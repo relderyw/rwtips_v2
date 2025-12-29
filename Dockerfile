@@ -4,15 +4,11 @@ FROM node:22-slim
 # Set working directory
 WORKDIR /app
 
-# Copy package files first for better caching
+# Copy package files
 COPY package*.json ./
 
-# Install ONLY production dependencies to save memory
-# This will ignore react, recharts, etc.
+# Install ONLY production dependencies to save memory (includes tsx and express)
 RUN npm install --omit=dev --no-audit
-
-# Install tsx globally or just use the local one if it's in dependencies
-# Since we moved tsx and typescript to dependencies, they will be installed.
 
 # Copy the rest of the application code
 COPY . .
@@ -20,9 +16,10 @@ COPY . .
 # Expose the health check port
 EXPOSE 8080
 
-# Environment variables (can also be set in Koyeb UI)
+# Environment variables
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Run the bot
-CMD ["npm", "run", "bot"]
+# In Render/Koyeb, sometimes tsx can be heavy. 
+# We'll use tsx for now as requested but with --no-cache to save disk/memory
+CMD ["npx", "tsx", "--no-cache", "server-bot.ts"]

@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "tsx server-bot.ts",
-    "bot": "tsx server-bot.ts"
+    "bot": "tsx --no-cache server-bot.ts",
+    "build:bot": "tsc server-bot.ts --outDir dist --module ESNext --target ESNext --moduleResolution node --allowJs --skipLibCheck --esModuleInterop"
   },
   "engines": {
     "node": ">=18.0.0"
