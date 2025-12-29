@@ -11,6 +11,7 @@ import { checkSession, logout as firebaseLogout, auth, db, firebaseInstance } fr
 import { sendTelegramAlert } from './services/telegram';
 import { BankrollManager } from './components/Bankroll/BankrollManager';
 import { H2HSearch } from './components/H2HSearch';
+import { StrategyHistory } from './components/StrategyHistory';
 
 interface GoalNotification {
   id: string;
@@ -91,7 +92,7 @@ const GoalToast: React.FC<{ notification: GoalNotification; onClose: (id: string
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => checkSession());
   const [isAdminView, setIsAdminView] = useState(false);
-  const [activeMainTab, setActiveMainTab] = useState<'radar' | 'thermometer' | 'bankroll' | 'h2h'>('radar');
+  const [activeMainTab, setActiveMainTab] = useState<'radar' | 'thermometer' | 'bankroll' | 'h2h' | 'relatorios'>('radar');
   const [history, setHistory] = useState<HistoryMatch[]>([]);
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const [filter, setFilter] = useState<string>('all');
@@ -227,23 +228,38 @@ const App: React.FC = () => {
   }, [liveEvents]);
 
   const analyzedLive = useMemo(() => {
-    return liveEvents.map(event => ({
-      event,
-      potential: analyzeMatchPotential(event.homePlayer, event.awayPlayer, history)
-    }));
+    return liveEvents.map(event => {
+      const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history);
+      return {
+        event,
+        potential: analysis.key,
+        confidence: analysis.confidence,
+        reasons: analysis.reasons
+      };
+    });
   }, [liveEvents, history]);
 
   useEffect(() => {
     if (analyzedLive.length > 0) {
-      analyzedLive.forEach(({ event, potential }) => {
+      analyzedLive.forEach(({ event, potential, confidence }) => {
         if (potential !== 'none') {
           const tipKey = `${event.id}-${potential}`;
           if (!sentTelegramTips.current.has(tipKey)) {
-            const lStats = leagueStats.find(s => s.leagueName === event.leagueName);
-            const metrics = lStats ? lStats.metrics : { ht05: 0, ft25: 0, ftBtts: 0 };
-            sendTelegramAlert(event, potential, metrics);
-            sentTelegramTips.current.add(tipKey);
-            setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 120);
+            const p1Stats = calculatePlayerStats(event.homePlayer, history, 5);
+            const p2Stats = calculatePlayerStats(event.awayPlayer, history, 5);
+
+            const metrics = {
+              ht05: (p1Stats.htOver05Rate + p2Stats.htOver05Rate) / 2,
+              ft25: (p1Stats.ftOver25Rate + p2Stats.ftOver25Rate) / 2,
+              ftBtts: (p1Stats.ftBttsRate + p2Stats.ftBttsRate) / 2
+            };
+
+            // Só envia se a confiança for >= 70 (ajustável)
+            if (confidence >= 70) {
+              sendTelegramAlert(event, potential, metrics, confidence);
+              sentTelegramTips.current.add(tipKey);
+              setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 120);
+            }
           }
         }
       });
@@ -365,6 +381,7 @@ const App: React.FC = () => {
                 <button onClick={() => setActiveMainTab('thermometer')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'thermometer' ? 'bg-white text-black shadow-2xl scale-105' : 'text-white/30 hover:text-white/60'}`}>Termômetro</button>
                 <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'bankroll' ? 'bg-emerald-500 text-black shadow-2xl scale-105' : 'text-white/30 hover:text-emerald-500'}`}>Gestão de Banca</button>
                 <button onClick={() => setActiveMainTab('h2h')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'h2h' ? 'bg-indigo-500 text-white shadow-2xl scale-105' : 'text-white/30 hover:text-indigo-500'}`}>H2H PRO</button>
+                <button onClick={() => setActiveMainTab('relatorios')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'relatorios' ? 'bg-rose-500 text-white shadow-2xl scale-105' : 'text-white/30 hover:text-rose-500'}`}>Relatórios</button>
               </nav>
               {(isLoggedIn || isAdminView) && (
                 <button onClick={handleLogout} className="w-10 h-10 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-center hover:bg-rose-500/20 transition-all active:scale-95 group">
@@ -449,8 +466,16 @@ const App: React.FC = () => {
                         <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em]">{matches.length} CONFRONTOS ATIVOS</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {matches.map(({ event, potential }: any) => (
-                          <LiveMatchCard key={event.id} match={event} potential={potential} historicalGames={history} onDetailClick={handleAnalyze} />
+                        {matches.map(({ event, potential, confidence, reasons }: any) => (
+                          <LiveMatchCard
+                            key={event.id}
+                            match={event}
+                            potential={potential}
+                            confidence={confidence}
+                            reasons={reasons}
+                            historicalGames={history}
+                            onDetailClick={handleAnalyze}
+                          />
                         ))}
                       </div>
                     </section>
@@ -467,6 +492,8 @@ const App: React.FC = () => {
             <BankrollManager userEmail={auth.currentUser?.email || ''} />
           ) : activeMainTab === 'h2h' ? (
             <H2HSearch />
+          ) : activeMainTab === 'relatorios' ? (
+            <StrategyHistory history={history} />
           ) : (
             <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
               <div className="bg-white/[0.01] border border-white/[0.05] p-6 rounded-[2.5rem] backdrop-blur-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">

@@ -25,7 +25,7 @@ const getDetailedSuggestion = (strategyKey: string, match: LiveEvent): string =>
   }
 };
 
-export const sendTelegramAlert = async (match: LiveEvent, strategyKey: string, metrics: any) => {
+export const sendTelegramAlert = async (match: LiveEvent, strategyKey: string, metrics: any, confidence: number = 70) => {
   const league = getLeagueInfo(match.leagueName);
   const theme = STRATEGY_THEMES[strategyKey] || { label: strategyKey.toUpperCase(), icon: 'fa-star' };
   
@@ -36,6 +36,16 @@ export const sendTelegramAlert = async (match: LiveEvent, strategyKey: string, m
   const mFT = metrics.ft25?.toFixed(0) || '0';
   const mBTTS = metrics.ftBtts?.toFixed(0) || '0';
 
+  const getConfidenceIcon = (c: number) => {
+    if (c >= 90) return '🟣';
+    if (c >= 85) return '🟢';
+    if (c >= 80) return '🟡';
+    if (c >= 75) return '🟠';
+    return '🔴';
+  };
+
+  const statusIcon = getConfidenceIcon(confidence);
+
   const message = `
 👑 <b>RW TIPS - FIFA ANALYTICS</b> 🎮
 
@@ -44,6 +54,7 @@ export const sendTelegramAlert = async (match: LiveEvent, strategyKey: string, m
 🏆 <b>LIGA:</b> <code>${league.name}</code>
 ⚔️ <b>CONFRONTO:</b> <code>${match.homePlayer} vs ${match.awayPlayer}</code>
 📊 <b>ESTRATÉGIA:</b> <code>${strategyLabel}</code>
+🔥 <b>CONFIANÇA:</b> <code>${confidence}%</code> ${statusIcon}
 
 ⏰ <b>TEMPO:</b> ${match.timer.formatted}
 ⚽ <b>PLACAR ATUAL:</b> ${match.score.home} - ${match.score.away}
