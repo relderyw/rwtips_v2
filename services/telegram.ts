@@ -7,6 +7,7 @@ const CHAT_ID = "-1001981134607";
 
 // Lista de proxies para redundância, similar ao utilizado em services/api.ts
 const PROXIES = [
+    (url: string) => url, // Conexão Direta (Essencial para o Robô Servidor)
     (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
     (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
 ];
