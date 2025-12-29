@@ -102,12 +102,14 @@ async function runBot() {
         return;
     }
 
-    for (const event of liveEvents) {
+  for (const event of liveEvents) {
         const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history);
         
         if (analysis.key !== 'none' && analysis.confidence >= 70) {
-            // Chave única baseada no ID do evento ou nos nomes dos jogadores + liga para maior estabilidade
-            const eventCode = event.id || `${event.homePlayer}-${event.awayPlayer}`.replace(/\s+/g, '');
+            const eventCode = (event.bet365EventId || event.id || `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`)
+                .toString()
+                .toLowerCase()
+                .replace(/\s+/g, '');
             const tipKey = `${eventCode}-${analysis.key}`;
             
             if (!sentTips.has(tipKey)) {

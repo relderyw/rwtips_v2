@@ -242,7 +242,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (analyzedLive.length > 0) {
       analyzedLive.forEach(({ event, potential, confidence }) => {
-        if (potential !== 'none') {
+        if (potential !== 'none' && import.meta.env.VITE_TELEGRAM_CLIENT_SEND === 'true') {
           const tipKey = `${event.id}-${potential}`;
           if (!sentTelegramTips.current.has(tipKey)) {
             const p1Stats = calculatePlayerStats(event.homePlayer, history, 5);

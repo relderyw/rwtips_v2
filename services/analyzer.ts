@@ -75,12 +75,13 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
     .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
     .slice(0, limit);
 
-  if (playerGames.length < limit) return null;
+  const sample = playerGames;
+  if (sample.length < 3) return null;
 
   let wins = 0, goalsHT = 0, goalsFT = 0, goalsConcededFT = 0, goalsConcededHT = 0;
   let over05HT = 0, over15HT = 0, over25HT = 0, over25FT = 0, over35FT = 0, bttsHT = 0, bttsFT = 0;
 
-  playerGames.forEach(g => {
+  sample.forEach(g => {
     const isHome = normalize(g.home_player) === targetName;
     const pFT = Number(isHome ? g.score_home || 0 : g.score_away || 0);
     const oFT = Number(isHome ? g.score_away || 0 : g.score_home || 0);
@@ -102,7 +103,7 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
     if (pFT > 0 && oFT > 0) bttsFT++;
   });
 
-  const last3Results: string[] = playerGames.slice(0, 3).map(g => {
+  const last3Results: string[] = sample.slice(0, 3).map(g => {
     const isHome = normalize(g.home_player) === targetName;
     const pFT = Number(isHome ? g.score_home || 0 : g.score_away || 0);
     const oFT = Number(isHome ? g.score_away || 0 : g.score_home || 0);
@@ -110,18 +111,18 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
   });
 
   return {
-    winRate: (wins / limit) * 100,
-    avgGoalsHT: goalsHT / limit,
-    avgGoalsFT: goalsFT / limit,
-    avgGoalsConcededHT: goalsConcededHT / limit,
-    avgGoalsConcededFT: goalsConcededFT / limit,
-    over05HT: (over05HT / limit) * 100,
-    over15HT: (over15HT / limit) * 100,
-    over25HT: (over25HT / limit) * 100,
-    over25FT: (over25FT / limit) * 100,
-    over35FT: (over35FT / limit) * 100,
-    bttsHT: (bttsHT / limit) * 100,
-    bttsFT: (bttsFT / limit) * 100,
+    winRate: (wins / sample.length) * 100,
+    avgGoalsHT: goalsHT / sample.length,
+    avgGoalsFT: goalsFT / sample.length,
+    avgGoalsConcededHT: goalsConcededHT / sample.length,
+    avgGoalsConcededFT: goalsConcededFT / sample.length,
+    over05HT: (over05HT / sample.length) * 100,
+    over15HT: (over15HT / sample.length) * 100,
+    over25HT: (over25HT / sample.length) * 100,
+    over25FT: (over25FT / sample.length) * 100,
+    over35FT: (over35FT / sample.length) * 100,
+    bttsHT: (bttsHT / sample.length) * 100,
+    bttsFT: (bttsFT / sample.length) * 100,
     last3Results
   };
 };
@@ -347,12 +348,12 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
   const avgBtts = (p1.bttsFT + p2.bttsFT) / 2;
   const avgGoalsFT = (p1.avgGoalsFT + p2.avgGoalsFT);
 
-  if (resultKey === 'none' && avgOver25 >= 97 && avgOver35 >= 75 && avgBtts >= 88 && avgGoalsFT >= 4.0) {
+  if (resultKey === 'none' && avgOver25 >= 85 && avgOver35 >= 60 && avgBtts >= 70 && avgGoalsFT >= 3.0) {
       resultKey = 'ft_pro';
   }
 
   // 3. BTTS HT PRO
-  if (resultKey === 'none' && p1.avgGoalsHT >= 1.5 && p2.avgGoalsHT >= 1.5 && p1.bttsHT > 80 && p2.bttsHT > 80) {
+  if (resultKey === 'none' && p1.avgGoalsHT >= 1.2 && p2.avgGoalsHT >= 1.2 && p1.bttsHT > 70 && p2.bttsHT > 70) {
       resultKey = 'btts_pro_ht';
   }
 
