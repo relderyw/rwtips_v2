@@ -12,6 +12,13 @@ const app = express();
 app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀'));
 app.listen(PORT, () => console.log(`[SERVER] Health check rodando na porta ${PORT}`));
 
+const extractPlayerName = (str: string): string => {
+    if (!str) return "";
+    const parenMatch = str.match(/\((.*?)\)/);
+    if (parenMatch && parenMatch[1]) return parenMatch[1].trim();
+    return str.trim();
+};
+
 const sentTips = new Set<string>();
 
 async function fetchHistory() {
@@ -24,11 +31,17 @@ async function fetchHistory() {
                 filters: { status: 3, last_7_days: true, sort: "-time" }
             })
         });
+
+        if (!res.ok) {
+            console.error(`[BOT] Erro ao buscar histórico: Status ${res.status}`);
+            return [];
+        }
+
         const d: any = await res.json();
         const results = d?.data?.results || [];
         return results.map((m: any) => ({
-            home_player: m.player_home_name || m.player_name_1 || "",
-            away_player: m.player_away_name || m.player_name_2 || "",
+            home_player: extractPlayerName(m.player_home_name || m.player_name_1 || ""),
+            away_player: extractPlayerName(m.player_away_name || m.player_name_2 || ""),
             league_name: m.league_name || "Esoccer",
             score_home: Number(m.total_goals_home ?? 0),
             score_away: Number(m.total_goals_away ?? 0),
@@ -37,7 +50,7 @@ async function fetchHistory() {
             data_realizacao: m.time
         }));
     } catch (e) {
-        console.error("Erro ao buscar histórico:", e);
+        console.error("[BOT] Erro fatal ao buscar histórico:", e);
         return [];
     }
 }
@@ -45,10 +58,20 @@ async function fetchHistory() {
 async function fetchLive() {
     try {
         const response = await fetch(`${API_BASE}/api/app3/live-events`);
+        if (!response.ok) {
+            console.error(`[BOT] Erro ao buscar live: Status ${response.status}`);
+            return [];
+        }
+
         const json: any = await response.json();
-        return json.events || [];
+        const events = json.events || [];
+        return events.map((m: any) => ({
+            ...m,
+            homePlayer: extractPlayerName(m.homePlayer || ""),
+            awayPlayer: extractPlayerName(m.awayPlayer || "")
+        }));
     } catch (e) {
-        console.error("Erro ao buscar live:", e);
+        console.error("[BOT] Erro fatal ao buscar live:", e);
         return [];
     }
 }
