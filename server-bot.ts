@@ -3,9 +3,16 @@ import { analyzeMatchPotential, calculatePlayerStats, getLeagueInfo } from './se
 import { sendTelegramAlert } from './services/telegram.js';
 
 // Configurações
-const API_BASE = process.env.API_BASE || "http://localhost:3001";
+let API_BASE = process.env.API_BASE || "http://localhost:3001";
+// Remove barras finais para evitar duplicidade //api//v1
+if (API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+
 const PORT = process.env.PORT || 8080;
 const POLL_INTERVAL = 15000; // 15 segundos
+const HEADERS = {
+    "Content-Type": "application/json",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+};
 
 // Servidor de Health Check (Necessário para Koyeb/Render/Heroku não derrubarem o bot)
 const app = express();
@@ -22,10 +29,12 @@ const extractPlayerName = (str: string): string => {
 const sentTips = new Set<string>();
 
 async function fetchHistory() {
+    const url = `${API_BASE}/api/app3/history`;
     try {
-        const res = await fetch(`${API_BASE}/api/app3/history`, {
+        console.log(`[BOT] Coletando histórico de: ${url}`);
+        const res = await fetch(url, {
             method: 'POST',
-            headers: { "Content-Type": "application/json" },
+            headers: HEADERS,
             body: JSON.stringify({
                 query: { sort: "-time", limit: 300, offset: 0 },
                 filters: { status: 3, last_7_days: true, sort: "-time" }
@@ -33,7 +42,7 @@ async function fetchHistory() {
         });
 
         if (!res.ok) {
-            console.error(`[BOT] Erro ao buscar histórico: Status ${res.status}`);
+            console.error(`[BOT] Erro ao buscar histórico: Status ${res.status} em ${url}`);
             return [];
         }
 
@@ -50,16 +59,17 @@ async function fetchHistory() {
             data_realizacao: m.time
         }));
     } catch (e) {
-        console.error("[BOT] Erro fatal ao buscar histórico:", e);
+        console.error(`[BOT] Erro fatal ao buscar histórico (${url}):`, e);
         return [];
     }
 }
 
 async function fetchLive() {
+    const url = `${API_BASE}/api/app3/live-events`;
     try {
-        const response = await fetch(`${API_BASE}/api/app3/live-events`);
+        const response = await fetch(url, { headers: HEADERS });
         if (!response.ok) {
-            console.error(`[BOT] Erro ao buscar live: Status ${response.status}`);
+            console.error(`[BOT] Erro ao buscar live: Status ${response.status} em ${url}`);
             return [];
         }
 
@@ -71,7 +81,7 @@ async function fetchLive() {
             awayPlayer: extractPlayerName(m.awayPlayer || "")
         }));
     } catch (e) {
-        console.error("[BOT] Erro fatal ao buscar live:", e);
+        console.error(`[BOT] Erro fatal ao buscar live (${url}):`, e);
         return [];
     }
 }
