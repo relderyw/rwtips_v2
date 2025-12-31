@@ -423,9 +423,16 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
   if (resultKey.includes('casa') && p1Last2.every(r => r === 'W')) confidence += 5;
   if (resultKey.includes('fora') && p2Last2.every(r => r === 'W')) confidence += 5;
 
+  const finalConfidence = Math.min(confidence, 100);
+  
+  // Enforcing global threshold of 80%
+  if (finalConfidence < 80) {
+      return none;
+  }
+
   return {
     key: resultKey,
-    confidence: Math.min(confidence, 100),
+    confidence: finalConfidence,
     reasons
   };
 };
