@@ -635,7 +635,10 @@ export const H2HSearch: React.FC = () => {
                                             {/* LEFT - Player */}
                                             <div className="text-left flex-1">
                                                 <div className="text-xs font-black text-cyan-400 leading-tight">{player1.slice(0, 12)}</div>
-                                                <div className="text-[9px] text-zinc-600 font-bold">{dot.date_time?.split(' ')[0]}</div>
+                                                <div className="text-[9px] text-zinc-600 font-bold">
+                                                    {dot.date_time ? new Date(dot.date_time).toLocaleDateString('pt-BR') : ""}
+                                                    <span className="ml-1 text-zinc-500">{dot.date_time ? new Date(dot.date_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ""}</span>
+                                                </div>
                                             </div>
 
                                             {/* CENTER - Score */}
@@ -707,7 +710,10 @@ export const H2HSearch: React.FC = () => {
                                         <div className="flex items-center justify-between gap-3">
                                             <div className="text-left flex-1">
                                                 <div className="text-xs font-black text-emerald-400 leading-tight">{player2.slice(0, 12)}</div>
-                                                <div className="text-[9px] text-zinc-600 font-bold">{dot.date_time?.split(' ')[0]}</div>
+                                                <div className="text-[9px] text-zinc-600 font-bold">
+                                                    {dot.date_time ? new Date(dot.date_time).toLocaleDateString('pt-BR') : ""}
+                                                    <span className="ml-1 text-zinc-500">{dot.date_time ? new Date(dot.date_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ""}</span>
+                                                </div>
                                             </div>
 
                                             <div className="text-center px-2">
@@ -776,7 +782,10 @@ export const H2HSearch: React.FC = () => {
                                         <div className="flex items-center justify-between gap-3">
                                             <div className="text-left flex-1">
                                                 <div className={`text-xs font-black leading-tight ${p1Score > p2Score ? 'text-cyan-400' : 'text-zinc-500'}`}>{p1Name.slice(0, 10)}</div>
-                                                <div className="text-[9px] text-zinc-600 font-semibold">{new Date(m.match_date).toLocaleDateString()}</div>
+                                                <div className="text-[9px] text-zinc-600 font-semibold">
+                                                    {new Date(m.match_date).toLocaleDateString('pt-BR')}
+                                                    <span className="ml-1 text-zinc-500">{new Date(m.match_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
                                             </div>
 
                                             <div className="text-center px-2">
