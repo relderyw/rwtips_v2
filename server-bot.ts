@@ -34,39 +34,53 @@ const extractPlayerName = (str: string): string => {
 const sentTips = new Set<string>();
 
 async function fetchHistory() {
-    const url = `${API_BASE}/api/app3/history`;
-    try {
-        console.log(`[BOT] Coletando histórico de: ${url}`);
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: HEADERS,
-            body: JSON.stringify({
-                query: { sort: "-time", limit: 300, offset: 0 },
-                filters: { status: 3, last_7_days: true, sort: "-time" }
-            })
-        });
+    let allResults: any[] = [];
+    const limitPerPage = 50; // Aumentei para 50 para reduzir requests, assumindo que API suporta
+    const totalGames = 300;
+    const pages = Math.ceil(totalGames / limitPerPage);
 
-        if (!res.ok) {
-            console.error(`[BOT] Erro ao buscar histórico: Status ${res.status} em ${url}`);
-            return [];
+    console.log(`[BOT] Coletando histórico (Alvo: ${totalGames} jogos)...`);
+
+    for (let i = 0; i < pages; i++) {
+        const url = `${API_BASE}/api/app3/history`;
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: HEADERS,
+                body: JSON.stringify({
+                    query: { sort: "-time", limit: limitPerPage, offset: i * limitPerPage },
+                    filters: { status: 3, last_7_days: true, sort: "-time" }
+                })
+            });
+
+            if (!res.ok) {
+                console.error(`[BOT] Erro ao buscar página ${i} do histórico: ${res.status}`);
+                continue;
+            }
+
+            const d: any = await res.json();
+            const results = d?.data?.results || [];
+            allResults = allResults.concat(results);
+            
+            if (results.length < limitPerPage) break; // Acabaram os dados
+
+        } catch (e) {
+            console.error(`[BOT] Erro ao buscar página ${i}:`, e);
         }
-
-        const d: any = await res.json();
-        const results = d?.data?.results || [];
-        return results.map((m: any) => ({
-            home_player: extractPlayerName(m.player_home_name || m.player_name_1 || ""),
-            away_player: extractPlayerName(m.player_away_name || m.player_name_2 || ""),
-            league_name: m.league_name || "Esoccer",
-            score_home: Number(m.total_goals_home ?? 0),
-            score_away: Number(m.total_goals_away ?? 0),
-            halftime_score_home: Number(m.ht_goals_home ?? 0),
-            halftime_score_away: Number(m.ht_goals_away ?? 0),
-            data_realizacao: m.time
-        }));
-    } catch (e) {
-        console.error(`[BOT] Erro fatal ao buscar histórico (${url}):`, e);
-        return [];
     }
+
+    console.log(`[BOT] Total de jogos históricos coletados: ${allResults.length}`);
+
+    return allResults.map((m: any) => ({
+        home_player: extractPlayerName(m.player_home_name || m.player_name_1 || ""),
+        away_player: extractPlayerName(m.player_away_name || m.player_name_2 || ""),
+        league_name: m.league_name || "Esoccer",
+        score_home: Number(m.total_goals_home ?? 0),
+        score_away: Number(m.total_goals_away ?? 0),
+        halftime_score_home: Number(m.ht_goals_home ?? 0),
+        halftime_score_away: Number(m.ht_goals_away ?? 0),
+        data_realizacao: m.time
+    }));
 }
 
 async function fetchLive() {

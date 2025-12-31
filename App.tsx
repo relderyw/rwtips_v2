@@ -254,8 +254,8 @@ const App: React.FC = () => {
               ftBtts: (p1Stats.ftBttsRate + p2Stats.ftBttsRate) / 2
             };
 
-            // Só envia se a confiança for >= 70 (ajustável)
-            if (confidence >= 70) {
+            // Só envia se a confiança for >= 80 (ajustável)
+            if (confidence >= 80) {
               sendTelegramAlert(event, potential, metrics, confidence);
               sentTelegramTips.current.add(tipKey);
               setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 120);
