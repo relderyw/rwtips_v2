@@ -41,7 +41,7 @@ async function fetchHistory() {
             method: 'POST',
             headers: HEADERS,
             body: JSON.stringify({
-                query: { sort: "-time", limit: 1000, offset: 0 },
+                query: { sort: "-time", limit: 300, offset: 0 },
                 filters: { status: 3, last_7_days: true, sort: "-time" }
             })
         });
