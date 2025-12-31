@@ -675,7 +675,10 @@ const App: React.FC = () => {
                         return (
                           <div key={i} className="flex flex-col p-5 bg-white/[0.01] rounded-3xl border border-white/[0.04] hover:bg-white/[0.03] transition-all group">
                             <div className="flex justify-between items-center mb-3">
-                              <p className="text-[10px] font-mono-numbers font-bold text-white/20">{new Date(game.data_realizacao).toLocaleDateString()}</p>
+                              <p className="text-[10px] font-mono-numbers font-bold text-white/20">
+                                {new Date(game.data_realizacao).toLocaleDateString()}
+                                <span className="ml-2 text-white/10">{formatTimeStr(new Date(game.data_realizacao))}</span>
+                              </p>
                               <span className="text-[9px] font-black text-emerald-500/40 uppercase tracking-widest bg-emerald-500/5 px-2 py-0.5 rounded">HT: {game.halftime_score_home}-{game.halftime_score_away}</span>
                             </div>
                             <div className="flex items-center justify-between gap-4">
@@ -717,7 +720,10 @@ const App: React.FC = () => {
                         <div key={i} className="flex flex-col p-5 bg-white/[0.01] rounded-3xl border border-white/[0.04] hover:bg-white/[0.03] transition-all">
                           <div className="flex justify-between items-center mb-3">
                             <div className="flex items-center gap-3">
-                              <p className="text-[10px] font-mono-numbers font-bold text-white/20">{new Date(game.data_realizacao).toLocaleDateString()}</p>
+                              <p className="text-[10px] font-mono-numbers font-bold text-white/20">
+                                {new Date(game.data_realizacao).toLocaleDateString()}
+                                <span className="ml-2 text-white/10">{formatTimeStr(new Date(game.data_realizacao))}</span>
+                              </p>
                               {/* HT Score fix: Always Home x Away to match the names below */}
                               <span className="px-2 py-0.5 bg-black/60 text-emerald-500 text-[8px] font-black rounded border border-white/5 uppercase tracking-tighter shadow-xl">HT: {game.halftime_score_home}-{game.halftime_score_away}</span>
                             </div>
@@ -756,7 +762,10 @@ const App: React.FC = () => {
                         <div key={i} className="flex flex-col p-5 bg-white/[0.01] rounded-3xl border border-white/[0.04] hover:bg-white/[0.03] transition-all">
                           <div className="flex justify-between items-center mb-3">
                             <div className="flex items-center gap-3">
-                              <p className="text-[10px] font-mono-numbers font-bold text-white/20">{new Date(game.data_realizacao).toLocaleDateString()}</p>
+                              <p className="text-[10px] font-mono-numbers font-bold text-white/20">
+                                {new Date(game.data_realizacao).toLocaleDateString()}
+                                <span className="ml-2 text-white/10">{formatTimeStr(new Date(game.data_realizacao))}</span>
+                              </p>
                               {/* HT Score fix: Always Home x Away to match the names below */}
                               <span className="px-2 py-0.5 bg-black/60 text-emerald-500 text-[8px] font-black rounded border border-white/5 uppercase tracking-tighter shadow-xl">HT: {game.halftime_score_home}-{game.halftime_score_away}</span>
                             </div>
