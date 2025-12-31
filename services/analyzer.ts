@@ -534,7 +534,7 @@ export const generateStrategyReport = (history: HistoryMatch[], limitPerLeague?:
     const analysis = analyzeMatchPotential(currentMatch.home_player, currentMatch.away_player, pastData);
     const potential = analysis.key;
     
-    if (potential !== 'none') {
+    if (potential !== 'none' && analysis.confidence >= 85) {
       const dateKey = new Date(currentMatch.data_realizacao).toLocaleDateString('pt-BR');
       const leagueName = currentMatch.league_name || "Outra";
       const key = `${dateKey}_${leagueName}`;
