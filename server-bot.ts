@@ -105,7 +105,7 @@ async function runBot() {
   for (const event of liveEvents) {
         const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history);
         
-        if (analysis.key !== 'none' && analysis.confidence >= 70) {
+        if (analysis.key !== 'none' && analysis.confidence >= 80) {
             const eventCode = (event.bet365EventId || event.id || `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`)
                 .toString()
                 .toLowerCase()
