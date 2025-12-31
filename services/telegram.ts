@@ -26,7 +26,7 @@ const getDetailedSuggestion = (strategyKey: string, match: LiveEvent): string =>
   }
 };
 
-export const sendTelegramAlert = async (match: LiveEvent, strategyKey: string, metrics: any, confidence: number = 70) => {
+export const sendTelegramAlert = async (match: LiveEvent, strategyKey: string, metrics: any, confidence: number = 70, source: 'BOT' | 'PLATFORM' = 'BOT') => {
   const league = getLeagueInfo(match.leagueName);
   const theme = STRATEGY_THEMES[strategyKey] || { label: strategyKey.toUpperCase(), icon: 'fa-star' };
   
@@ -47,8 +47,11 @@ export const sendTelegramAlert = async (match: LiveEvent, strategyKey: string, m
 
   const statusIcon = getConfidenceIcon(confidence);
 
+  const header = source === 'PLATFORM' ? '💻 <b>VIA WEB</b> 🌐' : '🤖 <b>ROBÔ AUTO</b> ⚙️';
+
   const message = `
 👑 <b>RW TIPS - FIFA ANALYTICS</b> 🎮
+${header}
 
 ✅ <b>ENTRADA CONFIRMADA</b> ✅
 

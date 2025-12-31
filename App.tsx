@@ -256,7 +256,7 @@ const App: React.FC = () => {
 
             // Só envia se a confiança for >= 70 (ajustável)
             if (confidence >= 70) {
-              sendTelegramAlert(event, potential, metrics, confidence);
+              sendTelegramAlert(event, potential, metrics, confidence, 'PLATFORM');
               sentTelegramTips.current.add(tipKey);
               setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 120);
             }

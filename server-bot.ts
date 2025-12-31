@@ -125,7 +125,7 @@ async function runBot() {
                   ftBtts: (p1Stats.ftBttsRate + p2Stats.ftBttsRate) / 2 
                 };
 
-                await sendTelegramAlert(event, analysis.key, metrics, analysis.confidence);
+                await sendTelegramAlert(event, analysis.key, metrics, analysis.confidence, 'BOT');
                 
                 sentTips.add(tipKey);
                 // Limpa o cache de tips enviadas após 2 horas
