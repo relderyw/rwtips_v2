@@ -21,13 +21,62 @@ let isRunning = true;
 // Servidor de Health Check (Necessário para Koyeb/Render/Heroku não derrubarem o bot)
 const app = express();
 app.use(cors()); // Habilita CORS para todas as origens
-app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀'));
+app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀 [V2 - WITH NEXT GAMES]'));
 
-// Endpoint para Próximos Jogos (Web Scraper)
+// Função para buscar próximos jogos via BetsAPI (RapidAPI)
+// Adaptação do código Python fornecido pelo usuário
+async function fetchBetsApiUpcomingEvents() {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+    const url = 'https://betsapi2.p.rapidapi.com/v1/bet365/upcoming';
+
+    try {
+        console.log(`[API] Buscando eventos para o dia: ${today}`);
+        const response = await axios.get(url, {
+            params: {
+                sport_id: '1',       // 1 = Futebol
+                day: today
+            },
+            headers: {
+                'X-RapidAPI-Key': '05731d6e8emsh4479ae2409717dep1c7713jsn1ca3de816712',
+                'X-RapidAPI-Host': 'betsapi2.p.rapidapi.com'
+            }
+        });
+
+        const data = response.data;
+        if (data && data.success === 1 && data.results) {
+            console.log(`[API] Encontrados ${data.results.length} eventos.`);
+            
+            // Mapeia para o formato que o frontend espera
+            return data.results.map((event: any) => ({
+                id: event.id || 'N/A',
+                home: { 
+                    name: event.home.name, 
+                    team: event.home.name, // BetsAPI geralmente dá o nome completo, usamos como placeholder
+                    image: event.home.image_id ? `https://assets.b365api.com/images/team/m/${event.home.image_id}.png` : '' 
+                },
+                away: { 
+                    name: event.away.name, 
+                    team: event.away.name, 
+                    image: event.away.image_id ? `https://assets.b365api.com/images/team/m/${event.away.image_id}.png` : ''
+                },
+                time: new Date(Number(event.time) * 1000).toLocaleString('pt-BR'), // Converte timestamp UNIX
+                league: { name: event.league.name }
+            }));
+        } else {
+            console.log('[API] Nenhum evento encontrado ou resposta inesperada:', data);
+            return [];
+        }
+    } catch (error) {
+        console.error('[API] Erro ao buscar eventos na BetsAPI:', error);
+        return [];
+    }
+}
+
+// Endpoint para Próximos Jogos (BetsAPI)
 app.get('/api/next-games', async (req, res) => {
     try {
         console.log('[API] Recebida solicitação para /api/next-games');
-        const games = await scrapeNextGames();
+        const games = await fetchBetsApiUpcomingEvents();
         console.log(`[API] Retornando ${games.length} jogos`);
         res.json({ success: true, results: games });
     } catch (error) {
@@ -49,93 +98,6 @@ const extractPlayerName = (str: string): string => {
 };
 
 const sentTips = new Set<string>();
-
-// Função de Scraping para Drafted.gg
-async function scrapeNextGames() {
-    const url = 'https://drafted.gg'; // URL alvo inferida
-    try {
-        console.log('[SCRAPER] Buscando dados de:', url);
-        const { data } = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
-        
-        console.log(`[SCRAPER] Dados recebidos. Tamanho: ${data.length} bytes`);
-        const $ = cheerio.load(data);
-        const games: any[] = [];
-        
-        // Seletores baseados no snippet HTML fornecido
-        // Desktop cards
-        const desktopCards = $('.hidden.lg\\:flex.cursor-pointer');
-        console.log(`[SCRAPER] Encontrados ${desktopCards.length} cards desktop`);
-
-        desktopCards.each((i, el) => {
-            const home = $(el).find('.w-\\[128px\\].rounded-tl-lg').next().find('.uppercase.text-3\\.5xl').text().trim();
-            const homeTeam = $(el).find('.w-\\[128px\\].rounded-tl-lg').next().find('.font-nunito').first().text().trim();
-            const homeImg = $(el).find('img').first().attr('src') || $(el).find('img').first().attr('srcset')?.split(' ')[0];
-            
-            const away = $(el).find('.w-\\[128px\\].rounded-tr-lg').prev().find('.uppercase.text-3\\.5xl').text().trim();
-            const awayTeam = $(el).find('.w-\\[128px\\].rounded-tr-lg').prev().find('.font-nunito').first().text().trim();
-            const awayImg = $(el).find('img').last().attr('src') || $(el).find('img').last().attr('srcset')?.split(' ')[0];
-            
-            const middleSection = $(el).find('.flex.flex-col.items-center.font-nunito');
-            const matchIdText = middleSection.find('.text-xs.lg\\:text-sm').text().trim(); // "Match 2352161"
-            const matchId = matchIdText.replace('Match', '').trim();
-            const dateTimeNode = middleSection.contents().filter((_, node) => node.type === 'text' && node.data.includes(':')).text().trim();
-            
-            // Tentar extrair data/hora se o seletor acima falhar
-            let time = dateTimeNode;
-            if (!time) {
-                 // Fallback: pegar todo texto e tentar regex
-                 const fullText = middleSection.text();
-                 const timeMatch = fullText.match(/\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/);
-                 if (timeMatch) time = timeMatch[0];
-            }
-            
-            if (home && away) {
-                games.push({
-                    id: matchId,
-                    home: { name: home, team: homeTeam, image: homeImg },
-                    away: { name: away, team: awayTeam, image: awayImg },
-                    time: time,
-                    league: { name: 'E-Soccer' } // Default ou extrair se possível
-                });
-            }
-        });
-        
-        // Se não achou desktop, tentar mobile (ou combinar)
-        if (games.length === 0) {
-             console.log('[SCRAPER] Tentando seletores mobile...');
-             const mobileCards = $('.lg\\:hidden.cursor-pointer');
-             console.log(`[SCRAPER] Encontrados ${mobileCards.length} cards mobile`);
-
-             mobileCards.each((i, el) => {
-                // Implementar seletores mobile se necessário, mas o desktop deve cobrir se o HTML for responsivo padrão
-                // O HTML fornecido tem blocos duplicados para mobile/desktop
-                const home = $(el).find('.uppercase.text-2xl').first().text().trim();
-                const away = $(el).find('.uppercase.text-2xl').last().text().trim();
-                const timeStr = $(el).text().match(/\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/)?.[0] || '';
-                
-                 if (home && away) {
-                    games.push({
-                        id: `mobile-${i}`,
-                        home: { name: home, team: 'N/A', image: '' },
-                        away: { name: away, team: 'N/A', image: '' },
-                        time: timeStr,
-                        league: { name: 'E-Soccer' }
-                    });
-                }
-             });
-        }
-        
-        console.log(`[SCRAPER] Total de jogos extraídos: ${games.length}`);
-        return games;
-    } catch (e) {
-        console.error('[BOT] Erro no scraper:', e);
-        return [];
-    }
-}
 
 async function fetchHistory() {
     const url = `${API_BASE}/api/app3/history`;
