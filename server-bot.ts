@@ -206,6 +206,7 @@ async function fetchHistory() {
 
         const d: any = await res.json();
         const results = d?.data?.results || [];
+        if (results.length === 0) console.warn("[BOT] ⚠️ API de histórico retornou 0 resultados.");
         return results.map((m: any) => ({
             home_player: extractPlayerName(m.player_home_name || m.player_name_1 || ""),
             away_player: extractPlayerName(m.player_away_name || m.player_name_2 || ""),
@@ -233,6 +234,7 @@ async function fetchLive() {
 
         const json: any = await response.json();
         const events = json.events || [];
+        if (events.length === 0) console.warn("[BOT] ⚠️ API de live-events retornou 0 eventos.");
         return events.map((m: any) => ({
             ...m,
             homePlayer: extractPlayerName(m.homePlayer || ""),
@@ -251,13 +253,18 @@ async function runBot() {
     const liveEvents = await fetchLive();
 
     if (liveEvents.length === 0) {
-        console.log("[BOT] Nenhum jogo ao vivo no momento.");
+        console.log("[BOT] Verificando... Nenhum jogo ao vivo no momento.");
         return;
     }
 
-  for (const event of liveEvents) {
+    console.log(`[BOT] ${liveEvents.length} jogos ao vivo encontrados. Analisando...`);
+
+    for (const event of liveEvents) {
         const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history);
         
+        // Log de depuração para cada jogo analisado
+        console.log(`[BOT] 🔍 ${event.homePlayer} vs ${event.awayPlayer} | Estratégia: ${analysis.key} | Confiança: ${analysis.confidence}%`);
+
         if (analysis.key !== 'none' && analysis.confidence >= 85) {
             const eventCode = (event.bet365EventId || event.id || `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`)
                 .toString()
