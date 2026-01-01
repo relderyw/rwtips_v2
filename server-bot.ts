@@ -180,8 +180,9 @@ const server = app.listen(Number(PORT), '0.0.0.0', () => {
 
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
-    // Remove parênteses e o conteúdo dentro deles para padronizar (ex: "Borees (BVB)" -> "Borees")
-    return str.replace(/\(.*?\)/g, "").trim();
+    const parenMatch = str.match(/\((.*?)\)/);
+    if (parenMatch && parenMatch[1]) return parenMatch[1].trim();
+    return str.trim();
 };
 
 const sentTips = new Set<string>();
