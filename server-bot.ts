@@ -187,41 +187,45 @@ const extractPlayerName = (str: string): string => {
 
 const sentTips = new Set<string>();
 
-async function fetchHistory() {
-    const url = `${API_BASE}/api/app3/history`;
-    try {
-        console.log(`[BOT] Coletando histórico de: ${url}`);
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: HEADERS,
-            body: JSON.stringify({
-                query: { sort: "-time", limit: 1000, offset: 0 },
-                filters: { status: 3, last_7_days: true, sort: "-time" }
-            })
-        });
+async function fetchHistory(numPages: number = 40): Promise<HistoryMatch[]> {
+    let all: HistoryMatch[] = [];
+    console.log(`[BOT] Coletando histórico (${numPages} páginas)...`);
 
-        if (!res.ok) {
-            console.error(`[BOT] Erro ao buscar histórico: Status ${res.status} em ${url}`);
-            return [];
+    for (let i = 0; i < numPages; i++) {
+        try {
+            const res = await fetch(`${API_BASE}/api/app3/history`, {
+                method: 'POST',
+                headers: HEADERS,
+                body: JSON.stringify({
+                    query: { sort: "-time", limit: 20, offset: i * 20 },
+                    filters: { status: 3, last_7_days: true, sort: "-time" }
+                })
+            });
+
+            if (!res.ok) break;
+
+            const d: any = await res.json();
+            const results = d?.data?.results || [];
+            if (results.length === 0) break;
+
+            const mapped = results.map((m: any) => ({
+                home_player: extractPlayerName(m.player_home_name || m.player_name_1 || ""),
+                away_player: extractPlayerName(m.player_away_name || m.player_name_2 || ""),
+                league_name: m.league_name || "Esoccer",
+                score_home: Number(m.total_goals_home ?? 0),
+                score_away: Number(m.total_goals_away ?? 0),
+                halftime_score_home: Number(m.ht_goals_home ?? 0),
+                halftime_score_away: Number(m.ht_goals_away ?? 0),
+                data_realizacao: m.time
+            }));
+            all = all.concat(mapped);
+        } catch (e) {
+            console.error(`[BOT] Erro ao buscar página ${i} do histórico:`, e);
+            break;
         }
-
-        const d: any = await res.json();
-        const results = d?.data?.results || [];
-        if (results.length === 0) console.warn("[BOT] ⚠️ API de histórico retornou 0 resultados.");
-        return results.map((m: any) => ({
-            home_player: extractPlayerName(m.player_home_name || m.player_name_1 || ""),
-            away_player: extractPlayerName(m.player_away_name || m.player_name_2 || ""),
-            league_name: m.league_name || "Esoccer",
-            score_home: Number(m.total_goals_home ?? 0),
-            score_away: Number(m.total_goals_away ?? 0),
-            halftime_score_home: Number(m.ht_goals_home ?? 0),
-            halftime_score_away: Number(m.ht_goals_away ?? 0),
-            data_realizacao: m.time
-        }));
-    } catch (e) {
-        console.error(`[BOT] Erro fatal ao buscar histórico (${url}):`, e);
-        return [];
     }
+    console.log(`[BOT] Histórico coletado: ${all.length} jogos.`);
+    return all;
 }
 
 async function fetchLive() {
@@ -261,11 +265,15 @@ async function runBot() {
     console.log(`[BOT] ${liveEvents.length} jogos ao vivo encontrados. Analisando...`);
 
     for (const event of liveEvents) {
+        // Diagnóstico: Calcular stats individuais para logar a quantidade de jogos encontrada
+        const p1Stats = calculatePlayerStats(event.homePlayer, history, 5);
+        const p2Stats = calculatePlayerStats(event.awayPlayer, history, 5);
+        
         const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history);
         
         // Log detalhado para identificar bônus e motivos
         const motivos = analysis.reasons.length > 0 ? ` | Motivos: ${analysis.reasons.join(', ')}` : '';
-        console.log(`[BOT] 🔍 ${event.homePlayer} vs ${event.awayPlayer} | Estratégia: ${analysis.key} | Confiança: ${analysis.confidence}%${motivos}`);
+        console.log(`[BOT] 🔍 ${event.homePlayer} (${p1Stats.matchesPlayed}j) vs ${event.awayPlayer} (${p2Stats.matchesPlayed}j) | Estratégia: ${analysis.key} | Confiança: ${analysis.confidence}%${motivos}`);
 
         if (analysis.key !== 'none' && analysis.confidence >= 85) {
             const eventCode = (event.bet365EventId || event.id || `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`)
