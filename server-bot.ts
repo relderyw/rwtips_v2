@@ -73,13 +73,98 @@ async function fetchBetsApiUpcomingEvents() {
     }
 }
 
-// Endpoint para Próximos Jogos (BetsAPI)
+// Função para fazer scraping de dados do Drafted.gg (para Esoccer)
+async function scrapeDraftedGames() {
+    try {
+        console.log('[SCRAPER] Buscando jogos no Drafted.gg...');
+        const response = await axios.get('https://drafted.gg', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
+
+        const $ = cheerio.load(response.data);
+        const games: any[] = [];
+
+        // Seleciona os containers de jogos (Desktop view)
+        // O seletor baseia-se na estrutura fornecida: div com bg-foreground e hidden lg:flex
+        const matchCards = $('.w-full.bg-foreground.rounded-lg.hidden.lg\\:flex');
+
+        matchCards.each((_, element) => {
+            const card = $(element);
+            
+            // Home Team
+            // Procura o primeiro nome e time
+            const homeName = card.find('.uppercase.text-3\\.5xl').first().text().trim();
+            const homeTeam = card.find('.font-nunito').first().text().trim();
+            // Imagem pode estar no container da esquerda ou no logo
+            // Tenta pegar o logo primeiro (img dentro de border)
+            let homeImage = card.find('img[src*="teams/icons"]').first().attr('src');
+            // Se não achar logo, tenta a imagem do jogador
+            if (!homeImage) homeImage = card.find('img').first().attr('src');
+            // Ajusta URL relativa se necessário (embora pareçam absolutas no snippet)
+            if (homeImage && homeImage.startsWith('/')) homeImage = `https://drafted.gg${homeImage}`;
+
+            // Away Team
+            // Procura o segundo nome e time
+            const awayName = card.find('.uppercase.text-3\\.5xl').last().text().trim();
+            const awayTeam = card.find('.font-nunito').last().text().trim();
+            let awayImage = card.find('img[src*="teams/icons"]').last().attr('src');
+            if (!awayImage) awayImage = card.find('img').last().attr('src');
+            if (awayImage && awayImage.startsWith('/')) awayImage = `https://drafted.gg${awayImage}`;
+
+            // Time / League
+            // O tempo geralmente está no meio. O snippet mostrava grid-cols-3.
+            // A coluna do meio deve ter o tempo.
+            const middleCol = card.find('.grid.grid-cols-3 > div').eq(1); // Segunda coluna (índice 1)
+            let time = middleCol.text().trim();
+            // Limpa o texto para tentar achar hora (ex: "VS 09:20")
+            const timeMatch = time.match(/\d{2}:\d{2}/);
+            time = timeMatch ? `Hoje ${timeMatch[0]}` : "Aguardando";
+
+            // ID único
+            const id = `dg-${homeName}-${awayName}-${Date.now()}`.replace(/\s+/g, '-').toLowerCase();
+
+            if (homeName && awayName) {
+                games.push({
+                    id: id,
+                    home: { name: homeName, team: homeTeam, image: homeImage || '' },
+                    away: { name: awayName, team: awayTeam, image: awayImage || '' },
+                    time: time,
+                    league: { name: 'Esoccer (Drafted)' } // Hardcoded já que é do drafted.gg
+                });
+            }
+        });
+
+        console.log(`[SCRAPER] Encontrados ${games.length} jogos no Drafted.gg`);
+        return games;
+    } catch (error) {
+        console.error('[SCRAPER] Erro ao fazer scraping:', error);
+        return [];
+    }
+}
+
+// Endpoint para Próximos Jogos (BetsAPI + Scraping)
 app.get('/api/next-games', async (req, res) => {
     try {
         console.log('[API] Recebida solicitação para /api/next-games');
-        const games = await fetchBetsApiUpcomingEvents();
-        console.log(`[API] Retornando ${games.length} jogos`);
-        res.json({ success: true, results: games });
+        
+        // Executa em paralelo para ser mais rápido
+        const [apiGames, scrapedGames] = await Promise.all([
+            fetchBetsApiUpcomingEvents().catch(err => {
+                console.error("Erro na API Bets:", err);
+                return [];
+            }),
+            scrapeDraftedGames().catch(err => {
+                console.error("Erro no Scraper:", err);
+                return [];
+            })
+        ]);
+
+        const allGames = [...scrapedGames, ...apiGames]; // Prioriza Scraped (aparecem primeiro) ou misturado
+        
+        console.log(`[API] Retornando total de ${allGames.length} jogos (${scrapedGames.length} via Scraper, ${apiGames.length} via API)`);
+        res.json({ success: true, results: allGames });
     } catch (error) {
         console.error('[BOT] Erro no endpoint /api/next-games:', error);
         res.status(500).json({ success: false, error: 'Erro ao buscar próximos jogos' });
