@@ -17,9 +17,9 @@ export const NextGames: React.FC = () => {
     const fetchGames = async () => {
         setLoading(true);
         try {
-            // Usa a URL base do Vite ou fallback para localhost
-            // Importante: No Netlify, VITE_API_BASE deve apontar para o URL do seu bot (ex: https://meu-bot-koyeb.app/api/next-games)
-            const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+            // Usa a URL base do Vite ou fallback para a produção no Render
+            // Importante: No Netlify, se VITE_API_BASE não estiver definido, usará o Render por padrão
+            const API_BASE = import.meta.env.VITE_API_BASE || "https://rwtips-r943.onrender.com";
 
             // Remove barras finais extras se existirem e garante que não estamos duplicando /api
             const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
