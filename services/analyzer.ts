@@ -72,7 +72,11 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
   const targetName = normalize(playerName);
   const playerGames = games
     .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
-    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+    .sort((a, b) => {
+      const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
+      const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
+      return timeB - timeA;
+    })
     .slice(0, limit);
 
   const sample = playerGames;
@@ -142,7 +146,11 @@ export const calculateMetricProbability = (playerName: string, gamesData: any, m
   const targetName = normalize(playerName);
   const playerGames = games
     .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
-    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+    .sort((a, b) => {
+      const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
+      const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
+      return timeB - timeA;
+    })
     .slice(0, limit);
     
   if (playerGames.length === 0) return 0;
@@ -194,7 +202,11 @@ export const calculateLeagueStats = (historyData: any, sampleSize: number = 15):
   
   const stats: LeagueStats[] = [];
   leaguesMap.forEach((games, leagueName) => {
-    const sortedGames = [...games].sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime());
+    const sortedGames = [...games].sort((a, b) => {
+      const timeA = typeof a.data_realizacao === 'number' ? a.data_realizacao : new Date(a.data_realizacao + (a.data_realizacao.includes('Z') ? '' : 'Z')).getTime();
+      const timeB = typeof b.data_realizacao === 'number' ? b.data_realizacao : new Date(b.data_realizacao + (b.data_realizacao.includes('Z') ? '' : 'Z')).getTime();
+      return timeB - timeA;
+    });
     const sample = sortedGames.slice(0, sampleSize);
     if (sample.length === 0) return;
     
@@ -240,7 +252,11 @@ export const calculatePlayerStats = (playerName: string, gamesData: any, limit: 
   const targetName = normalize(playerName);
   const playerGames = games
     .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
-    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime());
+    .sort((a, b) => {
+      const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
+      const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
+      return timeB - timeA;
+    });
   
   if (playerGames.length === 0) {
     return {
@@ -348,7 +364,7 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
   const avgBtts = (p1.bttsFT + p2.bttsFT) / 2;
   const avgGoalsFT = (p1.avgGoalsFT + p2.avgGoalsFT);
 
-  if (resultKey === 'none' && avgOver25 >= 85 && avgOver35 >= 60 && avgBtts >= 70 && avgGoalsFT >= 3.0) {
+  if (resultKey === 'none' && avgOver25 >= 85 && avgOver35 >= 60 && avgBtts >= 70 && avgGoalsFT >= 2.8) {
       resultKey = 'ft_pro';
   }
 
@@ -412,6 +428,13 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
       if (h2h.p1AvgGoalsHT + h2h.p2AvgGoalsHT >= 1.5) {
         confidence += 10;
         reasons.push("H2H com alta média de gols no HT");
+      }
+    }
+
+    if (resultKey === 'ft_pro' || resultKey === 'top_clash') {
+      if (h2h.p1AvgGoalsFT + h2h.p2AvgGoalsFT >= 2.5) {
+        confidence += 15;
+        reasons.push("H2H amplamente favorável a gols");
       }
     }
   }

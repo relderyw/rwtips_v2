@@ -265,17 +265,23 @@ async function runBot() {
     console.log(`[BOT] ${liveEvents.length} jogos ao vivo encontrados. Analisando...`);
 
     for (const event of liveEvents) {
-        // Diagnóstico: Calcular stats individuais para logar a quantidade de jogos encontrada
-        const p1Stats = calculatePlayerStats(event.homePlayer, history, 5);
-        const p2Stats = calculatePlayerStats(event.awayPlayer, history, 5);
-        
+        const p1 = calculatePlayerStats(event.homePlayer, history, 5);
+        const p2 = calculatePlayerStats(event.awayPlayer, history, 5);
         const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history);
         
-        // Log detalhado para identificar bônus e motivos
-        const motivos = analysis.reasons.length > 0 ? ` | Motivos: ${analysis.reasons.join(', ')}` : '';
-        console.log(`[BOT] 🔍 ${event.homePlayer} (${p1Stats.matchesPlayed}j) vs ${event.awayPlayer} (${p2Stats.matchesPlayed}j) | Estratégia: ${analysis.key} | Confiança: ${analysis.confidence}%${motivos}`);
+        // Debug de Métricas para FT_PRO
+        const avgOver25 = (p1.ftOver25Rate + p2.ftOver25Rate) / 2;
+        const avgOver35 = (p1.ft35Rate + p2.ft35Rate) / 2;
+        const avgBtts = (p1.ftBttsRate + p2.ftBttsRate) / 2;
+        const avgGoalsFT = (p1.avgGoalsScoredFT + p2.avgGoalsScoredFT);
 
-        if (analysis.key !== 'none' && analysis.confidence >= 85) {
+        const motivos = analysis.reasons.length > 0 ? ` | Motivos: ${analysis.reasons.join(', ')}` : '';
+        console.log(`[BOT] 🔍 ${event.homePlayer} vs ${event.awayPlayer} | Estratégia: ${analysis.key} | Confiança: ${analysis.confidence}%${motivos}`);
+        console.log(`[BOT] 📊 Métricas: O25:${avgOver25}% | O35:${avgOver35}% | BTTS:${avgBtts}% | Gols:${avgGoalsFT.toFixed(1)}`);
+
+        const currentThreshold = (analysis.key.includes('_pro') && !analysis.key.includes('engine') && analysis.key !== 'ft_pro' && analysis.key !== 'ht_pro') ? 85 : 75;
+
+        if (analysis.key !== 'none' && analysis.confidence >= currentThreshold) {
             const eventCode = (event.bet365EventId || event.id || `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`)
                 .toString()
                 .toLowerCase()
