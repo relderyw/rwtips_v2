@@ -213,9 +213,18 @@ const App: React.FC = () => {
         setNextUpdate(prev => Math.max(0, prev - 1));
       }, 1000);
 
+      const historySyncInterval = setInterval(async () => {
+        setIsSyncingHistory(true);
+        const authData = await loginDev3();
+        const hist = authData ? await fetchHistoryGames(40) : [];
+        if (hist.length > 0) setHistory(hist);
+        setIsSyncingHistory(false);
+      }, 1000 * 60 * 5); // A cada 5 minutos
+
       return () => {
         clearInterval(liveSyncInterval);
         clearInterval(countdownInterval);
+        clearInterval(historySyncInterval);
       };
     }
   }, [isLoggedIn]);
@@ -242,7 +251,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (analyzedLive.length > 0) {
-      analyzedLive.forEach(({ event, potential, confidence }) => {
+      analyzedLive.forEach(({ event, potential, confidence, reasons }) => {
         if (potential !== 'none') {
           const tipKey = `${event.id}-${potential}`;
           if (!sentTelegramTips.current.has(tipKey)) {
@@ -257,7 +266,7 @@ const App: React.FC = () => {
 
             // Só envia se a confiança for >= 85 (ajustável)
             if (confidence >= 85) {
-              sendTelegramAlert(event, potential, metrics, confidence, 'PLATFORM');
+              sendTelegramAlert(event, potential, metrics, confidence, 'PLATFORM', reasons);
               sentTelegramTips.current.add(tipKey);
               setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 120);
             }
