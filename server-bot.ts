@@ -2,6 +2,7 @@ import express from 'express';
 // Force Render Update - V2
 import { analyzeMatchPotential, calculatePlayerStats } from './services/analyzer';
 import { sendTelegramAlert } from './services/telegram';
+import { LiveEvent, HistoryMatch } from './types';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import cors from 'cors';
@@ -179,9 +180,8 @@ const server = app.listen(Number(PORT), '0.0.0.0', () => {
 
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
-    const parenMatch = str.match(/\((.*?)\)/);
-    if (parenMatch && parenMatch[1]) return parenMatch[1].trim();
-    return str.trim();
+    // Remove parênteses e o conteúdo dentro deles para padronizar (ex: "Borees (BVB)" -> "Borees")
+    return str.replace(/\(.*?\)/g, "").trim();
 };
 
 const sentTips = new Set<string>();
@@ -249,8 +249,8 @@ async function fetchLive() {
 async function runBot() {
     console.log(`[BOT] Iniciando ciclo de monitoramento... ${new Date().toLocaleTimeString()}`);
     
-    const history = await fetchHistory();
-    const liveEvents = await fetchLive();
+    const history = await fetchHistory() as HistoryMatch[];
+    const liveEvents = await fetchLive() as LiveEvent[];
 
     if (liveEvents.length === 0) {
         console.log("[BOT] Verificando... Nenhum jogo ao vivo no momento.");
@@ -262,8 +262,9 @@ async function runBot() {
     for (const event of liveEvents) {
         const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history);
         
-        // Log de depuração para cada jogo analisado
-        console.log(`[BOT] 🔍 ${event.homePlayer} vs ${event.awayPlayer} | Estratégia: ${analysis.key} | Confiança: ${analysis.confidence}%`);
+        // Log detalhado para identificar bônus e motivos
+        const motivos = analysis.reasons.length > 0 ? ` | Motivos: ${analysis.reasons.join(', ')}` : '';
+        console.log(`[BOT] 🔍 ${event.homePlayer} vs ${event.awayPlayer} | Estratégia: ${analysis.key} | Confiança: ${analysis.confidence}%${motivos}`);
 
         if (analysis.key !== 'none' && analysis.confidence >= 85) {
             const eventCode = (event.bet365EventId || event.id || `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`)
