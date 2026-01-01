@@ -243,7 +243,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (analyzedLive.length > 0) {
       analyzedLive.forEach(({ event, potential, confidence }) => {
-        if (potential !== 'none' && import.meta.env.VITE_TELEGRAM_CLIENT_SEND === 'true') {
+        if (potential !== 'none') {
           const tipKey = `${event.id}-${potential}`;
           if (!sentTelegramTips.current.has(tipKey)) {
             const p1Stats = calculatePlayerStats(event.homePlayer, history, 5);
@@ -255,8 +255,8 @@ const App: React.FC = () => {
               ftBtts: (p1Stats.ftBttsRate + p2Stats.ftBttsRate) / 2
             };
 
-            // Só envia se a confiança for >= 70 (ajustável)
-            if (confidence >= 70) {
+            // Só envia se a confiança for >= 85 (ajustável)
+            if (confidence >= 85) {
               sendTelegramAlert(event, potential, metrics, confidence, 'PLATFORM');
               sentTelegramTips.current.add(tipKey);
               setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 120);
