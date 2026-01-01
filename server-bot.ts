@@ -3,6 +3,7 @@ import { analyzeMatchPotential, calculatePlayerStats } from './services/analyzer
 import { sendTelegramAlert } from './services/telegram';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import cors from 'cors';
 
 // Configurações
 let API_BASE = process.env.API_BASE || "http://localhost:3001";
@@ -19,12 +20,15 @@ let isRunning = true;
 
 // Servidor de Health Check (Necessário para Koyeb/Render/Heroku não derrubarem o bot)
 const app = express();
+app.use(cors()); // Habilita CORS para todas as origens
 app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀'));
 
 // Endpoint para Próximos Jogos (Web Scraper)
 app.get('/api/next-games', async (req, res) => {
     try {
+        console.log('[API] Recebida solicitação para /api/next-games');
         const games = await scrapeNextGames();
+        console.log(`[API] Retornando ${games.length} jogos`);
         res.json({ success: true, results: games });
     } catch (error) {
         console.error('[BOT] Erro no endpoint /api/next-games:', error);
@@ -50,18 +54,23 @@ const sentTips = new Set<string>();
 async function scrapeNextGames() {
     const url = 'https://drafted.gg'; // URL alvo inferida
     try {
+        console.log('[SCRAPER] Buscando dados de:', url);
         const { data } = await axios.get(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
         });
         
+        console.log(`[SCRAPER] Dados recebidos. Tamanho: ${data.length} bytes`);
         const $ = cheerio.load(data);
         const games: any[] = [];
         
         // Seletores baseados no snippet HTML fornecido
         // Desktop cards
-        $('.hidden.lg\\:flex.cursor-pointer').each((i, el) => {
+        const desktopCards = $('.hidden.lg\\:flex.cursor-pointer');
+        console.log(`[SCRAPER] Encontrados ${desktopCards.length} cards desktop`);
+
+        desktopCards.each((i, el) => {
             const home = $(el).find('.w-\\[128px\\].rounded-tl-lg').next().find('.uppercase.text-3\\.5xl').text().trim();
             const homeTeam = $(el).find('.w-\\[128px\\].rounded-tl-lg').next().find('.font-nunito').first().text().trim();
             const homeImg = $(el).find('img').first().attr('src') || $(el).find('img').first().attr('srcset')?.split(' ')[0];
@@ -97,7 +106,11 @@ async function scrapeNextGames() {
         
         // Se não achou desktop, tentar mobile (ou combinar)
         if (games.length === 0) {
-             $('.lg\\:hidden.cursor-pointer').each((i, el) => {
+             console.log('[SCRAPER] Tentando seletores mobile...');
+             const mobileCards = $('.lg\\:hidden.cursor-pointer');
+             console.log(`[SCRAPER] Encontrados ${mobileCards.length} cards mobile`);
+
+             mobileCards.each((i, el) => {
                 // Implementar seletores mobile se necessário, mas o desktop deve cobrir se o HTML for responsivo padrão
                 // O HTML fornecido tem blocos duplicados para mobile/desktop
                 const home = $(el).find('.uppercase.text-2xl').first().text().trim();
@@ -116,6 +129,7 @@ async function scrapeNextGames() {
              });
         }
         
+        console.log(`[SCRAPER] Total de jogos extraídos: ${games.length}`);
         return games;
     } catch (e) {
         console.error('[BOT] Erro no scraper:', e);

@@ -17,10 +17,19 @@ export const NextGames: React.FC = () => {
     const fetchGames = async () => {
         setLoading(true);
         try {
-            // Adjust URL if running on a different port/proxy, but relative path should work if proxied or same origin
-            // In dev mode (vite), we might need to point to localhost:8080 if proxy isn't set up. 
-            // For now assuming localhost:8080 based on server-bot.ts
-            const res = await fetch('http://localhost:8080/api/next-games');
+            // Usa a URL base do Vite ou fallback para localhost
+            // Importante: No Netlify, VITE_API_BASE deve apontar para o URL do seu bot (ex: https://meu-bot-koyeb.app/api/next-games)
+            const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+
+            // Remove barras finais extras se existirem e garante que não estamos duplicando /api
+            const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+            // Se o VITE_API_BASE ja tiver /api incluso (comum em configs), ajusta aqui
+            // Mas vamos assumir que o usuario configurou o host root
+
+            const url = `${cleanBase}/api/next-games`;
+            console.log("Fetching Next Games from:", url);
+
+            const res = await fetch(url);
             const data = await res.json();
             if (data.success) {
                 setGames(data.results);
