@@ -12,7 +12,7 @@ import { sendTelegramAlert } from './services/telegram';
 import { BankrollManager } from './components/Bankroll/BankrollManager';
 import { H2HSearch } from './components/H2HSearch';
 import { StrategyHistory } from './components/StrategyHistory';
-import { NextGames } from './components/NextGames';
+
 
 interface GoalNotification {
   id: string;
@@ -383,7 +383,7 @@ const App: React.FC = () => {
                 <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'bankroll' ? 'bg-emerald-500 text-black shadow-2xl scale-105' : 'text-white/30 hover:text-emerald-500'}`}>Gestão de Banca</button>
                 <button onClick={() => setActiveMainTab('h2h')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'h2h' ? 'bg-indigo-500 text-white shadow-2xl scale-105' : 'text-white/30 hover:text-indigo-500'}`}>H2H PRO</button>
                 <button onClick={() => setActiveMainTab('relatorios')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'relatorios' ? 'bg-rose-500 text-white shadow-2xl scale-105' : 'text-white/30 hover:text-rose-500'}`}>Relatórios</button>
-                <button onClick={() => setActiveMainTab('next_games')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'next_games' ? 'bg-amber-500 text-black shadow-2xl scale-105' : 'text-white/30 hover:text-amber-500'}`}>Próximos Jogos</button>
+
               </nav>
               {(isLoggedIn || isAdminView) && (
                 <button onClick={handleLogout} className="w-10 h-10 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-center hover:bg-rose-500/20 transition-all active:scale-95 group">
@@ -496,8 +496,6 @@ const App: React.FC = () => {
             <H2HSearch />
           ) : activeMainTab === 'relatorios' ? (
             <StrategyHistory history={history} />
-          ) : activeMainTab === 'next_games' ? (
-            <NextGames />
           ) : (
             <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
               <div className="bg-white/[0.01] border border-white/[0.05] p-6 rounded-[2.5rem] backdrop-blur-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">

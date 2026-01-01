@@ -33,6 +33,7 @@ async function fetchBetsApiUpcomingEvents() {
     try {
         console.log(`[API] Buscando eventos para o dia: ${today}`);
         const response = await axios.get(url, {
+            timeout: 8000, // Timeout de 8s
             params: {
                 sport_id: '1',       // 1 = Futebol
                 day: today
