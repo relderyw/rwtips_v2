@@ -1,6 +1,8 @@
 import express from 'express';
 import { analyzeMatchPotential, calculatePlayerStats } from './services/analyzer';
 import { sendTelegramAlert } from './services/telegram';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
 // Configurações
 let API_BASE = process.env.API_BASE || "http://localhost:3001";
@@ -19,7 +21,18 @@ let isRunning = true;
 const app = express();
 app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀'));
 
-const server = app.listen(PORT, '0.0.0.0', () => {
+// Endpoint para Próximos Jogos (Web Scraper)
+app.get('/api/next-games', async (req, res) => {
+    try {
+        const games = await scrapeNextGames();
+        res.json({ success: true, results: games });
+    } catch (error) {
+        console.error('[BOT] Erro no endpoint /api/next-games:', error);
+        res.status(500).json({ success: false, error: 'Erro ao buscar próximos jogos' });
+    }
+});
+
+const server = app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`[SERVER] Health check rodando na porta ${PORT}`);
     console.log(`[SERVER] URL de health check monitorada localmente: http://localhost:${PORT}`);
 });
@@ -32,6 +45,83 @@ const extractPlayerName = (str: string): string => {
 };
 
 const sentTips = new Set<string>();
+
+// Função de Scraping para Drafted.gg
+async function scrapeNextGames() {
+    const url = 'https://drafted.gg'; // URL alvo inferida
+    try {
+        const { data } = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
+        
+        const $ = cheerio.load(data);
+        const games: any[] = [];
+        
+        // Seletores baseados no snippet HTML fornecido
+        // Desktop cards
+        $('.hidden.lg\\:flex.cursor-pointer').each((i, el) => {
+            const home = $(el).find('.w-\\[128px\\].rounded-tl-lg').next().find('.uppercase.text-3\\.5xl').text().trim();
+            const homeTeam = $(el).find('.w-\\[128px\\].rounded-tl-lg').next().find('.font-nunito').first().text().trim();
+            const homeImg = $(el).find('img').first().attr('src') || $(el).find('img').first().attr('srcset')?.split(' ')[0];
+            
+            const away = $(el).find('.w-\\[128px\\].rounded-tr-lg').prev().find('.uppercase.text-3\\.5xl').text().trim();
+            const awayTeam = $(el).find('.w-\\[128px\\].rounded-tr-lg').prev().find('.font-nunito').first().text().trim();
+            const awayImg = $(el).find('img').last().attr('src') || $(el).find('img').last().attr('srcset')?.split(' ')[0];
+            
+            const middleSection = $(el).find('.flex.flex-col.items-center.font-nunito');
+            const matchIdText = middleSection.find('.text-xs.lg\\:text-sm').text().trim(); // "Match 2352161"
+            const matchId = matchIdText.replace('Match', '').trim();
+            const dateTimeNode = middleSection.contents().filter((_, node) => node.type === 'text' && node.data.includes(':')).text().trim();
+            
+            // Tentar extrair data/hora se o seletor acima falhar
+            let time = dateTimeNode;
+            if (!time) {
+                 // Fallback: pegar todo texto e tentar regex
+                 const fullText = middleSection.text();
+                 const timeMatch = fullText.match(/\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/);
+                 if (timeMatch) time = timeMatch[0];
+            }
+            
+            if (home && away) {
+                games.push({
+                    id: matchId,
+                    home: { name: home, team: homeTeam, image: homeImg },
+                    away: { name: away, team: awayTeam, image: awayImg },
+                    time: time,
+                    league: { name: 'E-Soccer' } // Default ou extrair se possível
+                });
+            }
+        });
+        
+        // Se não achou desktop, tentar mobile (ou combinar)
+        if (games.length === 0) {
+             $('.lg\\:hidden.cursor-pointer').each((i, el) => {
+                // Implementar seletores mobile se necessário, mas o desktop deve cobrir se o HTML for responsivo padrão
+                // O HTML fornecido tem blocos duplicados para mobile/desktop
+                const home = $(el).find('.uppercase.text-2xl').first().text().trim();
+                const away = $(el).find('.uppercase.text-2xl').last().text().trim();
+                const timeStr = $(el).text().match(/\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}/)?.[0] || '';
+                
+                 if (home && away) {
+                    games.push({
+                        id: `mobile-${i}`,
+                        home: { name: home, team: 'N/A', image: '' },
+                        away: { name: away, team: 'N/A', image: '' },
+                        time: timeStr,
+                        league: { name: 'E-Soccer' }
+                    });
+                }
+             });
+        }
+        
+        return games;
+    } catch (e) {
+        console.error('[BOT] Erro no scraper:', e);
+        return [];
+    }
+}
 
 async function fetchHistory() {
     const url = `${API_BASE}/api/app3/history`;
