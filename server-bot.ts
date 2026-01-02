@@ -267,7 +267,7 @@ async function runBot() {
     for (const event of liveEvents) {
         const p1 = calculatePlayerStats(event.homePlayer, history, 5);
         const p2 = calculatePlayerStats(event.awayPlayer, history, 5);
-        const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history);
+        const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history, event.leagueName);
         
         // Debug de Métricas para FT_PRO
         const avgOver25 = (p1.ftOver25Rate + p2.ftOver25Rate) / 2;

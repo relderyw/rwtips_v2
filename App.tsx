@@ -239,7 +239,7 @@ const App: React.FC = () => {
 
   const analyzedLive = useMemo(() => {
     return liveEvents.map(event => {
-      const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history);
+      const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history, event.leagueName);
       return {
         event,
         potential: analysis.key,

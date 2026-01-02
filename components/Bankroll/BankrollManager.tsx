@@ -1118,15 +1118,20 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
                         })()}
                       </p>
                       {bet.resultado !== 'aguardando' && (
-                        <p className={`text-[9px] font-bold mt-0.5 ${bet.resultado === 'green' || bet.resultado === 'meio-green' ? 'text-emerald-500/60' :
-                          bet.resultado === 'red' || bet.resultado === 'meio-red' ? 'text-rose-400/60' :
-                            'text-white/20'
-                          }`}>
-                          {(() => {
-                            const profit = calculateProfit(bet.stake, bet.odds, bet.resultado);
-                            return profit > 0 ? `+${formatCurrency(profit)}` : formatCurrency(profit);
-                          })()}
-                        </p>
+                        <div className="flex flex-col items-end gap-0.5 mt-0.5">
+                          <p className={`text-[9px] font-bold ${bet.resultado === 'green' || bet.resultado === 'meio-green' ? 'text-emerald-500/60' :
+                            bet.resultado === 'red' || bet.resultado === 'meio-red' ? 'text-rose-400/60' :
+                              'text-white/20'
+                            }`}>
+                            {(() => {
+                              const profit = calculateProfit(bet.stake, bet.odds, bet.resultado);
+                              return profit > 0 ? `+${formatCurrency(profit)}` : formatCurrency(profit);
+                            })()}
+                          </p>
+                          <p className="text-[8px] font-black text-white/30 uppercase tracking-tighter">
+                            Retorno: <span className="text-white/50">{formatCurrency(bet.stake + calculateProfit(bet.stake, bet.odds, bet.resultado))}</span>
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>

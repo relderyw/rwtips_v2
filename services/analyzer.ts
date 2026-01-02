@@ -344,7 +344,7 @@ export interface AnalysisResult {
   reasons: string[];
 }
 
-export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData: any): AnalysisResult => {
+export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData: any, leagueName: string = ''): AnalysisResult => {
   let games: HistoryMatch[] = [];
 
   if (Array.isArray(gamesData)) {
@@ -355,6 +355,25 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
 
   const none = { key: 'none', confidence: 0, reasons: [] };
   if (!games || games.length === 0) return none;
+
+  // --- Salvaguarda por Liga ---
+  if (leagueName) {
+    const leagueGames = games.filter(g => (g.league_name || '') === leagueName);
+    if (leagueGames.length >= 10) {
+      const sample = leagueGames.slice(0, 15);
+      const uHT = (sample.filter(g => Number(g.halftime_score_home || 0) === 0 && Number(g.halftime_score_away || 0) === 0).length / sample.length) * 100;
+      const uFT = (sample.filter(g => Number(g.score_home || 0) === 0 && Number(g.score_away || 0) === 0).length / sample.length) * 100;
+      const o25 = (sample.filter(g => (Number(g.score_home || 0) + Number(g.score_away || 0)) > 2.5).length / sample.length) * 100;
+
+      // Veto se a liga estiver muito "Under" ou baixa média
+      if (uHT > 35 || uFT > 25 || o25 < 45) {
+        if (typeof window === 'undefined') {
+          console.log(`[ANALYZER] Veto por Liga (${leagueName}): uHT:${uHT.toFixed(0)}% uFT:${uFT.toFixed(0)}% o25:${o25.toFixed(0)}%`);
+        }
+        return none; // VETO POR LIGA FRACA
+      }
+    }
+  }
 
   const p1 = calculateRecentMetrics(p1Name, games, 5);
   const p2 = calculateRecentMetrics(p2Name, games, 5);
