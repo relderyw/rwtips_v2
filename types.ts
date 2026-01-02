@@ -90,7 +90,7 @@ export interface LeagueStats {
     ftBtts: number;
     ft0x0: number;
   };
-  temperature: 'hot' | 'warm' | 'cold';
+  temperature: 'hot' | 'ht_pro' | 'ft_pro' | 'normal' | 'warm' | 'cold';
 }
 
 export interface Prediction {

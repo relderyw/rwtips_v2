@@ -223,9 +223,25 @@ export const calculateLeagueStats = (historyData: any, sampleSize: number = 15):
       ft0x0: (sample.filter(g => Number(g.score_home || 0) === 0 && Number(g.score_away || 0) === 0).length / sample.length) * 100,
     };
     
-    let temp: 'hot' | 'warm' | 'cold' = 'warm';
-    if (metrics.ft25 >= 60 || metrics.ht05 >= 80) temp = 'hot';
-    else if (metrics.ft15 < 50) temp = 'cold';
+    let temp: 'hot' | 'ht_pro' | 'ft_pro' | 'normal' | 'warm' | 'cold' = 'normal';
+    
+    const htAvg = (metrics.ht05 + metrics.ht15 + metrics.ht25 + metrics.htBtts) / 4;
+    const ftAvg = (metrics.ft15 + metrics.ft25 + metrics.ft35 + metrics.ftBtts) / 4;
+
+    const isHtPro = htAvg >= 85 && metrics.ht0x0 === 0;
+    const isFtPro = ftAvg >= 85 && metrics.ft0x0 === 0;
+
+    if (htAvg >= 85 && metrics.ht0x0 === 0 && ftAvg >= 85 && metrics.ft0x0 === 0) {
+      temp = 'hot';
+    } else if (htAvg >= 85 && metrics.ht0x0 === 0 && (ftAvg < 85 || metrics.ft0x0 > 15)) {
+      temp = 'ht_pro';
+    } else if (ftAvg >= 85 && metrics.ft0x0 === 0 && (htAvg < 85 || metrics.ht0x0 > 15)) {
+      temp = 'ft_pro';
+    } else if (metrics.ft25 >= 60 || metrics.ht05 >= 80) {
+      temp = 'warm';
+    } else if (metrics.ft15 < 50) {
+      temp = 'cold';
+    }
     
     stats.push({ 
       leagueName, 
