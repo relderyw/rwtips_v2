@@ -279,9 +279,7 @@ async function runBot() {
         console.log(`[BOT] 🔍 ${event.homePlayer} vs ${event.awayPlayer} | Estratégia: ${analysis.key} | Confiança: ${analysis.confidence}%${motivos}`);
         console.log(`[BOT] 📊 Métricas: O25:${avgOver25}% | O35:${avgOver35}% | BTTS:${avgBtts}% | Gols:${avgGoalsFT.toFixed(1)}`);
 
-        const currentThreshold = (analysis.key.includes('_pro') && !analysis.key.includes('engine') && analysis.key !== 'ft_pro' && analysis.key !== 'ht_pro') ? 85 : 75;
-
-        if (analysis.key !== 'none' && analysis.confidence >= currentThreshold) {
+        if (analysis.key !== 'none' && analysis.confidence >= 85) {
             const eventCode = (event.bet365EventId || event.id || `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`)
                 .toString()
                 .toLowerCase()
