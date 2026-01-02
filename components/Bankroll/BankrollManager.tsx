@@ -1105,7 +1105,7 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
                       <p className="text-xs font-black text-white">{formatCurrency(bet.stake)}</p>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end">
                       <p className="text-[10px] font-bold text-white/30 mb-0.5">Unit: <span className="text-white">{(bet.stake / unitValue).toFixed(2)}u</span></p>
                       <p className={`text-xs font-black ${bet.resultado === 'green' || bet.resultado === 'meio-green' ? 'text-emerald-500' :
                         bet.resultado === 'red' || bet.resultado === 'meio-red' ? 'text-rose-500' :
@@ -1117,6 +1117,17 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
                           return units > 0 ? `+${units.toFixed(2)}u` : units < 0 ? `${units.toFixed(2)}u` : '0.00u';
                         })()}
                       </p>
+                      {bet.resultado !== 'aguardando' && (
+                        <p className={`text-[9px] font-bold mt-0.5 ${bet.resultado === 'green' || bet.resultado === 'meio-green' ? 'text-emerald-500/60' :
+                          bet.resultado === 'red' || bet.resultado === 'meio-red' ? 'text-rose-400/60' :
+                            'text-white/20'
+                          }`}>
+                          {(() => {
+                            const profit = calculateProfit(bet.stake, bet.odds, bet.resultado);
+                            return profit > 0 ? `+${formatCurrency(profit)}` : formatCurrency(profit);
+                          })()}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1132,6 +1143,9 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
                         </button>
                       </>
                     )}
+                    <button onClick={() => copyBet(bet)} className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-black transition-colors" title="Copiar e criar nova">
+                      <Copy size={14} />
+                    </button>
                     <button onClick={() => startEditing(bet)} className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500 hover:text-white transition-colors">
                       <Pencil size={14} />
                     </button>
