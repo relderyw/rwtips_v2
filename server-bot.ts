@@ -279,12 +279,14 @@ async function runBot() {
         console.log(`[BOT] 🔍 ${event.homePlayer} vs ${event.awayPlayer} | Estratégia: ${analysis.key} | Confiança: ${analysis.confidence}%${motivos}`);
         console.log(`[BOT] 📊 Métricas: O25:${avgOver25}% | O35:${avgOver35}% | BTTS:${avgBtts}% | Gols:${avgGoalsFT.toFixed(1)}`);
 
-        if (analysis.key !== 'none' && analysis.confidence >= 85) {
-            const eventCode = (event.bet365EventId || event.id || `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`)
-                .toString()
+        if (analysis.key !== 'none' && analysis.confidence >= 80) {
+            // Gera uma chave única robusta para o evento (JogadorA-JogadorB-Liga)
+            // Removemos IDs variáveis que podem causar duplicidade se a API oscilar
+            const matchSignature = `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`
                 .toLowerCase()
                 .replace(/\s+/g, '');
-            const tipKey = `${eventCode}-${analysis.key}`;
+            
+            const tipKey = `${matchSignature}-${analysis.key}`;
             
             if (!sentTips.has(tipKey)) {
                 console.log(`[BOT][${INSTANCE_ID}] 🚀 SINAL DETECTADO: ${event.homePlayer} vs ${event.awayPlayer} (${analysis.key}) - Confiança: ${analysis.confidence}%`);
@@ -302,8 +304,8 @@ async function runBot() {
                 await sendTelegramAlert(event, analysis.key, metrics, analysis.confidence, 'BOT', analysis.reasons);
                 
                 sentTips.add(tipKey);
-                // Limpa o cache de tips enviadas após 2 horas
-                setTimeout(() => sentTips.delete(tipKey), 1000 * 60 * 120);
+                // Limpa o cache de tips enviadas após 4 horas (suficiente para o jogo sumir)
+                setTimeout(() => sentTips.delete(tipKey), 1000 * 60 * 240);
             }
         }
     }

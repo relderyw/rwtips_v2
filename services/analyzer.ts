@@ -12,6 +12,7 @@ export const STRATEGY_THEMES: Record<string, { label: string, color: string, ico
   ht_pro: { label: "HT PRO SNIPER", color: "#6366f1", secondary: "rgba(99, 102, 241, 0.15)", icon: "fa-crosshairs" },
   ft_pro: { label: "FT PRO ENGINE", color: "#f97316", secondary: "rgba(249, 115, 22, 0.15)", icon: "fa-fire-flame-simple" },
   btts_pro_ht: { label: "BTTS HT PRO", color: "#ec4899", secondary: "rgba(236, 72, 153, 0.15)", icon: "fa-arrows-rotate" },
+  btts_pro_ft: { label: "BTTS FT PRO", color: "#ec4899", secondary: "rgba(236, 72, 153, 0.15)", icon: "fa-arrows-rotate" },
   casa_pro: { label: "CASA DOMINANTE", color: "#10b981", secondary: "rgba(16, 185, 129, 0.15)", icon: "fa-house-circle-check" },
   fora_pro: { label: "FORA DOMINANTE", color: "#10b981", secondary: "rgba(16, 185, 129, 0.15)", icon: "fa-plane-arrival" },
   casa_engine_pro: { label: "CASA ENGINE", color: "#06b6d4", secondary: "rgba(6, 182, 212, 0.15)", icon: "fa-gears" },
@@ -82,7 +83,7 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
   const sample = playerGames;
   if (sample.length < 3) return null;
 
-  let wins = 0, goalsHT = 0, goalsFT = 0, goalsConcededFT = 0, goalsConcededHT = 0;
+  let wins = 0, draws = 0, goalsHT = 0, goalsFT = 0, goalsConcededFT = 0, goalsConcededHT = 0;
   let over05HT = 0, over15HT = 0, over25HT = 0, over25FT = 0, over35FT = 0, bttsHT = 0, bttsFT = 0;
 
   sample.forEach(g => {
@@ -93,6 +94,8 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
     const oHT = Number(isHome ? g.halftime_score_away || 0 : g.halftime_score_home || 0);
     
     if (pFT > oFT) wins++;
+    else if (pFT === oFT) draws++;
+
     goalsHT += pHT;
     goalsFT += pFT;
     goalsConcededFT += oFT;
@@ -116,6 +119,7 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
 
   return {
     winRate: (wins / sample.length) * 100,
+    drawRate: (draws / sample.length) * 100,
     avgGoalsHT: goalsHT / sample.length,
     avgGoalsFT: goalsFT / sample.length,
     avgGoalsConcededHT: goalsConcededHT / sample.length,
@@ -277,7 +281,7 @@ export const calculatePlayerStats = (playerName: string, gamesData: any, limit: 
   if (playerGames.length === 0) {
     return {
       name: playerName, matchesPlayed: 0, wins: 0, draws: 0, losses: 0,
-      avgGoalsScoredHT: 0, avgGoalsScoredFT: 0, avgGoalsConceded: 0, winRate: 0,
+      avgGoalsScoredHT: 0, avgGoalsScoredFT: 0, avgGoalsConceded: 0, winRate: 0, drawRate: 0,
       last5: [], lastMatches: [], htOver05Rate: 0, htOver15Rate: 0, htOver25Rate: 0, htBttsRate: 0,
       ht0x0Rate: 0, ft15Rate: 0, ftOver25Rate: 0, ft35Rate: 0, ftBttsRate: 0, ft0x0Rate: 0
     };
@@ -286,7 +290,7 @@ export const calculatePlayerStats = (playerName: string, gamesData: any, limit: 
   const sampleLimit = Math.min(limit, playerGames.length);
   const recentSample = playerGames.slice(0, sampleLimit);
   
-  let goalsHT = 0, goalsFT = 0, concededFT = 0, wins = 0;
+  let goalsHT = 0, goalsFT = 0, concededFT = 0, wins = 0, draws = 0;
   const last5: string[] = [];
   const lastMatches: any[] = [];
   
@@ -312,6 +316,7 @@ export const calculatePlayerStats = (playerName: string, gamesData: any, limit: 
       opponentHT: oHT
     });
     if (pFT > oFT) wins++;
+    else if (pFT === oFT) draws++;
   });
 
   return {
@@ -322,6 +327,7 @@ export const calculatePlayerStats = (playerName: string, gamesData: any, limit: 
     avgGoalsScoredFT: goalsFT / recentSample.length,
     avgGoalsConceded: concededFT / recentSample.length,
     winRate: (wins / recentSample.length) * 100,
+    drawRate: (draws / recentSample.length) * 100,
     last5: last5,
     lastMatches: lastMatches,
     htOver05Rate: calculateMetricProbability(playerName, games, 'over0.5', true, limit),
@@ -387,47 +393,49 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
   let confidence = 70;
   const reasons: string[] = [];
 
-  // 1. HT PRO SNIPER
-  if (p1.over05HT === 100 && p1.avgGoalsHT >= 1.8 &&
-      p2.over05HT === 100 && p2.avgGoalsHT >= 1.8) {
+  // 1. HT PRO
+  // User: +1.5 HT = 100% | +2.5 HT >= 88% | BTTS HT <= 77% | MD_GOLS_CASA_HT >= 1.5 | MD_GOLS_FORA_HT >= 1.5 | +2.5 FT <= 75%
+  if (p1.over15HT === 100 && p1.over25HT >= 88 && p1.bttsHT <= 77 && p1.avgGoalsHT >= 1.5 && p2.avgGoalsHT >= 1.5 && p1.over25FT <= 75) {
       resultKey = 'ht_pro';
   }
 
-  // 2. FT PRO ENGINE
-  const avgOver25 = (p1.over25FT + p2.over25FT) / 2;
-  const avgOver35 = (p1.over35FT + p2.over35FT) / 2;
-  const avgBtts = (p1.bttsFT + p2.bttsFT) / 2;
-  const avgGoalsFT = (p1.avgGoalsFT + p2.avgGoalsFT);
-
-  if (resultKey === 'none' && avgOver25 >= 85 && avgOver35 >= 60 && avgBtts >= 70 && avgGoalsFT >= 2.8) {
+  // 2. FT PRO
+  // User: +2.5 FT = 100% | +3.5 FT >= 88% | BTTS FT: <= 77% | MD_GOLS_CASA >= 2.5 | MD_GOLS_FORA >= 2.5 | +2.5 HT <= 60%
+  if (resultKey === 'none' && p1.over25FT === 100 && p1.over35FT >= 88 && p1.bttsFT <= 77 && p1.avgGoalsFT >= 2.5 && p2.avgGoalsFT >= 2.5 && p1.over25HT <= 60) {
       resultKey = 'ft_pro';
   }
 
-  // 3. BTTS HT PRO
-  if (resultKey === 'none' && p1.avgGoalsHT >= 1.2 && p2.avgGoalsHT >= 1.2 && p1.bttsHT > 70 && p2.bttsHT > 70) {
+  // 3. BTTS HT
+  // User: = 100% | MD_GOLS_CASA_HT: >= 1.8 | MD_GOLS_FORA_HT: >= 1.8 | +2.5 HT <= 60%
+  if (resultKey === 'none' && p1.bttsHT === 100 && p1.avgGoalsHT >= 1.8 && p2.avgGoalsHT >= 1.8 && p1.over25HT <= 60) {
       resultKey = 'btts_pro_ht';
   }
 
-  // 4. DOMINANTE
-  const isP1Dominant = p1.last3Results.filter(r => r === 'W').length === 3 || 
-                      (p1.last3Results.filter(r => r === 'W').length === 2 && p1.last3Results.includes('D'));
-  
-  const isP2Dominant = p2.last3Results.filter(r => r === 'W').length === 3 || 
-                      (p2.last3Results.filter(r => r === 'W').length === 2 && p2.last3Results.includes('D'));
-
-  if (resultKey === 'none') {
-    if (isP1Dominant) resultKey = 'casa_pro';
-    else if (isP2Dominant) resultKey = 'fora_pro';
+  // 4. BTTS FT
+  // User: = 100% | MD_GOLS_CASA_FT: >= 2.0 | MD_GOLS_FORA_FT: >= 2.0 | +2.5 FT <= 88%
+  if (resultKey === 'none' && p1.bttsFT === 100 && p1.avgGoalsFT >= 2.0 && p2.avgGoalsFT >= 2.0 && p1.over25FT <= 88) {
+      resultKey = 'btts_pro_ft';
   }
 
-  // 5. ENGINE PRO
+  // 5. DOMINANTE
+  // User Casa: Win Casa >= 70% | Win Fora <= 20%
+  // User Fora: Win Fora >= 70% | Win Casa <= 20%
   if (resultKey === 'none') {
-    if (p1.avgGoalsHT >= 2.0 && p1.avgGoalsFT >= 2.5 && p2.avgGoalsHT <= 1.0 && p2.avgGoalsFT <= 1.8) resultKey = 'casa_engine_pro';
-    else if (p2.avgGoalsHT >= 2.0 && p2.avgGoalsFT >= 2.5 && p1.avgGoalsHT <= 1.0 && p1.avgGoalsFT <= 1.8) resultKey = 'fora_engine_pro';
+    if (p1.winRate >= 70 && p2.winRate <= 20) resultKey = 'casa_pro';
+    else if (p2.winRate >= 70 && p1.winRate <= 20) resultKey = 'fora_pro';
   }
 
-  // 6. ELITE CLASH
-  if (resultKey === 'none' && p1.winRate >= 50 && p2.winRate >= 50) {
+  // 6. ENGINE PRO
+  // User Casa: MD_GOLS_HT_CASA >= 2.5 | MD_GOLS_FT_CASA >= 3.7 | MD_GOLS_HT_FORA <= 0.7 | MD_GOLS_FT_FORA <= 1.7
+  // User Fora: MD_GOLS_HT_FORA >= 2.5 | MD_GOLS_FT_FORA >= 3.7 | MD_GOLS_HT_CASA <= 0.7 | MD_GOLS_FT_CASA <= 1.7
+  if (resultKey === 'none') {
+    if (p1.avgGoalsHT >= 2.5 && p1.avgGoalsFT >= 3.7 && p2.avgGoalsHT <= 0.7 && p2.avgGoalsFT <= 1.7) resultKey = 'casa_engine_pro';
+    else if (p2.avgGoalsHT >= 2.5 && p2.avgGoalsFT >= 3.7 && p1.avgGoalsHT <= 0.7 && p1.avgGoalsFT <= 1.7) resultKey = 'fora_engine_pro';
+  }
+
+  // 7. ELITE CLASH
+  // User: Win Casa: >= 60% | Win Fora: >= 60% | %Draw Casa: <= 25% | %Draw Fora: <= 25%
+  if (resultKey === 'none' && p1.winRate >= 60 && p2.winRate >= 60 && p1.drawRate <= 25 && p2.drawRate <= 25) {
     resultKey = 'top_clash';
   }
 
@@ -548,6 +556,7 @@ export const checkStrategySuccess = (strategyKey: string, match: HistoryMatch): 
     case 'ht_pro': return totHT > 0.5;
     case 'ft_pro': return totFT > 2.5;
     case 'btts_pro_ht': return Number(match.halftime_score_home) > 0 && Number(match.halftime_score_away) > 0;
+    case 'btts_pro_ft': return Number(match.score_home) > 0 && Number(match.score_away) > 0;
     case 'casa_pro': return Number(match.score_home) > Number(match.score_away);
     case 'fora_pro': return Number(match.score_away) > Number(match.score_home);
     case 'casa_engine_pro': return Number(match.score_home) > 1.5;

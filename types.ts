@@ -61,6 +61,7 @@ export interface PlayerStats {
   avgGoalsScoredFT: number;
   avgGoalsConceded: number;
   winRate: number;
+  drawRate: number;
   last5: string[];
   htOver05Rate: number;
   ftOver25Rate: number;
