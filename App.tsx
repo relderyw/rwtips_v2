@@ -253,7 +253,13 @@ const App: React.FC = () => {
     if (analyzedLive.length > 0) {
       analyzedLive.forEach(({ event, potential, confidence, reasons }) => {
         if (potential !== 'none') {
-          const tipKey = `${event.id}-${potential}`;
+          // Gera uma chave única robusta (JogadorA-JogadorB-Liga)
+          const matchSignature = `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`
+            .toLowerCase()
+            .replace(/\s+/g, '');
+
+          const tipKey = `${matchSignature}-${potential}`;
+
           if (!sentTelegramTips.current.has(tipKey)) {
             const p1Stats = calculatePlayerStats(event.homePlayer, history, 5);
             const p2Stats = calculatePlayerStats(event.awayPlayer, history, 5);
@@ -264,11 +270,12 @@ const App: React.FC = () => {
               ftBtts: (p1Stats.ftBttsRate + p2Stats.ftBttsRate) / 2
             };
 
-            // Só envia se a confiança for >= 85 (ajustável)
-            if (confidence >= 85) {
+            // Só envia se a confiança for >= 80 (ajustável)
+            if (confidence >= 80) {
               sendTelegramAlert(event, potential, metrics, confidence, 'PLATFORM', reasons);
               sentTelegramTips.current.add(tipKey);
-              setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 120);
+              // Limpa o cache após 4 horas
+              setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 240);
             }
           }
         }
