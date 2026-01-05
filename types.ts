@@ -101,3 +101,123 @@ export interface Prediction {
   suggestedBet: string;
   reasoning: string;
 }
+
+export interface NBAGame {
+  id: string;
+  dateET: string;
+  homeTeam: {
+    name: string;
+    shortName: string;
+    nameCode: string;
+    id: number;
+  };
+  awayTeam: {
+    name: string;
+    shortName: string;
+    nameCode: string;
+    id: number;
+  };
+  homeScore?: number;
+  awayScore?: number;
+  status: string;
+  homeRecord?: string;
+  awayRecord?: string;
+}
+
+export interface NBATeamStats {
+  pointsForPerGame: number;
+  pointsAgainstPerGame: number;
+  fieldGoalsPercentage: number;
+  freeThrowsPercentage: number;
+  threePointPercentage: number;
+  reboundsPerGame: number;
+  assistsPerGame: number;
+  blocksPerGame: number;
+  stealsPerGame: number;
+  turnoverPerGame: number;
+}
+
+export interface NBAInjury {
+  playerName: string;
+  position: string;
+  description: string;
+  status: 'OUT' | 'QUESTIONABLE' | 'PROBABLE';
+}
+
+export interface NBALeader {
+  category: string;
+  players: {
+    name: string;
+    position: string;
+    value: number;
+    seoId: string;
+  }[];
+}
+
+export interface NBAProProjection {
+  total: number;
+  spread: string;
+  homeProb: number;
+  awayProb: number;
+  homePts: string;
+  awayPts: string;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+// ============================================
+// NBA INTELLIGENT SCORING SYSTEM
+// ============================================
+
+export interface NBARecentForm {
+  wins: number;
+  losses: number;
+  avgPointsScored: number;
+  avgPointsAllowed: number;
+  overUnder: {
+    over: number;
+    under: number;
+  };
+  last5Results: ('W' | 'L')[];
+  streak: {
+    type: 'W' | 'L';
+    count: number;
+  };
+}
+
+export interface NBABettingAlert {
+  type: 'injury' | 'value' | 'pace' | 'rest' | 'streak' | 'mismatch';
+  severity: 'high' | 'medium' | 'low';
+  message: string;
+  impact: string;
+}
+
+export interface NBAGameEdge {
+  betType: 'spread' | 'total' | 'moneyline';
+  suggestedBet: string;
+  edge: number; // Percentage edge
+  confidence: number; // 0-100
+  reasoning: string[];
+}
+
+export interface NBAOpportunityScore {
+  total: number; // 0-100
+  breakdown: {
+    spreadAnalysis: number; // 0-20
+    totalConsistency: number; // 0-20
+    recentForm: number; // 0-20
+    injuryImpact: number; // 0-20
+    restAdvantage: number; // 0-10
+    paceMatch: number; // 0-10
+  };
+  category: 'hot' | 'value' | 'caution';
+  bestBet: NBAGameEdge;
+  alerts: NBABettingAlert[];
+}
+
+export interface NBAEnhancedGame extends NBAGame {
+  opportunityScore?: NBAOpportunityScore;
+  recentForm?: {
+    home: NBARecentForm;
+    away: NBARecentForm;
+  };
+}
