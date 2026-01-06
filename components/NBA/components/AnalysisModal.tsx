@@ -15,6 +15,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [seasonStats, setSeasonStats] = useState<{ home: SeasonStats; away: SeasonStats } | null>(null);
   const [playerStats, setPlayerStats] = useState<any>(null);
+  const [recentGames, setRecentGames] = useState<{ home: any[], away: any[] }>({ home: [], away: [] });
   const [injuries, setInjuries] = useState<any[]>([]);
   const [projections, setProjections] = useState<Projections | null>(null);
 
@@ -22,10 +23,12 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
     async function loadData() {
       setLoading(true);
       try {
-        const [stats, players, injuryData] = await Promise.all([
+        const [stats, players, injuryData, homeResults, awayResults] = await Promise.all([
           nbaDataService.getSeasonStats(game.eventId),
           nbaDataService.getPlayerStats(game.eventId),
-          nbaDataService.getInjuries()
+          nbaDataService.getInjuries(),
+          nbaDataService.getTeamResults(game.bottom.seoIdentifier), // Home team (bottom)
+          nbaDataService.getTeamResults(game.top.seoIdentifier)     // Away team (top)
         ]);
 
         const homeS = stats.home.stats;
@@ -33,6 +36,11 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
 
         setSeasonStats({ home: homeS, away: awayS });
         setPlayerStats(players);
+
+        setRecentGames({
+          home: homeResults,
+          away: awayResults
+        });
 
         const homeInj = injuryData.find((t: any) => t.competitor.seoIdentifier === game.bottom.seoIdentifier)?.playerInjuries || [];
         const awayInj = injuryData.find((t: any) => t.competitor.seoIdentifier === game.top.seoIdentifier)?.playerInjuries || [];
@@ -48,6 +56,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
     }
     loadData();
   }, [game]);
+
 
   const comparisonStats = [
     { key: 'pointsForPerGame', label: 'Pontos por Jogo' },
@@ -201,25 +210,39 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
                   </div>
 
                   {/* Recent Games History Sections - 5 games total independently of H2H */}
+                  {/* Recent Games History Sections */}
                   <div className="grid lg:grid-cols-2 gap-4">
                     {/* Away Recent History */}
                     <div className="bg-[#0a0a0a] border border-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
                       <div className="bg-zinc-900/40 p-5 border-b border-zinc-900 flex justify-between items-center">
                         <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                          <History className="w-4 h-4 text-emerald-500" /> JOGOS RECENTES FORA - {game.top.name.toUpperCase()}
+                          <History className="w-4 h-4 text-emerald-500" /> JOGOS RECENTES - {game.top.name.toUpperCase()}
                         </h4>
-                        <div className="flex gap-2">
-                          {[true, true, false, true, false].map((w, i) => (
-                            <div key={i} className={`w-2.5 h-2.5 rounded-full ${w ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-red-500'}`}></div>
-                          ))}
-                        </div>
                       </div>
-                      <div className="p-4 space-y-2">
-                        <RecentHistoryRow date="22 DEZ" match={`${game.top.shortName} @ NYK`} score="112 - 105" win />
-                        <RecentHistoryRow date="20 DEZ" match={`${game.top.shortName} @ PHI`} score="98 - 102" />
-                        <RecentHistoryRow date="18 DEZ" match={`${game.top.shortName} @ MIL`} score="115 - 110" win />
-                        <RecentHistoryRow date="15 DEZ" match={`${game.top.shortName} @ BOS`} score="105 - 120" />
-                        <RecentHistoryRow date="12 DEZ" match={`${game.top.shortName} @ TOR`} score="110 - 99" win />
+
+                      <div className="p-4">
+                        {/* Table Header */}
+                        <div className="flex justify-between items-center px-4 pb-2 border-b border-zinc-800 mb-2">
+                          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">DATA</span>
+                          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">CONFRONTO</span>
+                        </div>
+                        <div className="space-y-1">
+                          {recentGames.away.length > 0 ? recentGames.away.map((g: GameEvent) => {
+                            const dateObj = new Date(g.dateET);
+                            const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+
+                            return (
+                              <RecentHistoryRow
+                                key={g.eventId}
+                                date={dateStr}
+                                teamA={{ name: g.top.shortName, logo: getTeamLogo(g.top.seoIdentifier), score: g.top.score || 0 }}
+                                teamB={{ name: g.bottom.shortName, logo: getTeamLogo(g.bottom.seoIdentifier), score: g.bottom.score || 0 }}
+                              />
+                            );
+                          }) : (
+                            <div className="text-center py-4 text-zinc-600 text-[10px]">Não há jogos recentes</div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -227,20 +250,32 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
                     <div className="bg-[#0a0a0a] border border-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
                       <div className="bg-zinc-900/40 p-5 border-b border-zinc-900 flex justify-between items-center">
                         <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                          <History className="w-4 h-4 text-emerald-500" /> JOGOS RECENTES CASA - {game.bottom.name.toUpperCase()}
+                          <History className="w-4 h-4 text-emerald-500" /> JOGOS RECENTES - {game.bottom.name.toUpperCase()}
                         </h4>
-                        <div className="flex gap-2">
-                          {[true, false, true, true, true].map((w, i) => (
-                            <div key={i} className={`w-2.5 h-2.5 rounded-full ${w ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-red-500'}`}></div>
-                          ))}
-                        </div>
                       </div>
-                      <div className="p-4 space-y-2">
-                        <RecentHistoryRow date="23 DEZ" match={`${game.bottom.shortName} @ GSW`} score="118 - 112" win />
-                        <RecentHistoryRow date="21 DEZ" match={`${game.bottom.shortName} @ LAL`} score="105 - 115" />
-                        <RecentHistoryRow date="19 DEZ" match={`${game.bottom.shortName} @ PHX`} score="122 - 110" win />
-                        <RecentHistoryRow date="16 DEZ" match={`${game.bottom.shortName} @ DAL`} score="114 - 108" win />
-                        <RecentHistoryRow date="14 DEZ" match={`${game.bottom.shortName} @ DEN`} score="125 - 120" win />
+                      <div className="p-4">
+                        {/* Table Header */}
+                        <div className="flex justify-between items-center px-4 pb-2 border-b border-zinc-800 mb-2">
+                          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">DATA</span>
+                          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">CONFRONTO</span>
+                        </div>
+                        <div className="space-y-1">
+                          {recentGames.home.length > 0 ? recentGames.home.map((g: GameEvent) => {
+                            const dateObj = new Date(g.dateET);
+                            const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+
+                            return (
+                              <RecentHistoryRow
+                                key={g.eventId}
+                                date={dateStr}
+                                teamA={{ name: g.top.shortName, logo: getTeamLogo(g.top.seoIdentifier), score: g.top.score || 0 }}
+                                teamB={{ name: g.bottom.shortName, logo: getTeamLogo(g.bottom.seoIdentifier), score: g.bottom.score || 0 }}
+                              />
+                            );
+                          }) : (
+                            <div className="text-center py-4 text-zinc-600 text-[10px]">Não há jogos recentes</div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -403,15 +438,34 @@ const OverviewPlayerRow = ({ label, color, name, val }: { label: string, color: 
   </div>
 );
 
-const RecentHistoryRow = ({ date, match, score, win }: { date: string, match: string, score: string, win?: boolean }) => (
-  <div className="flex items-center justify-between p-4 rounded-2xl bg-black/60 border border-zinc-900 group hover:border-zinc-700 transition-all cursor-default shadow-sm">
-    <div className="flex items-center gap-6">
-      <span className="text-zinc-600 uppercase font-black tracking-tighter text-[11px] w-14">{date}</span>
-      <span className="text-zinc-200 font-bold text-[13px] uppercase tracking-tight">{match}</span>
-    </div>
-    <div className="flex items-center gap-6">
-      <span className="font-oxanium font-bold text-white text-base tracking-tighter">{score}</span>
-      <div className={`w-2.5 h-2.5 rounded-full ${win ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-red-500'}`}></div>
+const RecentHistoryRow = ({ date, teamA, teamB }: {
+  date: string,
+  teamA: { name: string, logo: string, score: number },
+  teamB: { name: string, logo: string, score: number },
+  key?: string | number
+}) => (
+  <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-zinc-900/50 hover:bg-black/60 transition-all cursor-default group hover:border-zinc-800">
+    <span className="text-zinc-500 font-bold text-[10px] w-20 uppercase tracking-widest">{date}</span>
+
+    <div className="flex items-center gap-3 flex-1 justify-end">
+      {/* Team A */}
+      <div className="flex items-center gap-2">
+        <img src={teamA.logo} className="w-5 h-5 object-contain opacity-80" />
+        <span className="text-[10px] font-black text-zinc-400 w-8 text-right hidden sm:block">{teamA.name}</span>
+      </div>
+
+      {/* Score */}
+      <div className="flex items-center gap-2 px-2">
+        <span className={`font-oxanium font-bold text-sm ${teamA.score > teamB.score ? 'text-white' : 'text-zinc-600'}`}>{teamA.score}</span>
+        <span className="text-zinc-700 text-[10px]">-</span>
+        <span className={`font-oxanium font-bold text-sm ${teamB.score > teamA.score ? 'text-white' : 'text-zinc-600'}`}>{teamB.score}</span>
+      </div>
+
+      {/* Team B */}
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-black text-zinc-400 w-8 hidden sm:block">{teamB.name}</span>
+        <img src={teamB.logo} className="w-5 h-5 object-contain opacity-80" />
+      </div>
     </div>
   </div>
 );
@@ -463,8 +517,8 @@ const BetRecommendation = ({ title, value, conf }: { title: string; value: strin
       <span className="text-xl font-bold text-white group-hover:text-emerald-500 transition-colors tracking-tight">{value}</span>
     </div>
     <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${conf === 'ALTA' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]' :
-        conf === 'MÉDIA' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30' :
-          'bg-red-500/10 text-red-500 border border-red-500/30'
+      conf === 'MÉDIA' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30' :
+        'bg-red-500/10 text-red-500 border border-red-500/30'
       }`}>
       {conf}
     </div>

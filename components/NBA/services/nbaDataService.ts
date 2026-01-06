@@ -46,6 +46,10 @@ class NBADataService {
     const data = await this.fetchWithProxy(url, 300000);
     return (data[date] || []).map((e: any) => ({
       eventId: e.eventId,
+      top: e.top,
+      bottom: e.bottom,
+      status: e.status,
+      dateET: e.dateGMT || e.date,
       ...e.event
     }));
   }
@@ -68,6 +72,34 @@ class NBADataService {
   async getInjuries() {
     const url = `${BASE_STATS_URL}/playerInjuries?brand=tsn&type=json`;
     return this.fetchWithProxy(url, 300000);
+  }
+
+  async getTeamResults(teamSeoId: string): Promise<GameEvent[]> {
+    const dates: string[] = [];
+    // Generate last 12 days to ensure we cover enough ground
+    for (let i = 1; i <= 14; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dates.push(d.toISOString().split('T')[0]);
+    }
+
+    try {
+        const results = await Promise.all(dates.map(date => this.getFinishedGames(date)));
+        
+        // Flatten and filter for the specific team
+        const allGames = results.flat();
+        
+        const teamGames = allGames.filter(game => 
+            (game.top.seoIdentifier === teamSeoId || game.bottom.seoIdentifier === teamSeoId) &&
+            game.status === 'Final'
+        );
+
+        // Sort by date descending (newest first)
+        return teamGames.sort((a, b) => new Date(b.dateET).getTime() - new Date(a.dateET).getTime()).slice(0, 5);
+    } catch (error) {
+        console.error("Error fetching team history:", error);
+        return [];
+    }
   }
 }
 

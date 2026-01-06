@@ -20,10 +20,12 @@ const NBADashboard: React.FC = () => {
     async function init() {
       try {
         const dates = await nbaDataService.getAvailableDates();
-        setAvailableDates(dates);
-        if (dates.length > 0) {
+        const sortedDates = dates.sort(); // Ensure chronological order (ASC)
+        setAvailableDates(sortedDates);
+        if (sortedDates.length > 0) {
           const today = new Date().toISOString().split('T')[0];
-          const closestDate = dates.find(d => d >= today) || dates[0];
+          // Try to find today, otherwise closest future date, otherwise just the first available (earliest)
+          const closestDate = sortedDates.find(d => d >= today) || sortedDates[0];
           setSelectedDate(closestDate);
         }
       } catch (err) {
