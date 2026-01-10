@@ -2,6 +2,7 @@
 import { HistoryMatch, LiveEvent } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
+const API_BACKUP = "https://rwtips-r943.onrender.com/api/matches/live";
 
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
@@ -52,32 +53,67 @@ export const fetchHistoryGames = async (numPages: number = 15): Promise<HistoryM
     return all;
 };
 
+const adaptFallbackLiveEvents = (data: any[]): LiveEvent[] => {
+    return data.map((item: any) => ({
+        id: String(item.id),
+        leagueName: item.league?.name || "Esoccer",
+        eventName: `${item.home?.name || "Player 1"} vs ${item.away?.name || "Player 2"}`,
+        stage: String(item.time_status), // Mapear se necessário, ex: "1" -> "1H"
+        timer: {
+            minute: Number(item.timer?.tm || 0),
+            second: Number(item.timer?.ts || 0),
+            formatted: `${item.timer?.tm || 0}:${String(item.timer?.ts || 0).padStart(2, '0')}`
+        },
+        score: {
+            home: Number(item.ss?.split('-')[0] || 0),
+            away: Number(item.ss?.split('-')[1] || 0)
+        },
+        homePlayer: extractPlayerName(item.home?.name || ""),
+        awayPlayer: extractPlayerName(item.away?.name || ""),
+        homeTeamName: item.home?.name || "",
+        awayTeamName: item.away?.name || "",
+        isLive: true,
+        bet365EventId: undefined // Desabilita link da Bet365
+    }));
+};
+
 export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
     try {
-        const response = await fetch(`${API_BASE}/api/app3/live-events`);
-        if (!response.ok) throw new Error("Live events fetch failed");
+        let json;
+        try {
+            const response = await fetch(`${API_BASE}/api/app3/live-events`);
+            if (!response.ok) throw new Error("Live events fetch failed");
+            json = await response.json();
+            
+            const events = json.events || [];
+            return events.map((m: any) => ({
+                id: String(m.id),
+                leagueName: m.leagueName || "Esoccer",
+                eventName: m.eventName,
+                stage: m.stage,
+                timer: {
+                    minute: m.timer?.minute ?? 0,
+                    second: m.timer?.second ?? 0,
+                    formatted: m.timer?.formatted ?? "00:00"
+                },
+                score: m.score,
+                homePlayer: extractPlayerName(m.homePlayer || ""),
+                awayPlayer: extractPlayerName(m.awayPlayer || ""),
+                homeTeamName: m.homeTeamName,
+                awayTeamName: m.awayTeamName,
+                isLive: m.isLive,
+                bet365EventId: m.bet365EventId
+            }));
 
-        const json = await response.json();
-        const events = json.events || [];
-        
-        return events.map((m: any) => ({
-            id: String(m.id),
-            leagueName: m.leagueName || "Esoccer",
-            eventName: m.eventName,
-            stage: m.stage,
-            timer: {
-                minute: m.timer?.minute ?? 0,
-                second: m.timer?.second ?? 0,
-                formatted: m.timer?.formatted ?? "00:00"
-            },
-            score: m.score,
-            homePlayer: extractPlayerName(m.homePlayer || ""),
-            awayPlayer: extractPlayerName(m.awayPlayer || ""),
-            homeTeamName: m.homeTeamName,
-            awayTeamName: m.awayTeamName,
-            isLive: m.isLive,
-            bet365EventId: m.bet365EventId
-        }));
+        } catch (primaryError) {
+            console.warn("Primary API failed, attempting backup...", primaryError);
+            const backupResponse = await fetch(API_BACKUP);
+            if (!backupResponse.ok) throw new Error("Backup API fetch failed");
+            
+            const backupJson = await backupResponse.json();
+            const backupData = backupJson.data || [];
+            return adaptFallbackLiveEvents(backupData);
+        }
     } catch (error) {
         console.error("Live Games Error:", error);
         return [];

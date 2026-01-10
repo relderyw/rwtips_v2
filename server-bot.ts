@@ -11,6 +11,7 @@ import cors from 'cors';
 let API_BASE = process.env.API_BASE || "http://localhost:3001";
 // Remove barras finais para evitar duplicidade //api//v1
 if (API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
+const API_BACKUP = "https://rwtips-r943.onrender.com/api/matches/live";
 
 const PORT = process.env.PORT || 8080;
 const POLL_INTERVAL = 15000;
@@ -228,26 +229,66 @@ async function fetchHistory(numPages: number = 40): Promise<HistoryMatch[]> {
     return all;
 }
 
+
+
+const adaptFallbackLiveEvents = (data: any[]): LiveEvent[] => {
+    return data.map((item: any) => ({
+        id: String(item.id),
+        leagueName: item.league?.name || "Esoccer",
+        eventName: `${item.home?.name || "Player 1"} vs ${item.away?.name || "Player 2"}`,
+        stage: String(item.time_status),
+        timer: {
+            minute: Number(item.timer?.tm || 0),
+            second: Number(item.timer?.ts || 0),
+            formatted: `${item.timer?.tm || 0}:${String(item.timer?.ts || 0).padStart(2, '0')}`
+        },
+        score: {
+            home: Number(item.ss?.split('-')[0] || 0),
+            away: Number(item.ss?.split('-')[1] || 0)
+        },
+        homePlayer: extractPlayerName(item.home?.name || ""),
+        awayPlayer: extractPlayerName(item.away?.name || ""),
+        homeTeamName: item.home?.name || "",
+        awayTeamName: item.away?.name || "",
+        isLive: true,
+        bet365EventId: undefined
+    }));
+};
+
 async function fetchLive() {
-    const url = `${API_BASE}/api/app3/live-events`;
     try {
+        const url = `${API_BASE}/api/app3/live-events`;
         const response = await fetch(url, { headers: HEADERS });
-        if (!response.ok) {
-            console.error(`[BOT] Erro ao buscar live: Status ${response.status} em ${url}`);
-            return [];
-        }
+        
+        if (!response.ok) throw new Error(`Status ${response.status}`);
 
         const json: any = await response.json();
         const events = json.events || [];
         if (events.length === 0) console.warn("[BOT] ⚠️ API de live-events retornou 0 eventos.");
+        
         return events.map((m: any) => ({
             ...m,
             homePlayer: extractPlayerName(m.homePlayer || ""),
             awayPlayer: extractPlayerName(m.awayPlayer || "")
         }));
-    } catch (e) {
-        console.error(`[BOT] Erro fatal ao buscar live (${url}):`, e);
-        return [];
+
+    } catch (primaryError) {
+        console.warn(`[BOT] ⚠️ Erro na API principal, tentando backup... (${primaryError})`);
+        
+        try {
+            const backupResponse = await fetch(API_BACKUP, { headers: HEADERS });
+            if (!backupResponse.ok) throw new Error(`Backup Status ${backupResponse.status}`);
+            
+            const backupJson: any = await backupResponse.json();
+            const backupData = backupJson.data || [];
+            
+            console.log(`[BOT] ✅ API Backup sucesso: ${backupData.length} eventos recuperados.`);
+            return adaptFallbackLiveEvents(backupData);
+            
+        } catch (backupError) {
+            console.error(`[BOT] ❌ Erro fatal: Ambas APIs falharam. (${backupError})`);
+            return [];
+        }
     }
 }
 
