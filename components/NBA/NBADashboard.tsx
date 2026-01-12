@@ -3,12 +3,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 // Sidebar removed
 import GameCard from './components/GameCard';
 import AnalysisModal from './components/AnalysisModal';
+import IntelligencePanel from './components/IntelligencePanel';
 import { nbaDataService } from './services/nbaDataService';
 import { GameEvent } from './types';
-import { Calendar, RefreshCw, AlertCircle, TrendingUp } from 'lucide-react';
+import { Calendar, RefreshCw, AlertCircle, TrendingUp, Brain } from 'lucide-react';
 
 const NBADashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('upcoming');
+  const [activeTab, setActiveTab] = useState('intelligence');
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [games, setGames] = useState<GameEvent[]>([]);
@@ -108,6 +109,32 @@ const NBADashboard: React.FC = () => {
           </div>
         </header>
 
+        {/* Tab Navigation */}
+        <div className="max-w-7xl mx-auto mb-8 px-4 sm:px-0">
+          <div className="flex gap-2 bg-zinc-950 border border-zinc-900 rounded-2xl p-1.5 sm:p-2 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setActiveTab('intelligence')}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === 'intelligence'
+                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
+                : 'text-zinc-500 hover:text-white hover:bg-zinc-900'
+                }`}
+            >
+              <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Intelligence
+            </button>
+            <button
+              onClick={() => setActiveTab('upcoming')}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === 'upcoming'
+                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
+                : 'text-zinc-500 hover:text-white hover:bg-zinc-900'
+                }`}
+            >
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Próximos Jogos
+            </button>
+          </div>
+        </div>
+
         <div className="max-w-7xl mx-auto">
           {error ? (
             <div className="bg-red-500/5 border border-red-500/20 p-12 rounded-3xl text-center max-w-2xl mx-auto backdrop-blur-sm">
@@ -128,6 +155,8 @@ const NBADashboard: React.FC = () => {
             <div className="text-center py-40 bg-zinc-950/20 rounded-3xl border border-zinc-900 border-dashed">
               <p className="text-zinc-600 text-lg font-medium italic">Nenhum evento esportivo encontrado nesta data.</p>
             </div>
+          ) : activeTab === 'intelligence' ? (
+            <IntelligencePanel games={games} onSelectGame={setSelectedGame} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {games.map(game => (

@@ -88,7 +88,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/95 backdrop-blur-md z-[9000] flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-black/95 backdrop-blur-md z-[9000] flex items-start justify-center p-4 sm:pt-16 overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-[#050505] border border-zinc-900 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
 
         {/* Header */}
@@ -96,16 +96,18 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-zinc-900 rounded-full flex items-center justify-center p-1 border border-zinc-800">
-                <img src={getTeamLogo(game.top.seoIdentifier)} className="w-full h-full object-contain" />
+                <img src={getTeamLogo(game.bottom.seoIdentifier)} className="w-full h-full object-contain" />
               </div>
               <span className="font-oxanium font-bold text-zinc-700 text-sm italic tracking-tighter">VS</span>
               <div className="w-8 h-8 bg-zinc-900 rounded-full flex items-center justify-center p-1 border border-zinc-800">
-                <img src={getTeamLogo(game.bottom.seoIdentifier)} className="w-full h-full object-contain" />
+                <img src={getTeamLogo(game.top.seoIdentifier)} className="w-full h-full object-contain" />
               </div>
             </div>
             <div>
-              <h2 className="font-oxanium font-bold text-lg text-white tracking-tight uppercase">
-                {game.top.name} @ {game.bottom.name}
+              <h2 className="font-oxanium font-bold text-lg text-white tracking-tight uppercase flex items-center gap-2">
+                {game.bottom.shortName} <span className="text-emerald-500 text-[10px]">CASA</span>
+                <span className="text-zinc-800 mx-1">x</span>
+                {game.top.shortName} <span className="text-zinc-600 text-[10px]">FORA</span>
               </h2>
               <p className="text-emerald-500 text-[9px] font-bold tracking-[0.2em] mt-0.5 uppercase">Advanced Market Pro</p>
             </div>
@@ -160,7 +162,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
                             stroke="currentColor" strokeWidth="8" fill="transparent"
                             strokeDasharray={`${(homeProb * 2.82).toFixed(1)} 282.6`}
                             className={`${getProbColor(homeProb)} transition-all duration-1000`}
-                            style={{ filter: `drop-shadow(0 0 8px ${getProbShadow(homeProb)})` }}
+                            style={{ filter: `drop-shadow(0 0 4px ${getProbShadow(homeProb)})` }}
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -170,12 +172,12 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
                       </div>
                       <div className="flex items-center justify-between px-6 pt-4 border-t border-zinc-900/50">
                         <div className="text-left">
-                          <span className="block text-[8px] text-zinc-600 uppercase font-black tracking-widest mb-1">{game.top.shortName} PROB</span>
-                          <span className={`text-lg font-oxanium font-bold ${getProbColor(awayProb)}`}>{awayProb}%</span>
+                          <span className="block text-[8px] text-zinc-600 uppercase font-black tracking-widest mb-1">CASA ({game.bottom.shortName})</span>
+                          <span className={`text-lg font-oxanium font-bold ${getProbColor(homeProb)}`}>{homeProb}%</span>
                         </div>
                         <div className="text-right">
-                          <span className="block text-[8px] text-zinc-600 uppercase font-black tracking-widest mb-1">{game.bottom.shortName} PROB</span>
-                          <span className={`text-lg font-oxanium font-bold ${getProbColor(homeProb)}`}>{homeProb}%</span>
+                          <span className="block text-[8px] text-zinc-600 uppercase font-black tracking-widest mb-1">FORA ({game.top.shortName})</span>
+                          <span className={`text-lg font-oxanium font-bold ${getProbColor(awayProb)}`}>{awayProb}%</span>
                         </div>
                       </div>
                     </div>
@@ -205,32 +207,29 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
 
                   {/* Player Leaders Summary */}
                   <div className="grid lg:grid-cols-2 gap-4">
+                    <OverviewPlayerCard title={game.bottom.shortName} logo={getTeamLogo(game.bottom.seoIdentifier)} players={playerStats?.home?.playerStatsByCategory} isHome />
                     <OverviewPlayerCard title={game.top.shortName} logo={getTeamLogo(game.top.seoIdentifier)} players={playerStats?.away?.playerStatsByCategory} />
-                    <OverviewPlayerCard title={game.bottom.shortName} logo={getTeamLogo(game.bottom.seoIdentifier)} players={playerStats?.home?.playerStatsByCategory} />
                   </div>
 
                   {/* Recent Games History Sections - 5 games total independently of H2H */}
                   {/* Recent Games History Sections */}
                   <div className="grid lg:grid-cols-2 gap-4">
-                    {/* Away Recent History */}
+                    {/* Home Recent History */}
                     <div className="bg-[#0a0a0a] border border-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
                       <div className="bg-zinc-900/40 p-5 border-b border-zinc-900 flex justify-between items-center">
                         <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                          <History className="w-4 h-4 text-emerald-500" /> JOGOS RECENTES - {game.top.name.toUpperCase()}
+                          <History className="w-4 h-4 text-emerald-500" /> JOGOS RECENTES - {game.bottom.name.toUpperCase()} (CASA)
                         </h4>
                       </div>
-
                       <div className="p-4">
-                        {/* Table Header */}
                         <div className="flex justify-between items-center px-4 pb-2 border-b border-zinc-800 mb-2">
                           <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">DATA</span>
                           <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">CONFRONTO</span>
                         </div>
                         <div className="space-y-1">
-                          {recentGames.away.length > 0 ? recentGames.away.map((g: GameEvent) => {
+                          {recentGames.home.length > 0 ? recentGames.home.map((g: GameEvent) => {
                             const dateObj = new Date(g.dateET);
                             const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
-
                             return (
                               <RecentHistoryRow
                                 key={g.eventId}
@@ -246,24 +245,22 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
                       </div>
                     </div>
 
-                    {/* Home Recent History */}
+                    {/* Away Recent History */}
                     <div className="bg-[#0a0a0a] border border-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
                       <div className="bg-zinc-900/40 p-5 border-b border-zinc-900 flex justify-between items-center">
                         <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                          <History className="w-4 h-4 text-emerald-500" /> JOGOS RECENTES - {game.bottom.name.toUpperCase()}
+                          <History className="w-4 h-4 text-emerald-500" /> JOGOS RECENTES - {game.top.name.toUpperCase()} (FORA)
                         </h4>
                       </div>
                       <div className="p-4">
-                        {/* Table Header */}
                         <div className="flex justify-between items-center px-4 pb-2 border-b border-zinc-800 mb-2">
                           <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">DATA</span>
                           <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">CONFRONTO</span>
                         </div>
                         <div className="space-y-1">
-                          {recentGames.home.length > 0 ? recentGames.home.map((g: GameEvent) => {
+                          {recentGames.away.length > 0 ? recentGames.away.map((g: GameEvent) => {
                             const dateObj = new Date(g.dateET);
                             const dateStr = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
-
                             return (
                               <RecentHistoryRow
                                 key={g.eventId}
@@ -294,17 +291,17 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
                     return (
                       <div key={stat.key} className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 group hover:border-emerald-500/30 transition-all">
                         <div className="flex justify-between items-center mb-2">
-                          <span className={`text-lg font-oxanium font-bold ${awayVal > homeVal ? 'text-emerald-500' : 'text-zinc-400'}`}>
-                            {stat.format ? stat.format(seasonStats.away[stat.key as keyof SeasonStats]) : awayVal}
-                          </span>
-                          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{stat.label}</span>
                           <span className={`text-lg font-oxanium font-bold ${homeVal > awayVal ? 'text-emerald-500' : 'text-zinc-400'}`}>
                             {stat.format ? stat.format(seasonStats.home[stat.key as keyof SeasonStats]) : homeVal}
                           </span>
+                          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{stat.label}</span>
+                          <span className={`text-lg font-oxanium font-bold ${awayVal > homeVal ? 'text-emerald-500' : 'text-zinc-400'}`}>
+                            {stat.format ? stat.format(seasonStats.away[stat.key as keyof SeasonStats]) : awayVal}
+                          </span>
                         </div>
                         <div className="flex items-center gap-4 h-1.5 bg-zinc-900/50 rounded-full overflow-hidden relative">
-                          <div className="h-full absolute right-1/2 transition-all duration-700" style={{ width: `calc(${awayWidth}% / 2)`, backgroundColor: awayVal > homeVal ? '#10b981' : '#27272a' }} />
-                          <div className="h-full absolute left-1/2 transition-all duration-700" style={{ width: `calc(${homeWidth}% / 2)`, backgroundColor: homeVal > awayVal ? '#10b981' : '#27272a' }} />
+                          <div className="h-full absolute right-1/2 transition-all duration-700" style={{ width: `calc(${homeWidth}% / 2)`, backgroundColor: homeVal > awayVal ? '#10b981' : '#27272a' }} />
+                          <div className="h-full absolute left-1/2 transition-all duration-700" style={{ width: `calc(${awayWidth}% / 2)`, backgroundColor: awayVal > homeVal ? '#10b981' : '#27272a' }} />
                         </div>
                       </div>
                     );
@@ -359,14 +356,14 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
                 <div className="space-y-6">
                   <div className="grid lg:grid-cols-2 gap-6">
                     <PlayerCategoryStats
-                      title={game.top.name}
-                      logo={getTeamLogo(game.top.seoIdentifier)}
-                      playersData={playerStats?.away?.playerStatsByCategory}
-                    />
-                    <PlayerCategoryStats
-                      title={game.bottom.name}
+                      title={`${game.bottom.name} (CASA)`}
                       logo={getTeamLogo(game.bottom.seoIdentifier)}
                       playersData={playerStats?.home?.playerStatsByCategory}
+                    />
+                    <PlayerCategoryStats
+                      title={`${game.top.name} (FORA)`}
+                      logo={getTeamLogo(game.top.seoIdentifier)}
+                      playersData={playerStats?.away?.playerStatsByCategory}
                     />
                   </div>
 
@@ -376,7 +373,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
                       <h4 className="font-oxanium font-bold text-xl uppercase tracking-tighter text-white">Relatório de Lesões</h4>
                     </div>
                     <div className="grid md:grid-cols-2 gap-10">
-                      {['away', 'home'].map(side => {
+                      {['home', 'away'].map(side => {
                         const teamName = side === 'away' ? game.top.name : game.bottom.name;
                         const teamInjuries = injuries.filter(i => i.team === side);
                         return (
@@ -412,11 +409,11 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
   );
 };
 
-const OverviewPlayerCard = ({ title, logo, players }: { title: string, logo: string, players: any }) => (
+const OverviewPlayerCard = ({ title, logo, players, isHome }: { title: string, logo: string, players: any, isHome?: boolean }) => (
   <div className="bg-[#0a0a0a] border border-zinc-900 rounded-2xl p-4 group hover:border-zinc-800 transition-all shadow-md">
     <div className="flex items-center gap-2 mb-4 border-b border-zinc-900 pb-3">
       <img src={logo} className="w-10 h-10 opacity-70" />
-      <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">LÍDERES {title}</h4>
+      <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">LÍDERES {title} {isHome && <span className="text-emerald-500/50">(CASA)</span>}</h4>
     </div>
     <div className="space-y-5">
       <OverviewPlayerRow label="PONTOS" color="bg-emerald-500" name={players?.pointsAverage?.[0]?.player.displayName} val={players?.pointsAverage?.[0]?.stats.pointsAverage} />
@@ -448,23 +445,23 @@ const RecentHistoryRow = ({ date, teamA, teamB }: {
     <span className="text-zinc-500 font-bold text-[10px] w-20 uppercase tracking-widest">{date}</span>
 
     <div className="flex items-center gap-3 flex-1 justify-end">
-      {/* Team A */}
+      {/* Team B (Home) */}
       <div className="flex items-center gap-2">
-        <img src={teamA.logo} className="w-5 h-5 object-contain opacity-80" />
-        <span className="text-[10px] font-black text-zinc-400 w-8 text-right hidden sm:block">{teamA.name}</span>
+        <img src={teamB.logo} className="w-5 h-5 object-contain opacity-80" />
+        <span className="text-[10px] font-black text-zinc-400 w-8 text-right hidden sm:block">{teamB.name}</span>
       </div>
 
       {/* Score */}
       <div className="flex items-center gap-2 px-2">
-        <span className={`font-oxanium font-bold text-sm ${teamA.score > teamB.score ? 'text-white' : 'text-zinc-600'}`}>{teamA.score}</span>
-        <span className="text-zinc-700 text-[10px]">-</span>
         <span className={`font-oxanium font-bold text-sm ${teamB.score > teamA.score ? 'text-white' : 'text-zinc-600'}`}>{teamB.score}</span>
+        <span className="text-zinc-700 text-[10px]">x</span>
+        <span className={`font-oxanium font-bold text-sm ${teamA.score > teamB.score ? 'text-white' : 'text-zinc-600'}`}>{teamA.score}</span>
       </div>
 
-      {/* Team B */}
+      {/* Team A (Away) */}
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-black text-zinc-400 w-8 hidden sm:block">{teamB.name}</span>
-        <img src={teamB.logo} className="w-5 h-5 object-contain opacity-80" />
+        <span className="text-[10px] font-black text-zinc-400 w-8 hidden sm:block">{teamA.name}</span>
+        <img src={teamA.logo} className="w-5 h-5 object-contain opacity-80" />
       </div>
     </div>
   </div>

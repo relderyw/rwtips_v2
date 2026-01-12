@@ -53,3 +53,32 @@ export interface Projections {
   awayPts: string;
   confidence: 'Low' | 'Medium' | 'High';
 }
+
+export interface GameIntelligence {
+  eventId: string;
+  intelligenceScore: number; // 0-100
+  overUnderProbability: number; // % probability of being Over
+  confidence: 'Low' | 'Medium' | 'High';
+  trends: {
+    recentOverUnder: string; // e.g., "4/5 Over"
+    teamPace: 'Fast' | 'Medium' | 'Slow';
+    playerHotStreak: boolean;
+    volumeIndicator: number; // Expected total points
+  };
+  reasons: string[]; // Main reasons for the recommendation
+  recommendation: 'OVER' | 'UNDER' | 'SKIP';
+  detailedAnalysis: {
+    awayTeamTrend: {
+      overCount: number;
+      underCount: number;
+      avgTotal: number;
+    };
+    homeTeamTrend: {
+      overCount: number;
+      underCount: number;
+      avgTotal: number;
+    };
+    paceScore: number;
+    h2hPattern?: string;
+  };
+}
