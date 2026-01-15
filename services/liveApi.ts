@@ -3,10 +3,17 @@ export interface LiveScore {
     leagueName: string;
     countryName: string;
     countryImagePath?: string;
-    homeTeam: { name: string; score: number };
-    awayTeam: { name: string; score: number };
+    localTeamName: string;
+    visitorTeamName: string;
+    localTeamFlag?: string;
+    visitorTeamFlag?: string;
+    scoresLocalTeam?: number;
+    scoresVisitorTeam?: number;
+    homeTeam?: { name: string; score: number };
+    awayTeam?: { name: string; score: number };
     status: string;
     time: string;
+    minute?: number;
     [key: string]: any;
 }
 
