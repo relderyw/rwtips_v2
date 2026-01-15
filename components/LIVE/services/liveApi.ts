@@ -1,9 +1,8 @@
 
 import axios from 'axios';
 
-// Use relative paths to leverage Vite proxy in development
-// In production, ensure the backend serves these routes or configure appropriate proxies
-const API_BASE = ''; 
+const API_BASE = import.meta.env.VITE_API_BASE
+    || (import.meta.env.PROD ? 'https://m2.sokkerpro.com' : '');
 
 export interface LiveScore {
     id: number;
@@ -34,7 +33,8 @@ export const liveApi = {
     // Fetch all live scores
     async getLiveScores() {
         try {
-            const response = await axios.get('/api/livescores');
+            const url = API_BASE ? `${API_BASE}/livescores` : '/api/livescores';
+            const response = await axios.get(url);
             return response.data;
         } catch (error) {
             console.error('Error fetching live scores:', error);
@@ -45,7 +45,8 @@ export const liveApi = {
     // Fetch details for a specific fixture
     async getFixtureDetails(fixtureId: string | number) {
         try {
-            const response = await axios.get(`/api/fixture/${fixtureId}`);
+            const url = API_BASE ? `${API_BASE}/fixture/${fixtureId}` : `/api/fixture/${fixtureId}`;
+            const response = await axios.get(url);
             return response.data;
         } catch (error) {
             console.error(`Error fetching fixture details for ${fixtureId}:`, error);
