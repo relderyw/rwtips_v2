@@ -228,34 +228,56 @@ app.get('/api/f-team-tournaments', async (req, res) => {
 // ------------------------------------------------------
 // --- NOVAS ROTAS PARA MÓDULO LIVE (SOKKERPRO) ---
 app.get('/api/livescores', async (req, res) => {
+    // Legacy logic port from TESTE/api/livescores.js
+    const url = 'https://m2.sokkerpro.com/livescores';
+    console.log(`[PROXY] Fetching livescores from ${url}...`);
+
     try {
-        console.log(`[PROXY] Fetching livescores from ${url}...`);
-        const response = await axios.get(url, {
+        const response = await fetch(url, {
+            method: 'GET',
             headers: { 'Accept': 'application/json' },
-            timeout: 15000 // 15s timeout
+            cache: 'no-store'
         });
-        console.log(`[PROXY] Status: ${response.status} | Data Size: ${JSON.stringify(response.data).length}`);
-        res.json(response.data);
+
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            console.error(`[PROXY] Error ${response.status}: ${text}`);
+            return res.status(response.status).json({ error: text || 'Erro na API externa' });
+        }
+
+        const data = await response.json();
+        res.status(200).json(data);
     } catch (error: any) {
-        console.error("Livescores Error:", error.message);
-        res.status(500).json({ error: "Failed to fetch livescores" });
+        console.error('Erro no handler livescores:', error);
+        res.status(500).json({ error: error.message || 'Erro interno' });
     }
 });
 
 app.get('/api/fixture/:id', async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: 'ID required' });
+    
+    const url = `https://m2.sokkerpro.com/fixture/${id}`;
+    console.log(`[PROXY] Fetching fixture details from ${url}...`);
+
     try {
-        const { id } = req.params;
-        if (!id) return res.status(400).json({ error: 'ID required' });
-        
-        const url = `https://m2.sokkerpro.com/fixture/${id}`;
-        const response = await axios.get(url, {
+        const response = await fetch(url, {
+            method: 'GET',
             headers: { 'Accept': 'application/json' },
-            timeout: 15000
+            cache: 'no-store'
         });
-        res.json(response.data);
+
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            console.error(`[PROXY] Error ${response.status}: ${text}`);
+            return res.status(response.status).json({ error: text || 'Erro na API externa' });
+        }
+
+        const data = await response.json();
+        res.status(200).json(data);
     } catch (error: any) {
-        console.error("Fixture Error:", error.message);
-        res.status(500).json({ error: "Failed to fetch fixture" });
+        console.error('Erro no handler fixture:', error);
+        res.status(500).json({ error: error.message || 'Erro interno' });
     }
 });
 // ------------------------------------------------------
