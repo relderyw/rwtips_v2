@@ -227,57 +227,34 @@ app.get('/api/f-team-tournaments', async (req, res) => {
 });
 // ------------------------------------------------------
 // --- NOVAS ROTAS PARA MÓDULO LIVE (SOKKERPRO) ---
+// Proxy para LiveScores
 app.get('/api/livescores', async (req, res) => {
-    // Legacy logic port from TESTE/api/livescores.js
-    const url = 'https://m2.sokkerpro.com/livescores';
-    console.log(`[PROXY] Fetching livescores from ${url}...`);
-
     try {
-        const response = await fetch(url, {
-            method: 'GET',
+        console.log('[API] Buscando LiveScores de m2.sokkerpro.com');
+        const response = await axios.get('https://m2.sokkerpro.com/livescores', {
             headers: { 'Accept': 'application/json' },
-            cache: 'no-store'
+            responseType: 'json'
         });
-
-        if (!response.ok) {
-            const text = await response.text().catch(() => '');
-            console.error(`[PROXY] Error ${response.status}: ${text}`);
-            return res.status(response.status).json({ error: text || 'Erro na API externa' });
-        }
-
-        const data = await response.json();
-        res.status(200).json(data);
-    } catch (error: any) {
-        console.error('Erro no handler livescores:', error);
-        res.status(500).json({ error: error.message || 'Erro interno' });
+        res.json(response.data);
+    } catch (error) {
+        console.error('[API] Erro em /api/livescores:', error);
+        res.status(500).json({ error: 'Erro ao buscar livescores' });
     }
 });
 
+// Proxy para Fixture Details
 app.get('/api/fixture/:id', async (req, res) => {
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ error: 'ID required' });
-    
-    const url = `https://m2.sokkerpro.com/fixture/${id}`;
-    console.log(`[PROXY] Fetching fixture details from ${url}...`);
-
     try {
-        const response = await fetch(url, {
-            method: 'GET',
+        const { id } = req.params;
+        console.log(`[API] Buscando detalhes da partida ${id}`);
+        const response = await axios.get(`https://m2.sokkerpro.com/fixture/${id}`, {
             headers: { 'Accept': 'application/json' },
-            cache: 'no-store'
+            responseType: 'json'
         });
-
-        if (!response.ok) {
-            const text = await response.text().catch(() => '');
-            console.error(`[PROXY] Error ${response.status}: ${text}`);
-            return res.status(response.status).json({ error: text || 'Erro na API externa' });
-        }
-
-        const data = await response.json();
-        res.status(200).json(data);
-    } catch (error: any) {
-        console.error('Erro no handler fixture:', error);
-        res.status(500).json({ error: error.message || 'Erro interno' });
+        res.json(response.data);
+    } catch (error) {
+        console.error(`[API] Erro em /api/fixture/${req.params.id}:`, error);
+        res.status(500).json({ error: 'Erro ao buscar detalhes da partida' });
     }
 });
 // ------------------------------------------------------

@@ -14,7 +14,7 @@ import { H2HSearch } from './components/H2HSearch';
 import { StrategyHistory } from './components/StrategyHistory';
 import { NBADashboard } from './components/NBA/NBADashboard';
 import { ModuleSelector } from './components/ModuleSelector';
-import LiveModule from './components/LiveModule';
+import LiveModule from './components/LIVE/LiveModule';
 
 
 interface GoalNotification {

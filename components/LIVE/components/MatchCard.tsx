@@ -1,6 +1,6 @@
 import React from 'react';
 import { getStatusColor, getStatusText } from '../utils/helpers';
-import { LiveScore } from '../../../services/liveApi';
+import { LiveScore } from '../services/liveApi';
 
 interface MatchCardProps {
     match: LiveScore;

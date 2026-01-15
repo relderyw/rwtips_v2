@@ -3,9 +3,10 @@ import { X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import LoadingSpinner from './LoadingSpinner';
 import { processPressureData, processProbabilities, processRecentMatches } from '../utils/helpers';
-import { LiveScore } from '../../../services/liveApi';
+import { LiveScore } from '../services/liveApi';
 
 interface MatchAnalysisModalProps {
+    isOpen?: boolean;
     match: LiveScore;
     matchData: any; // Using any for the complex API response to facilitate porting
     loading: boolean;
@@ -22,8 +23,8 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
     const pressureData = matchData ? processPressureData(matchData) : [];
     // Unused variables for now, but kept for future use if needed, or derived in render
     // const probabilities = processProbabilities(matchData);
-    const recentMatchesHome = matchData ? processRecentMatches(matchData, 'home', match.localTeamName || match.homeTeam?.name || '') : [];
-    const recentMatchesAway = matchData ? processRecentMatches(matchData, 'away', match.visitorTeamName || match.awayTeam?.name || '') : [];
+    const recentMatchesHome = matchData ? processRecentMatches(matchData, 'home', match.localTeamName || '') : [];
+    const recentMatchesAway = matchData ? processRecentMatches(matchData, 'away', match.visitorTeamName || '') : [];
 
     // Helper to safely get numeric values
     const getVal = (val: any) => parseInt(val) || 0;
@@ -81,7 +82,7 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                         {activeSection === '1tempo' ? (
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-                                    <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">{match.homeTeam.name}</div>
+                                    <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">{match.localTeamName}</div>
                                     <div className="text-3xl font-bold text-white">
                                         {prog.mercado_1x2_1t?.casa_vencer?.probabilidade || 0}%
                                     </div>
@@ -93,7 +94,7 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                                     </div>
                                 </div>
                                 <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-                                    <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">{match.awayTeam.name}</div>
+                                    <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">{match.visitorTeamName}</div>
                                     <div className="text-3xl font-bold text-white">
                                         {prog.mercado_1x2_1t?.fora_vencer?.probabilidade || 0}%
                                     </div>
@@ -103,7 +104,7 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                             <div className="space-y-4">
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="bg-slate-800 rounded-lg p-4 text-center">
-                                        <div className="text-xs text-slate-400 mb-2">{match.homeTeam.name.toUpperCase()}</div>
+                                        <div className="text-xs text-slate-400 mb-2">{match.localTeamName.toUpperCase()}</div>
                                         <div className="text-3xl font-bold text-white">
                                             {prog.mercado_1x2?.casa_vencer?.probabilidade || 0}%
                                         </div>
@@ -115,7 +116,7 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                                         </div>
                                     </div>
                                     <div className="bg-slate-800 rounded-lg p-4 text-center">
-                                        <div className="text-xs text-slate-400 mb-2">{match.awayTeam.name.toUpperCase()}</div>
+                                        <div className="text-xs text-slate-400 mb-2">{match.visitorTeamName.toUpperCase()}</div>
                                         <div className="text-3xl font-bold text-white">
                                             {prog.mercado_1x2?.fora_vencer?.probabilidade || 0}%
                                         </div>
