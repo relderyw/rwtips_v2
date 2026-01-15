@@ -15,7 +15,7 @@ import { StrategyHistory } from './components/StrategyHistory';
 import { NBADashboard } from './components/NBA/NBADashboard';
 import { ModuleSelector } from './components/ModuleSelector';
 import LiveModule from './components/LiveModule';
-import FUTDashboard from './components/FUT/FUTDashboard';
+
 
 interface GoalNotification {
   id: string;
