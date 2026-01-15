@@ -16,6 +16,10 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
+          '@/lib': path.resolve(__dirname, './components/FUT/lib'),
+          '@/hooks': path.resolve(__dirname, './components/FUT/hooks'),
+          '@/components': path.resolve(__dirname, './components/FUT/components'),
+          '@/app': path.resolve(__dirname, './components/FUT/app'),
           '@': path.resolve(__dirname, '.'),
         }
       }

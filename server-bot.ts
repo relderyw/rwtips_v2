@@ -174,6 +174,107 @@ app.get('/api/next-games', async (req, res) => {
     }
 });
 
+// --- PROXY ENDPOINTS PARA MÓDULO FUTEBOL (STATSHUB) ---
+const STATSHUB_BASE = "https://www.statshub.com/api";
+
+app.get('/api/f-matches', async (req, res) => {
+    try {
+        const { startOfDay, endOfDay } = req.query;
+        const response = await axios.get(`${STATSHUB_BASE}/event/by-date`, {
+            params: { startOfDay, endOfDay },
+            headers: { "Content-Type": "application/json" }
+        });
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch matches" });
+    }
+});
+
+app.get('/api/f-player-stats', async (req, res) => {
+    try {
+        const response = await axios.get(`${STATSHUB_BASE}/player-stats`, {
+            params: req.query,
+            headers: { "Content-Type": "application/json" }
+        });
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch player stats" });
+    }
+});
+
+app.get('/api/f-team-matches', async (req, res) => {
+    try {
+        const response = await axios.get(`${STATSHUB_BASE}/team-matches`, {
+            params: req.query,
+            headers: { "Content-Type": "application/json" }
+        });
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch team matches" });
+    }
+});
+
+app.get('/api/f-team-tournaments', async (req, res) => {
+    try {
+        const response = await axios.get(`${STATSHUB_BASE}/team-tournaments`, {
+            params: req.query,
+            headers: { "Content-Type": "application/json" }
+        });
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch team tournaments" });
+    }
+});
+// ------------------------------------------------------
+// --- NOVAS ROTAS PARA MÓDULO LIVE (SOKKERPRO) ---
+app.get('/api/livescores', async (req, res) => {
+    try {
+        console.log(`[PROXY] Fetching livescores from ${url}...`);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+        });
+        console.log(`[PROXY] Status: ${response.status}`);
+
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            return res.status(response.status).json({ error: text || 'Erro na API externa' });
+        }
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error: any) {
+        console.error("Livescores Error:", error);
+        res.status(500).json({ error: error.message || "Failed to fetch livescores" });
+    }
+});
+
+app.get('/api/fixture/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) return res.status(400).json({ error: 'ID required' });
+        
+        const url = `https://m2.sokkerpro.com/fixture/${id}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            return res.status(response.status).json({ error: 'Erro na API externa' });
+        }
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error: any) {
+        console.error("Fixture Error:", error);
+        res.status(500).json({ error: error.message || "Failed to fetch fixture" });
+    }
+});
+// ------------------------------------------------------
+
 const server = app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`[SERVER] Health check rodando na porta ${PORT}`);
     console.log(`[SERVER] URL de health check monitorada localmente: http://localhost:${PORT}`);

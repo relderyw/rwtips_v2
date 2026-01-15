@@ -19,6 +19,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     const [users, setUsers] = useState<any[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [renewModal, setRenewModal] = useState<{ isOpen: boolean, email: string, days: number }>({ isOpen: false, email: '', days: 30 });
+    const [modulesModal, setModulesModal] = useState<{ isOpen: boolean, email: string, allowed: string[] }>({ isOpen: false, email: '', allowed: [] });
 
     const fetchUsers = async () => {
         setLoadingUsers(true);
@@ -67,7 +68,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 role,
                 expirationDate: firebaseInstance.firestore.Timestamp.fromDate(expirationDate),
                 createdAt: firebaseInstance.firestore.Timestamp.fromDate(new Date()),
-                lastSeen: firebaseInstance.firestore.Timestamp.fromDate(new Date())
+                lastSeen: firebaseInstance.firestore.Timestamp.fromDate(new Date()),
+                allowedModules: ['fifa', 'futebol', 'basquete'] // Default to all
             });
 
             setStatus({ type: 'success', msg: 'Usuário criado com sucesso!' });
@@ -101,10 +103,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         }
     };
 
+    const handleUpdateModules = async () => {
+        setLoading(true);
+        try {
+            const query = await db.collection('users').where('email', '==', modulesModal.email).get();
+            if (!query.empty) {
+                const doc = query.docs[0];
+                await doc.ref.update({
+                    allowedModules: modulesModal.allowed
+                });
+                setModulesModal({ ...modulesModal, isOpen: false });
+                fetchUsers();
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const toggleModule = (module: string) => {
+        setModulesModal(prev => {
+            const newAllowed = prev.allowed.includes(module)
+                ? prev.allowed.filter(m => m !== module)
+                : [...prev.allowed, module];
+            return { ...prev, allowed: newAllowed };
+        });
+    };
+
     return (
         <div className="fixed inset-0 z-[10000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-6 overflow-y-auto">
             <div className="bg-[#0a0a0c] w-full max-w-2xl rounded-[3rem] border border-white/10 p-8 md:p-12 shadow-2xl relative">
-                
+
                 {/* Botão de Fechar */}
                 <button onClick={onClose} className="absolute top-8 right-8 text-white/20 hover:text-white transition-colors">
                     <i className="fa-solid fa-circle-xmark text-2xl"></i>
@@ -169,14 +199,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         <div className="space-y-2">
                             <label className="text-[9px] font-black text-white/30 uppercase tracking-widest">Senha</label>
                             <div className="relative">
-                                <input 
+                                <input
                                     type={showPassword ? "text" : "password"}
-                                    required 
-                                    value={password} 
-                                    onChange={e => setPassword(e.target.value)} 
-                                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 pl-6 pr-12 text-sm outline-none focus:border-emerald-500/50" 
+                                    required
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 pl-6 pr-12 text-sm outline-none focus:border-emerald-500/50"
                                 />
-                                <button 
+                                <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors p-2"
@@ -214,7 +244,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         ) : users.map(u => {
                             const isExpired = new Date() > u.expirationDate.toDate();
                             const isOnline = u.lastSeen && u.lastSeen.toDate().getTime() > (Date.now() - 5 * 60 * 1000);
-                            
+
                             return (
                                 <div key={u.id} className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl flex items-center justify-between group hover:border-white/10 transition-all">
                                     <div className="flex items-center gap-4">
@@ -227,7 +257,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                             </div>
                                         </div>
                                     </div>
-                                    <button onClick={() => setRenewModal({ isOpen: true, email: u.email, days: 30 })} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Renovar</button>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setModulesModal({ isOpen: true, email: u.email, allowed: u.allowedModules || ['fifa', 'futebol', 'basquete'] })} className="px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Módulos</button>
+                                        <button onClick={() => setRenewModal({ isOpen: true, email: u.email, days: 30 })} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Renovar</button>
+                                    </div>
                                 </div>
                             );
                         })}
@@ -253,6 +286,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                     </div>
                 </div>
             )}
-        </div>
+            {modulesModal.isOpen && (
+                <div className="fixed inset-0 z-[10002] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+                    <div className="bg-[#0a0a0c] w-full max-w-sm rounded-[2rem] border border-white/10 p-8 shadow-2xl">
+                        <h3 className="text-xl font-black text-white mb-6 tracking-tight">GERENCIAR MÓDULOS</h3>
+                        <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-6">Membro: {modulesModal.email}</p>
+
+                        <div className="space-y-3 mb-8">
+                            {['fifa', 'futebol', 'basquete'].map(mod => {
+                                const isSelected = modulesModal.allowed.includes(mod);
+                                return (
+                                    <button
+                                        key={mod}
+                                        onClick={() => toggleModule(mod)}
+                                        className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${isSelected
+                                            ? 'bg-emerald-500/10 border-emerald-500/50 text-white'
+                                            : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'}`}
+                                    >
+                                        <span className="text-xs font-black uppercase tracking-widest">{mod}</span>
+                                        <div className={`w-5 h-5 rounded flex items-center justify-center border ${isSelected ? 'bg-emerald-500 border-emerald-500' : 'border-white/20'}`}>
+                                            {isSelected && <i className="fa-solid fa-check text-black text-xs"></i>}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button onClick={() => setModulesModal({ ...modulesModal, isOpen: false })} className="flex-1 py-3 text-[10px] font-black uppercase text-white/30 hover:text-white transition-colors">Cancelar</button>
+                            <button onClick={handleUpdateModules} className="flex-1 bg-emerald-500 text-black py-3 rounded-xl text-[10px] font-black uppercase shadow-lg">Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            )
+            }
+        </div >
     );
 };
