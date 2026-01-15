@@ -10,30 +10,25 @@ export interface LiveScore {
     [key: string]: any;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001"; // Fallback para compatibilidade
-// Mas para o servidor local do bot é 8080 ou a url de produção
-// Vamos usar uma lógica similar ao api.ts original, mas adaptada
-
-const getApiUrl = () => {
-    // Se existir VITE_API_URL definida (produção), usa ela
-    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-    // Se não, assume localhost:8080 (backend local)
-    return "http://localhost:8080";
-};
-
-const BASE_URL = getApiUrl();
+const PROXY_URL = 'https://api.codetabs.com/v1/proxy?quest=';
+// Alternativa: 'https://corsproxy.io/?';
 
 async function fetchJson<T>(endpoint: string, options: RequestInit = {}, timeoutMs = 30000): Promise<T> {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeoutMs);
     
+    // O endpoint aqui será a URL completa do sokkerpro
+    // A logica muda: em vez de chamar /api/livescores, chamamos o proxy + url externa
+    const targetUrl = endpoint.startsWith('http') ? endpoint : `https://m2.sokkerpro.com${endpoint}`;
+    const proxyUrl = `${PROXY_URL}${encodeURIComponent(targetUrl)}`;
+
     try {
-        const res = await fetch(`${BASE_URL}${endpoint}`, {
+        const res = await fetch(proxyUrl, {
             ...options,
             signal: controller.signal,
             headers: {
                 'Accept': 'application/json',
-                ...(options.headers || {})
+                // Proxies publicos geralmente nao precisam de headers complexos
             }
         });
         clearTimeout(id);
@@ -52,6 +47,7 @@ async function fetchJson<T>(endpoint: string, options: RequestInit = {}, timeout
 }
 
 export const liveApi = {
-    getLiveScores: () => fetchJson<{ data: { sortedCategorizedFixtures: any[] } }>('/api/livescores'),
-    getFixtureDetails: (id: number | string) => fetchJson<{ data: any }>(`/api/fixture/${id}`)
+    // Agora passamos a URL do sokkerpro (ou parte dela)
+    getLiveScores: () => fetchJson<{ data: { sortedCategorizedFixtures: any[] } }>('https://m2.sokkerpro.com/livescores'),
+    getFixtureDetails: (id: number | string) => fetchJson<{ data: any }>(`https://m2.sokkerpro.com/fixture/${id}`)
 };

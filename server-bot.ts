@@ -230,23 +230,15 @@ app.get('/api/f-team-tournaments', async (req, res) => {
 app.get('/api/livescores', async (req, res) => {
     try {
         console.log(`[PROXY] Fetching livescores from ${url}...`);
-        const response = await fetch(url, {
-            method: 'GET',
+        const response = await axios.get(url, {
             headers: { 'Accept': 'application/json' },
-            cache: 'no-store'
+            timeout: 15000 // 15s timeout
         });
-        console.log(`[PROXY] Status: ${response.status}`);
-
-        if (!response.ok) {
-            const text = await response.text().catch(() => '');
-            return res.status(response.status).json({ error: text || 'Erro na API externa' });
-        }
-
-        const data = await response.json();
-        res.json(data);
+        console.log(`[PROXY] Status: ${response.status} | Data Size: ${JSON.stringify(response.data).length}`);
+        res.json(response.data);
     } catch (error: any) {
-        console.error("Livescores Error:", error);
-        res.status(500).json({ error: error.message || "Failed to fetch livescores" });
+        console.error("Livescores Error:", error.message);
+        res.status(500).json({ error: "Failed to fetch livescores" });
     }
 });
 
@@ -256,21 +248,14 @@ app.get('/api/fixture/:id', async (req, res) => {
         if (!id) return res.status(400).json({ error: 'ID required' });
         
         const url = `https://m2.sokkerpro.com/fixture/${id}`;
-        const response = await fetch(url, {
-            method: 'GET',
+        const response = await axios.get(url, {
             headers: { 'Accept': 'application/json' },
-            cache: 'no-store'
+            timeout: 15000
         });
-
-        if (!response.ok) {
-            return res.status(response.status).json({ error: 'Erro na API externa' });
-        }
-
-        const data = await response.json();
-        res.json(data);
+        res.json(response.data);
     } catch (error: any) {
-        console.error("Fixture Error:", error);
-        res.status(500).json({ error: error.message || "Failed to fetch fixture" });
+        console.error("Fixture Error:", error.message);
+        res.status(500).json({ error: "Failed to fetch fixture" });
     }
 });
 // ------------------------------------------------------
