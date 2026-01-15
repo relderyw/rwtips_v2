@@ -46,21 +46,52 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
                     });
                 }
 
-                // Process matches and calculate HT scores (logic ported from App.jsx)
                 const processedMatches = allMatches.map(match => {
+                    // Try to calculate HT score from timeline/events if available
                     let htScoreLocal = null;
                     let htScoreVisitor = null;
 
+                    // Check if match has timeline or events data
                     if (match.timeline || match.events) {
-                        // Simplified processing for typescript port
-                        // In full impl, copying the regex logic from App.jsx is ideal
+                        const events = match.timeline || match.events;
+                        let eventsArray: any[] = [];
+
+                        // Parse events if it's a JSON string
+                        if (typeof events === 'string') {
+                            try {
+                                eventsArray = JSON.parse(events);
+                            } catch (e) {
+                                // If parsing fails, events might be in a different format
+                            }
+                        } else if (Array.isArray(events)) {
+                            eventsArray = events;
+                        }
+
+                        // Find the last goal scored in first half (minute <= 45)
+                        if (Array.isArray(eventsArray)) {
+                            const firstHalfGoals = eventsArray.filter((event: any) => {
+                                const minute = parseInt(event.minute || event.min || 0);
+                                const isGoal = event.type === 'goal' || event.type_id === 14 || event.event === 'goal';
+                                return isGoal && minute > 0 && minute <= 45;
+                            });
+
+                            // Get the score from the last first-half goal
+                            if (firstHalfGoals.length > 0) {
+                                const lastHTGoal = firstHalfGoals[firstHalfGoals.length - 1];
+                                // Try to extract score from result field (e.g., "0-1", "1-1", etc.)
+                                const scoreMatch = (lastHTGoal.result || lastHTGoal.score || '').match(/(\d+)-(\d+)/);
+                                if (scoreMatch) {
+                                    htScoreLocal = parseInt(scoreMatch[1]);
+                                    htScoreVisitor = parseInt(scoreMatch[2]);
+                                }
+                            }
+                        }
                     }
 
-                    // For now returning as is, adding placeholders
                     return {
                         ...match,
-                        calculatedHTLocal: htScoreLocal,
-                        calculatedHTVisitor: htScoreVisitor
+                        calculatedHTLocal: htScoreLocal !== null ? htScoreLocal : (match.status === 'HT' ? match.scoresLocalTeam : null),
+                        calculatedHTVisitor: htScoreVisitor !== null ? htScoreVisitor : (match.status === 'HT' ? match.scoresVisitorTeam : null)
                     };
                 });
 
