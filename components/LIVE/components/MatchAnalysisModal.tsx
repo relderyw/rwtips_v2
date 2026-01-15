@@ -19,11 +19,11 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
     const [statPeriod, setStatPeriod] = useState('FT'); // FT, 1T, 2T
     const [statType, setStatType] = useState('GOLS'); // GOLS, ESCANTEIOS, etc
 
-    const pressureData = processPressureData(matchData);
+    const pressureData = matchData ? processPressureData(matchData) : [];
     // Unused variables for now, but kept for future use if needed, or derived in render
     // const probabilities = processProbabilities(matchData);
-    const recentMatchesHome = processRecentMatches(matchData, 'home', match.homeTeam.name);
-    const recentMatchesAway = processRecentMatches(matchData, 'away', match.awayTeam.name);
+    const recentMatchesHome = matchData ? processRecentMatches(matchData, 'home', match.homeTeam.name) : [];
+    const recentMatchesAway = matchData ? processRecentMatches(matchData, 'away', match.awayTeam.name) : [];
 
     // Helper to safely get numeric values
     const getVal = (val: any) => parseInt(val) || 0;
