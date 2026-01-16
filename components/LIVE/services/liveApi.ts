@@ -1,8 +1,7 @@
 
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_BASE
-    || (import.meta.env.PROD ? 'https://m2.sokkerpro.com' : '');
+const API_BASE = '/api';
 
 export interface LiveScore {
     id: number;
