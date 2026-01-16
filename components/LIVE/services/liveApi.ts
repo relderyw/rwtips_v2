@@ -1,8 +1,11 @@
 
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_BASE
-    || (import.meta.env.PROD ? 'https://m2.sokkerpro.com' : '');
+// Em produção, usa o backend próprio no Render (que atua como Proxy)
+// Em desenvolvimento, usa o proxy do Vite ('')
+const API_BASE = import.meta.env.PROD 
+    ? 'https://rwtips-r943.onrender.com' 
+    : '';
 
 export interface LiveScore {
     id: number;
