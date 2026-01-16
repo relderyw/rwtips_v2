@@ -4,8 +4,8 @@ import axios from 'axios';
 // Em produção, usa o backend próprio no Render (que atua como Proxy)
 // Em desenvolvimento, usa o proxy do Vite ('')
 const API_BASE = import.meta.env.PROD 
-    ? 'https://rwtips-r943.onrender.com' 
-    : '';
+    ? 'https://rwtips-r943.onrender.com/api' 
+    : '/api';
 
 export interface LiveScore {
     id: number;
@@ -37,7 +37,7 @@ export const liveApi = {
     // Fetch all live scores
     async getLiveScores() {
         try {
-            const url = API_BASE ? `${API_BASE}/livescores` : '/api/livescores';
+            const url = `${API_BASE}/livescores`;
             const response = await axios.get(url);
             return response.data;
         } catch (error) {
@@ -49,7 +49,7 @@ export const liveApi = {
     // Fetch details for a specific fixture
     async getFixtureDetails(fixtureId: string | number) {
         try {
-            const url = API_BASE ? `${API_BASE}/fixture/${fixtureId}` : `/api/fixture/${fixtureId}`;
+            const url = `${API_BASE}/fixture/${fixtureId}`;
             const response = await axios.get(url);
             return response.data;
         } catch (error) {
