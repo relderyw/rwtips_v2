@@ -403,6 +403,7 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                 ) : (
                     <div className="p-6">
                         {/* Match header with logos */}
+                        {/* Match header with logos */}
                         <div className="grid grid-cols-3 gap-4 items-center mb-6">
                             <div className="flex flex-col items-start">
                                 <div className="flex items-center gap-2 mb-2">
@@ -522,7 +523,171 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
 
                         {/* Outros conteúdos (simplificado para caber... ) usa a mesma lógica do original */}
                         {activeMainTab === 'ao-vivo' && matchData && (
-                            <div className="text-zinc-400 p-4 text-center">Implementação Completa do Ao Vivo em Breve... Utilize o app original para detalhes gráficos.</div>
+                            <div className="space-y-6">
+                                {/* Live statistics with circular progress */}
+                                <div className="flex justify-between items-center gap-4 px-4 overflow-x-auto">
+                                    {/* Ataques */}
+                                    <div className="flex flex-col items-center min-w-[120px]">
+                                        <div className="text-sm font-bold text-zinc-300 mb-2">Ataques</div>
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-2xl font-bold text-white min-w-[2ch] text-right">{matchData.localAttacksAttacks || 0}</span>
+                                            <div className="relative w-16 h-16">
+                                                <svg className="transform -rotate-90 w-16 h-16">
+                                                    <circle cx="32" cy="32" r="28" stroke="#18181b" strokeWidth="6" fill="transparent" />
+                                                    <circle cx="32" cy="32" r="28" stroke="#10b981" strokeWidth="6" fill="transparent"
+                                                        strokeDasharray={`${((parseInt(matchData.localAttacksAttacks) || 0) / ((parseInt(matchData.localAttacksAttacks) || 0) + (parseInt(matchData.visitorAttacksAttacks) || 0) || 1)) * 175.93} 175.93`} />
+                                                    <circle cx="32" cy="32" r="28" stroke="#ef4444" strokeWidth="6" fill="transparent"
+                                                        strokeDasharray={`${((parseInt(matchData.visitorAttacksAttacks) || 0) / ((parseInt(matchData.localAttacksAttacks) || 0) + (parseInt(matchData.visitorAttacksAttacks) || 0) || 1)) * 175.93} 175.93`}
+                                                        strokeDashoffset={`-${((parseInt(matchData.localAttacksAttacks) || 0) / ((parseInt(matchData.localAttacksAttacks) || 0) + (parseInt(matchData.visitorAttacksAttacks) || 0) || 1)) * 175.93}`} />
+                                                </svg>
+                                            </div>
+                                            <span className="text-2xl font-bold text-white min-w-[2ch] text-left">{matchData.visitorAttacksAttacks || 0}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Ataques Perigosos */}
+                                    <div className="flex flex-col items-center min-w-[120px]">
+                                        <div className="text-sm font-bold text-zinc-300 mb-2">Ataques Perigosos</div>
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-2xl font-bold text-white min-w-[2ch] text-right">{matchData.localAttacksDangerousAttacks || 0}</span>
+                                            <div className="relative w-16 h-16">
+                                                <svg className="transform -rotate-90 w-16 h-16">
+                                                    <circle cx="32" cy="32" r="28" stroke="#18181b" strokeWidth="6" fill="transparent" />
+                                                    <circle cx="32" cy="32" r="28" stroke="#10b981" strokeWidth="6" fill="transparent"
+                                                        strokeDasharray={`${((parseInt(matchData.localAttacksDangerousAttacks) || 0) / ((parseInt(matchData.localAttacksDangerousAttacks) || 0) + (parseInt(matchData.visitorAttacksDangerousAttacks) || 0) || 1)) * 175.93} 175.93`} />
+                                                    <circle cx="32" cy="32" r="28" stroke="#ef4444" strokeWidth="6" fill="transparent"
+                                                        strokeDasharray={`${((parseInt(matchData.visitorAttacksDangerousAttacks) || 0) / ((parseInt(matchData.localAttacksDangerousAttacks) || 0) + (parseInt(matchData.visitorAttacksDangerousAttacks) || 0) || 1)) * 175.93} 175.93`}
+                                                        strokeDashoffset={`-${((parseInt(matchData.localAttacksDangerousAttacks) || 0) / ((parseInt(matchData.localAttacksDangerousAttacks) || 0) + (parseInt(matchData.visitorAttacksDangerousAttacks) || 0) || 1)) * 175.93}`} />
+                                                </svg>
+                                            </div>
+                                            <span className="text-2xl font-bold text-white min-w-[2ch] text-left">{matchData.visitorAttacksDangerousAttacks || 0}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Posse de Bola */}
+                                    <div className="flex flex-col items-center min-w-[120px]">
+                                        <div className="text-sm font-bold text-zinc-300 mb-2">% de Posse</div>
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-2xl font-bold text-white min-w-[2ch] text-right">{matchData.localBallPossession || 0}</span>
+                                            <div className="relative w-16 h-16">
+                                                <svg className="transform -rotate-90 w-16 h-16">
+                                                    <circle cx="32" cy="32" r="28" stroke="#18181b" strokeWidth="6" fill="transparent" />
+                                                    <circle cx="32" cy="32" r="28" stroke="#10b981" strokeWidth="6" fill="transparent"
+                                                        strokeDasharray={`${((parseInt(matchData.localBallPossession) || 0) / 100) * 175.93} 175.93`} />
+                                                    <circle cx="32" cy="32" r="28" stroke="#ef4444" strokeWidth="6" fill="transparent"
+                                                        strokeDasharray={`${((parseInt(matchData.visitorBallPossession) || 0) / 100) * 175.93} 175.93`}
+                                                        strokeDashoffset={`-${((parseInt(matchData.localBallPossession) || 0) / 100) * 175.93}`} />
+                                                </svg>
+                                            </div>
+                                            <span className="text-2xl font-bold text-white min-w-[2ch] text-left">{matchData.visitorBallPossession || 0}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Corners and Cards Summary Row */}
+                                <div className="flex justify-between items-center px-4">
+                                    {/* Home Team Stats (Left) */}
+                                    <div className="flex gap-6">
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="h-3.5 flex items-center justify-center text-lg">🚩</div>
+                                            <div className="bg-zinc-800/80 border border-zinc-700 px-1.5 rounded text-[10px] font-mono text-white">
+                                                {matchData.localCorners || 0}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="w-2.5 h-3.5 bg-yellow-500 rounded-[1px] shadow-sm" />
+                                            <div className="bg-zinc-800/80 border border-zinc-700 px-1.5 rounded text-[10px] font-mono text-white">
+                                                {matchData.localYellowCards || 0}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="w-2.5 h-3.5 bg-red-600 rounded-[1px] shadow-sm" />
+                                            <div className="bg-zinc-800/80 border border-zinc-700 px-1.5 rounded text-[10px] font-mono text-white">
+                                                {matchData.localRedCards || 0}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Away Team Stats (Right) */}
+                                    <div className="flex gap-6">
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="w-2.5 h-3.5 bg-yellow-500 rounded-[1px] shadow-sm" />
+                                            <div className="bg-zinc-800/80 border border-zinc-700 px-1.5 rounded text-[10px] font-mono text-white">
+                                                {matchData.visitorYellowCards || 0}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="w-2.5 h-3.5 bg-red-600 rounded-[1px] shadow-sm" />
+                                            <div className="bg-zinc-800/80 border border-zinc-700 px-1.5 rounded text-[10px] font-mono text-white">
+                                                {matchData.visitorRedCards || 0}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="h-3.5 flex items-center justify-center text-lg">🚩</div>
+                                            <div className="bg-zinc-800/80 border border-zinc-700 px-1.5 rounded text-[10px] font-mono text-white">
+                                                {matchData.visitorCorners || 0}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Shot statistics with horizontal bars */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    {/* Chutes no Gol */}
+                                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+                                        <div className="text-xs text-zinc-400 mb-3 text-center">CHUTES NO GOL</div>
+                                        <div className="relative h-8 bg-zinc-800 rounded-full overflow-hidden">
+                                            <div className="absolute inset-0 flex">
+                                                <div
+                                                    className="bg-emerald-500 flex items-center justify-start pl-2"
+                                                    style={{
+                                                        width: `${((parseInt(matchData.localShotsOnGoal) || 0) / ((parseInt(matchData.localShotsOnGoal) || 0) + (parseInt(matchData.visitorShotsOnGoal) || 0) || 1)) * 100}%`
+                                                    }}
+                                                >
+                                                    <span className="text-white font-bold text-sm">{matchData.localShotsOnGoal || 0}</span>
+                                                </div>
+                                                <div
+                                                    className="bg-red-500 flex items-center justify-end pr-2 ml-auto"
+                                                    style={{
+                                                        width: `${((parseInt(matchData.visitorShotsOnGoal) || 0) / ((parseInt(matchData.localShotsOnGoal) || 0) + (parseInt(matchData.visitorShotsOnGoal) || 0) || 1)) * 100}%`
+                                                    }}
+                                                >
+                                                    <span className="text-white font-bold text-sm">{matchData.visitorShotsOnGoal || 0}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Chutes ao Lado */}
+                                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+                                        <div className="text-xs text-zinc-400 mb-3 text-center">CHUTES AO LADO</div>
+                                        <div className="relative h-8 bg-zinc-800 rounded-full overflow-hidden">
+                                            <div className="absolute inset-0 flex">
+                                                <div
+                                                    className="bg-emerald-500 flex items-center justify-start pl-2"
+                                                    style={{
+                                                        width: `${((parseInt(matchData.localShotsOffGoal) || 0) / ((parseInt(matchData.localShotsOffGoal) || 0) + (parseInt(matchData.visitorShotsOffGoal) || 0) || 1)) * 100}%`
+                                                    }}
+                                                >
+                                                    <span className="text-white font-bold text-sm">{matchData.localShotsOffGoal || 0}</span>
+                                                </div>
+                                                <div
+                                                    className="bg-red-500 flex items-center justify-end pr-2 ml-auto"
+                                                    style={{
+                                                        width: `${((parseInt(matchData.visitorShotsOffGoal) || 0) / ((parseInt(matchData.localShotsOffGoal) || 0) + (parseInt(matchData.visitorShotsOffGoal) || 0) || 1)) * 100}%`
+                                                    }}
+                                                >
+                                                    <span className="text-white font-bold text-sm">{matchData.visitorShotsOffGoal || 0}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         )}
 
                         {activeMainTab === 'graficos' && pressureData.length > 0 && (

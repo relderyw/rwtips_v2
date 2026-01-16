@@ -2,10 +2,11 @@
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE
-    || (import.meta.env.PROD ? 'https://rwtips-r943.onrender.com/api' : '');
+    || (import.meta.env.PROD ? 'https://m2.sokkerpro.com' : '');
 
 export interface LiveScore {
     id: number;
+    fixtureId?: string; // Mapped from fixtureId in API
     leagueName: string;
     countryName: string;
     countryImagePath?: string;
@@ -33,11 +34,7 @@ export const liveApi = {
     // Fetch all live scores
     async getLiveScores() {
         try {
-            // Ensure we don't have double slashes and correct API path
-            const baseUrl = API_BASE?.replace(/\/+$/, '') || '';
-            const apiPath = baseUrl.endsWith('/api') ? '' : '/api';
-            const url = baseUrl ? `${baseUrl}${apiPath}/livescores` : '/api/livescores';
-            
+            const url = API_BASE ? `${API_BASE}/livescores` : '/api/livescores';
             const response = await axios.get(url);
             return response.data;
         } catch (error) {
@@ -49,10 +46,7 @@ export const liveApi = {
     // Fetch details for a specific fixture
     async getFixtureDetails(fixtureId: string | number) {
         try {
-            const baseUrl = API_BASE?.replace(/\/+$/, '') || '';
-            const apiPath = baseUrl.endsWith('/api') ? '' : '/api';
-            const url = baseUrl ? `${baseUrl}${apiPath}/fixture/${fixtureId}` : `/api/fixture/${fixtureId}`;
-
+            const url = API_BASE ? `${API_BASE}/fixture/${fixtureId}` : `/api/fixture/${fixtureId}`;
             const response = await axios.get(url);
             return response.data;
         } catch (error) {

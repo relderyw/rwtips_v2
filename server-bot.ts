@@ -233,10 +233,17 @@ app.get('/api/f-team-tournaments', async (req, res) => {
         console.log('[API] Buscando LiveScores de m2.sokkerpro.com');
         const response = await axios.get('https://m2.sokkerpro.com/livescores', {
             headers: { 
-                'Accept': 'application/json',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
                 'Referer': 'https://sokkerpro.com/',
                 'Origin': 'https://sokkerpro.com',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 OPR/125.0.0.0',
+                'sec-ch-ua': '"Opera Air";v="125", "Not?A_Brand";v="8", "Chromium";v="141"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-site'
             },
             responseType: 'json'
         });
@@ -254,10 +261,17 @@ app.get('/api/fixture/:id', async (req, res) => {
         console.log(`[API] Buscando detalhes da partida ${id}`);
         const response = await axios.get(`https://m2.sokkerpro.com/fixture/${id}`, {
             headers: { 
-                'Accept': 'application/json',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
                 'Referer': 'https://sokkerpro.com/',
                 'Origin': 'https://sokkerpro.com',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 OPR/125.0.0.0',
+                'sec-ch-ua': '"Opera Air";v="125", "Not?A_Brand";v="8", "Chromium";v="141"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-site'
             },
             responseType: 'json'
         });

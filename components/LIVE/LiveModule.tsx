@@ -44,45 +44,25 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
                 });
             }
 
+            // LOG FOR DEBUGGING
+            if (allMatches.length > 0) {
+                console.log("DEBUG: Sample Match Data:", allMatches[0]);
+                console.log("DEBUG: Sample Match ID:", allMatches[0].id);
+            }
+
+            // Process matches to calculate HT scores
             // Process matches to calculate HT scores
             const processedMatches = allMatches.map(match => {
                 let htScoreLocal = null;
                 let htScoreVisitor = null;
+                // ... logic ...
 
-                if (match.timeline || match.events) {
-                    let eventsArray: any[] = [];
-                    const events = match.timeline || match.events;
-
-                    if (typeof events === 'string') {
-                        try {
-                            eventsArray = JSON.parse(events);
-                        } catch (e) {
-                            // ignore
-                        }
-                    } else if (Array.isArray(events)) {
-                        eventsArray = events;
-                    }
-
-                    if (Array.isArray(eventsArray)) {
-                        const firstHalfGoals = eventsArray.filter((event: any) => {
-                            const minute = parseInt(event.minute || event.min || 0);
-                            const isGoal = event.type === 'goal' || event.type_id === 14 || event.event === 'goal';
-                            return isGoal && minute > 0 && minute <= 45;
-                        });
-
-                        if (firstHalfGoals.length > 0) {
-                            const lastHTGoal = firstHalfGoals[firstHalfGoals.length - 1];
-                            const scoreMatch = (lastHTGoal.result || lastHTGoal.score || '').match(/(\d+)-(\d+)/);
-                            if (scoreMatch) {
-                                htScoreLocal = parseInt(scoreMatch[1]);
-                                htScoreVisitor = parseInt(scoreMatch[2]);
-                            }
-                        }
-                    }
-                }
+                // Ensure ID is set (mapped from fixtureId if id is missing)
+                const finalId = match.id || (match.fixtureId ? parseInt(match.fixtureId) : 0);
 
                 return {
                     ...match,
+                    id: finalId, // Override/Ensure ID is set
                     calculatedHTLocal: htScoreLocal,
                     calculatedHTVisitor: htScoreVisitor
                 };
@@ -104,9 +84,16 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
     }, []);
 
     const handleMatchClick = async (match: LiveScore) => {
+        console.log("DEBUG: Clicked match:", match);
+        console.log("DEBUG: Match ID:", match.id);
+
         setSelectedMatch(match);
         setLoadingMatch(true);
         try {
+            if (!match.id) {
+                console.error("ERROR: Match ID is undefined!");
+                return;
+            }
             const details = await liveApi.getFixtureDetails(match.id);
             setMatchData(details.data);
         } catch (err) {
@@ -142,12 +129,12 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
     return (
         <div className="min-h-screen bg-black text-white p-4 md:p-8">
             <div className="max-w-7xl mx-auto space-y-6">
-                
+
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center gap-4">
                         {onBack && (
-                            <button 
+                            <button
                                 onClick={onBack}
                                 className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white"
                             >
@@ -163,19 +150,19 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
                             </p>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
-                        <button 
-                            onClick={() => fetchMatches()} 
+                        <button
+                            onClick={() => fetchMatches()}
                             disabled={loading}
                             className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2"
                         >
                             <i className={`fa-solid fa-rotate ${loading ? 'animate-spin' : ''}`}></i>
                             Atualizar
                         </button>
-                        
+
                         {onLogout && (
-                            <button 
+                            <button
                                 onClick={onLogout}
                                 className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-all text-xs font-black uppercase tracking-widest text-red-400 hover:text-red-300 flex items-center gap-2"
                             >
@@ -187,7 +174,7 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
                 </div>
 
                 {/* Filter Bar */}
-                <FilterBar 
+                <FilterBar
                     leagues={uniqueLeagues}
                     selectedLeague={selectedLeague}
                     onLeagueChange={setSelectedLeague}
@@ -207,10 +194,10 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredMatches.map(match => (
-                            <MatchCard 
-                                key={match.id} 
-                                match={match} 
-                                onClick={handleMatchClick} 
+                            <MatchCard
+                                key={match.id}
+                                match={match}
+                                onClick={handleMatchClick}
                             />
                         ))}
                     </div>
