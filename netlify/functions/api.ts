@@ -52,6 +52,18 @@ export const handler: Handler = async (event: HandlerEvent) => {
        }
   }
 
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+      body: '',
+    };
+  }
+
   // Fallback: If we can't detect path, check if it's livescores or fixture based on typical usage
   // Ideally, we'd log this to see what Netlify actually sends.
   
