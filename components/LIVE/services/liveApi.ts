@@ -33,7 +33,11 @@ export const liveApi = {
     // Fetch all live scores
     async getLiveScores() {
         try {
-            const url = API_BASE ? `${API_BASE}/livescores` : '/api/livescores';
+            // Ensure we don't have double slashes and correct API path
+            const baseUrl = API_BASE?.replace(/\/+$/, '') || '';
+            const apiPath = baseUrl.endsWith('/api') ? '' : '/api';
+            const url = baseUrl ? `${baseUrl}${apiPath}/livescores` : '/api/livescores';
+            
             const response = await axios.get(url);
             return response.data;
         } catch (error) {
@@ -45,7 +49,10 @@ export const liveApi = {
     // Fetch details for a specific fixture
     async getFixtureDetails(fixtureId: string | number) {
         try {
-            const url = API_BASE ? `${API_BASE}/fixture/${fixtureId}` : `/api/fixture/${fixtureId}`;
+            const baseUrl = API_BASE?.replace(/\/+$/, '') || '';
+            const apiPath = baseUrl.endsWith('/api') ? '' : '/api';
+            const url = baseUrl ? `${baseUrl}${apiPath}/fixture/${fixtureId}` : `/api/fixture/${fixtureId}`;
+
             const response = await axios.get(url);
             return response.data;
         } catch (error) {
