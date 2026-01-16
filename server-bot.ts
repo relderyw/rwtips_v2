@@ -228,11 +228,16 @@ app.get('/api/f-team-tournaments', async (req, res) => {
 // ------------------------------------------------------
 // --- NOVAS ROTAS PARA MÓDULO LIVE (SOKKERPRO) ---
 // Proxy para LiveScores
-app.get('/api/livescores', async (req, res) => {
+    app.get('/api/livescores', async (req, res) => {
     try {
         console.log('[API] Buscando LiveScores de m2.sokkerpro.com');
         const response = await axios.get('https://m2.sokkerpro.com/livescores', {
-            headers: { 'Accept': 'application/json' },
+            headers: { 
+                'Accept': 'application/json',
+                'Referer': 'https://sokkerpro.com/',
+                'Origin': 'https://sokkerpro.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
             responseType: 'json'
         });
         res.json(response.data);
@@ -248,7 +253,12 @@ app.get('/api/fixture/:id', async (req, res) => {
         const { id } = req.params;
         console.log(`[API] Buscando detalhes da partida ${id}`);
         const response = await axios.get(`https://m2.sokkerpro.com/fixture/${id}`, {
-            headers: { 'Accept': 'application/json' },
+            headers: { 
+                'Accept': 'application/json',
+                'Referer': 'https://sokkerpro.com/',
+                'Origin': 'https://sokkerpro.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
             responseType: 'json'
         });
         res.json(response.data);

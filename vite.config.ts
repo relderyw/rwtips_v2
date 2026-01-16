@@ -13,13 +13,27 @@ export default defineConfig(({ mode }) => {
                 target: 'https://m2.sokkerpro.com',
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api/, ''),
-                secure: false
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Referer', 'https://sokkerpro.com/');
+                        proxyReq.setHeader('Origin', 'https://sokkerpro.com');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+                    });
+                }
             },
             '/api/fixture': {
                 target: 'https://m2.sokkerpro.com',
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api/, ''),
-                secure: false
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Referer', 'https://sokkerpro.com/');
+                        proxyReq.setHeader('Origin', 'https://sokkerpro.com');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+                    });
+                }
             }
         }
       },
