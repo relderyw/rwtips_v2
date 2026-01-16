@@ -3,9 +3,9 @@ import axios from 'axios';
 
 // Em produção, usa o backend próprio no Render (que atua como Proxy)
 // Em desenvolvimento, usa o proxy do Vite ('')
-const API_BASE = import.meta.env.PROD 
-    ? 'https://rwtips-r943.onrender.com/api' 
-    : '/api';
+// Em produção, usa o Netlify Functions (via rewrite no netlify.toml)
+// Em desenvolvimento, usa o proxy do Vite (vite.config.ts)
+const API_BASE = '/api';
 
 export interface LiveScore {
     id: number;
