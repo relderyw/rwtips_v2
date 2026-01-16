@@ -17,8 +17,16 @@ export default defineConfig(({ mode }) => {
                 configure: (proxy, _options) => {
                     proxy.on('proxyReq', (proxyReq, _req, _res) => {
                         proxyReq.setHeader('Accept', 'application/json, text/plain, */*');
+                        proxyReq.setHeader('Accept-Language', 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7');
                         proxyReq.setHeader('Referer', 'https://sokkerpro.com/');
-                        // Minimal headers to match working TESTE environment
+                        proxyReq.setHeader('Origin', 'https://sokkerpro.com');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 OPR/125.0.0.0');
+                        proxyReq.setHeader('sec-ch-ua', '"Opera Air";v="125", "Not?A_Brand";v="8", "Chromium";v="141"');
+                        proxyReq.setHeader('sec-ch-ua-mobile', '?0');
+                        proxyReq.setHeader('sec-ch-ua-platform', '"Windows"');
+                        proxyReq.setHeader('sec-fetch-dest', 'empty');
+                        proxyReq.setHeader('sec-fetch-mode', 'cors');
+                        proxyReq.setHeader('sec-fetch-site', 'same-site');
                     });
                 }
             },
@@ -30,8 +38,16 @@ export default defineConfig(({ mode }) => {
                 configure: (proxy, _options) => {
                     proxy.on('proxyReq', (proxyReq, _req, _res) => {
                         proxyReq.setHeader('Accept', 'application/json, text/plain, */*');
+                        proxyReq.setHeader('Accept-Language', 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7');
                         proxyReq.setHeader('Referer', 'https://sokkerpro.com/');
-                        // Minimal headers to match working TESTE environment
+                        proxyReq.setHeader('Origin', 'https://sokkerpro.com');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 OPR/125.0.0.0');
+                        proxyReq.setHeader('sec-ch-ua', '"Opera Air";v="125", "Not?A_Brand";v="8", "Chromium";v="141"');
+                        proxyReq.setHeader('sec-ch-ua-mobile', '?0');
+                        proxyReq.setHeader('sec-ch-ua-platform', '"Windows"');
+                        proxyReq.setHeader('sec-fetch-dest', 'empty');
+                        proxyReq.setHeader('sec-fetch-mode', 'cors');
+                        proxyReq.setHeader('sec-fetch-site', 'same-site');
                     });
                 }
             }

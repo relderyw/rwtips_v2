@@ -96,13 +96,8 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
             }
             const details = await liveApi.getFixtureDetails(match.id);
             setMatchData(details.data);
-        } catch (err: any) {
+        } catch (err) {
             console.error("Error loading match details:", err);
-            // Log detailed error info if available
-            if (err.response) {
-                console.error("Response data:", err.response.data);
-                console.error("Response status:", err.response.status);
-            }
         } finally {
             setLoadingMatch(false);
         }
