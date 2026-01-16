@@ -21,7 +21,7 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
     const [statType, setStatType] = useState('GOLS'); // GOLS, ESCANTEIOS, etc
 
     const pressureData = matchData ? processPressureData(matchData) : [];
-    // Unused variables for now, but kept for future use if needed, or derived in render
+    // Unused variables for now, but kept for future use if needed, or derived in render .
     // const probabilities = processProbabilities(matchData);
     const recentMatchesHome = matchData ? processRecentMatches(matchData, 'home', match.localTeamName || '') : [];
     const recentMatchesAway = matchData ? processRecentMatches(matchData, 'away', match.visitorTeamName || '') : [];
