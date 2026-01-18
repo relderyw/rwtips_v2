@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import LoadingSpinner from './LoadingSpinner';
 import { processPressureData, processProbabilities, processRecentMatches } from '../utils/helpers';
 import { LiveScore } from '../services/liveApi';
+import { calculateStrategies, StrategyResult } from '../utils/liveStrategies';
 
 interface MatchAnalysisModalProps {
     isOpen?: boolean;
@@ -13,22 +14,87 @@ interface MatchAnalysisModalProps {
     onClose: () => void;
 }
 
+// Helper Component: Circular Gauge
+const CircularGauge = ({ value, color = "#25ad70", label, subLabel }: { value: number; color?: string; label?: string; subLabel?: string }) => {
+    const radius = 40;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (value / 100) * circumference;
+
+    return (
+        <div className="flex flex-col items-center justify-center">
+            <div className="relative flex items-center justify-center">
+                <svg className="transform -rotate-90 w-24 h-24">
+                    <circle
+                        cx="48"
+                        cy="48"
+                        r={radius}
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        className="text-zinc-800"
+                    />
+                    <circle
+                        cx="48"
+                        cy="48"
+                        r={radius}
+                        stroke={color}
+                        strokeWidth="8"
+                        fill="transparent"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        className="transition-all duration-1000 ease-out"
+                        strokeLinecap="round"
+                    />
+                </svg>
+                <div className="absolute flex flex-col items-center">
+                    <span className="text-xl font-bold text-white">{value}</span>
+                </div>
+            </div>
+            {label && <span className="text-xs text-zinc-400 mt-2 uppercase tracking-wider">{label}</span>}
+            {subLabel && <span className="text-[10px] text-zinc-500">{subLabel}</span>}
+        </div>
+    );
+};
+
 const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchData, loading, onClose }) => {
     const [activeMainTab, setActiveMainTab] = useState('dicas');
     const [activeTipTab, setActiveTipTab] = useState('vencedor');
     const [activeSection, setActiveSection] = useState('jogo-inteiro');
     const [statPeriod, setStatPeriod] = useState('FT'); // FT, 1T, 2T
     const [statType, setStatType] = useState('GOLS'); // GOLS, ESCANTEIOS, etc
+    const [currentSlide, setCurrentSlide] = useState(0);
+
 
     const pressureData = matchData ? processPressureData(matchData) : [];
-    // Unused variables for now, but kept for future use if needed, or derived in render
-    // const probabilities = processProbabilities(matchData);
     const recentMatchesHome = matchData ? processRecentMatches(matchData, 'home', match.localTeamName || '') : [];
     const recentMatchesAway = matchData ? processRecentMatches(matchData, 'away', match.visitorTeamName || '') : [];
 
     // Helper to safely get numeric values
     const getVal = (val: any) => parseInt(val) || 0;
     const getFloat = (val: any) => parseFloat(val) || 0;
+
+    // Calculate Live Strategies
+    let liveStrategies: StrategyResult[] = [];
+    if (matchData) {
+        const statsForCalc = {
+            time: parseInt(matchData.minute) || 0,
+            homeScore: getVal(matchData.scoresLocalTeam),
+            awayScore: getVal(matchData.scoresVisitorTeam),
+            homeAttacks: getVal(matchData.localAttacksAttacks),
+            awayAttacks: getVal(matchData.visitorAttacksAttacks),
+            homeDangerousAttacks: getVal(matchData.localAttacksDangerousAttacks),
+            awayDangerousAttacks: getVal(matchData.visitorAttacksDangerousAttacks),
+            homeShootsOn: getVal(matchData.localShotsOnGoal),
+            awayShootsOn: getVal(matchData.visitorShotsOnGoal),
+            homeShootsOff: getVal(matchData.localShotsOffGoal),
+            awayShootsOff: getVal(matchData.visitorShotsOffGoal),
+            homeCorners: getVal(matchData.localCorners),
+            awayCorners: getVal(matchData.visitorCorners),
+            homeName: match.localTeamName || 'Casa',
+            awayName: match.visitorTeamName || 'Fora'
+        };
+        liveStrategies = calculateStrategies(statsForCalc);
+    }
 
     const statusLabel = matchData?.status === 'HT'
         ? 'INTERVALO'
@@ -380,7 +446,7 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-start justify-center p-4 z-50 pt-10 overflow-y-auto">
             <div className="bg-black border border-zinc-800 rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-2xl shadow-emerald-900/10">
                 {/* Top bar */}
                 <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50 sticky top-0 backdrop-blur-md z-10">
@@ -521,8 +587,139 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                         )}
 
                         {/* Outros conteúdos (simplificado para caber... ) usa a mesma lógica do original */}
+
                         {activeMainTab === 'ao-vivo' && matchData && (
-                            <div className="text-zinc-400 p-4 text-center">Implementação Completa do Ao Vivo em Breve... Utilize o app original para detalhes gráficos.</div>
+                            <div className="space-y-6">
+                                {/* Carousel Container */}
+                                <div className="relative bg-zinc-800/30 rounded-xl overflow-hidden min-h-[200px]">
+                                    {/* Slides */}
+                                    <div className="transition-transform duration-500 ease-in-out flex" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+
+                                        {/* Slide 1: Intensity Gauges */}
+                                        <div className="min-w-full p-4 flex justify-around items-center">
+                                            <div className="text-center space-y-2">
+                                                <div className="text-emerald-500 font-bold text-lg">{matchData.localAttacksAttacks || 0}</div>
+                                                <CircularGauge value={50} color="#25ad70" label="Ataques" />
+                                                <div className="text-red-500 font-bold text-lg">{matchData.visitorAttacksAttacks || 0}</div>
+                                            </div>
+                                            <div className="text-center space-y-2">
+                                                <div className="text-emerald-500 font-bold text-lg">{matchData.localAttacksDangerousAttacks || 0}</div>
+                                                <CircularGauge value={60} color="#eab308" label="Ataques Perigosos" />
+                                                <div className="text-red-500 font-bold text-lg">{matchData.visitorAttacksDangerousAttacks || 0}</div>
+                                            </div>
+                                            <div className="text-center space-y-2">
+                                                <div className="text-emerald-500 font-bold text-lg">{matchData.localBallPossession || 50}%</div>
+                                                <CircularGauge value={matchData.localBallPossession || 50} color="#3b82f6" label="Posse" />
+                                                <div className="text-red-500 font-bold text-lg">{matchData.visitorBallPossession || 50}%</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Slide 2: APPM Breakdown (Placeholder for now as specific granular API data might be missing) */}
+                                        <div className="min-w-full p-4 grid grid-cols-2 gap-4">
+                                            <div className="bg-zinc-800/50 p-3 rounded-lg text-center">
+                                                <div className="text-zinc-500 text-xs uppercase mb-1">APPM (Total)</div>
+                                                <div className="text-white font-bold">{((matchData.localAttacksAttacks || 0) / (matchData.minute || 1)).toFixed(2)}</div>
+                                            </div>
+                                            <div className="bg-zinc-800/50 p-3 rounded-lg text-center">
+                                                <div className="text-zinc-500 text-xs uppercase mb-1">APPM (Perigoso)</div>
+                                                <div className="text-white font-bold">{((matchData.localAttacksDangerousAttacks || 0) / (matchData.minute || 1)).toFixed(2)}</div>
+                                            </div>
+                                            {/* Add more breakdown items here if data becomes available */}
+                                            <div className="col-span-2 text-center text-zinc-500 text-xs italic mt-4">
+                                                Deslize para ver mais detalhes
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Carousel Indicators */}
+                                    <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+                                        {[0, 1].map((idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setCurrentSlide(idx)}
+                                                className={`w-2 h-2 rounded-full transition-all ${currentSlide === idx ? 'bg-emerald-500 w-4' : 'bg-zinc-600'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Pressure Bar (Kept from previous iteration as it's valuable) */}
+                                {(matchData.localPressureBar !== undefined || matchData.visitorPressureBar !== undefined) && (
+                                    <div className="bg-zinc-800/50 rounded-xl p-4 text-center border border-zinc-700">
+                                        <div className="flex justify-between text-xs text-zinc-400 mb-2 uppercase font-bold tracking-widest">
+                                            <span>Pressão Casa</span>
+                                            <span>Índice de Pressão</span>
+                                            <span>Pressão Visitante</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-emerald-500 font-bold text-xl w-8 text-right">{matchData.localPressureBar || 0}</div>
+                                            <div className="flex-1 h-2 bg-zinc-700 rounded-full overflow-hidden flex">
+                                                <div
+                                                    className="bg-emerald-500 h-full transition-all duration-500"
+                                                    style={{ width: `${matchData.localPressureBar || 50}%` }}
+                                                />
+                                                <div
+                                                    className="bg-red-500 h-full transition-all duration-500 flex-1"
+                                                    style={{ width: `${matchData.visitorPressureBar || 0}%` }}
+                                                />
+                                            </div>
+                                            <div className="text-red-500 font-bold text-xl w-8 text-left">{matchData.visitorPressureBar || 0}</div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Refined Stats Grid (Incidents) */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-zinc-800/50 rounded-lg p-3 flex justify-between items-center border border-zinc-700/50">
+                                        <span className="text-emerald-400 font-bold text-lg">{matchData.localShotsOnGoal || 0}</span>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-zinc-500 text-[10px] uppercase tracking-wider">Chutes no Gol</span>
+                                            {/* Mini Bar */}
+                                            <div className="w-16 h-1 bg-zinc-700 rounded-full mt-1 flex overflow-hidden">
+                                                <div className="bg-emerald-500 h-full" style={{ width: `${(getVal(matchData.localShotsOnGoal) / (getVal(matchData.localShotsOnGoal) + getVal(matchData.visitorShotsOnGoal) || 1)) * 100}%` }}></div>
+                                                <div className="bg-red-500 h-full flex-1"></div>
+                                            </div>
+                                        </div>
+                                        <span className="text-red-400 font-bold text-lg">{matchData.visitorShotsOnGoal || 0}</span>
+                                    </div>
+
+                                    <div className="bg-zinc-800/50 rounded-lg p-3 flex justify-between items-center border border-zinc-700/50">
+                                        <span className="text-emerald-400 font-bold text-lg">{matchData.localCorners || 0}</span>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-zinc-500 text-[10px] uppercase tracking-wider">Escanteios</span>
+                                            <div className="w-16 h-1 bg-zinc-700 rounded-full mt-1 flex overflow-hidden">
+                                                <div className="bg-emerald-500 h-full" style={{ width: `${(getVal(matchData.localCorners) / (getVal(matchData.localCorners) + getVal(matchData.visitorCorners) || 1)) * 100}%` }}></div>
+                                                <div className="bg-red-500 h-full flex-1"></div>
+                                            </div>
+                                        </div>
+                                        <span className="text-red-400 font-bold text-lg">{matchData.visitorCorners || 0}</span>
+                                    </div>
+
+                                    <div className="bg-zinc-800/50 rounded-lg p-3 flex justify-between items-center border border-zinc-700/50">
+                                        <span className="text-emerald-400 font-bold text-lg">{matchData.localYellowCards || 0}</span>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-zinc-500 text-[10px] uppercase tracking-wider">Cartões Amarelos</span>
+                                            <div className="w-16 h-1 bg-zinc-700 rounded-full mt-1 flex overflow-hidden">
+                                                <div className="bg-emerald-500 h-full" style={{ width: `${(getVal(matchData.localYellowCards) / (getVal(matchData.localYellowCards) + getVal(matchData.visitorYellowCards) || 1)) * 100}%` }}></div>
+                                                <div className="bg-red-500 h-full flex-1"></div>
+                                            </div>
+                                        </div>
+                                        <span className="text-red-400 font-bold text-lg">{matchData.visitorYellowCards || 0}</span>
+                                    </div>
+
+                                    <div className="bg-zinc-800/50 rounded-lg p-3 flex justify-between items-center border border-zinc-700/50">
+                                        <span className="text-emerald-400 font-bold text-lg">{matchData.localRedCards || 0}</span>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-zinc-500 text-[10px] uppercase tracking-wider">Cartões Vermelhos</span>
+                                            <div className="w-16 h-1 bg-zinc-700 rounded-full mt-1 flex overflow-hidden">
+                                                <div className="bg-emerald-500 h-full" style={{ width: `${(getVal(matchData.localRedCards) / (getVal(matchData.localRedCards) + getVal(matchData.visitorRedCards) || 1)) * 100}%` }}></div>
+                                                <div className="bg-red-500 h-full flex-1"></div>
+                                            </div>
+                                        </div>
+                                        <span className="text-red-400 font-bold text-lg">{matchData.visitorRedCards || 0}</span>
+                                    </div>
+                                </div>
+                            </div>
                         )}
 
                         {activeMainTab === 'graficos' && pressureData.length > 0 && (
@@ -617,27 +814,17 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                         )}
 
                         {activeMainTab === 'estatisticas' && matchData && (
-                            <div className="space-y-4">
+                            <div className="space-y-6">
+                                {/* Filtros de Estatísticas */}
                                 <div className="flex gap-4 mb-4">
                                     <div className="relative flex-1">
                                         <select
                                             value={statType}
                                             onChange={(e) => setStatType(e.target.value)}
-                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-white appearance-none cursor-pointer focus:outline-none focus:border-emerald-500"
+                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-white appearance-none cursor-pointer focus:outline-none focus:border-emerald-500 uppercase font-bold text-sm tracking-wide"
                                         >
-                                            <option value="GOLS">GOLS</option>
-                                            <option value="ESCANTEIOS">ESCANTEIOS</option>
-                                            <option value="CARTÕES AMARELOS">CARTÕES AMARELOS</option>
-                                            <option value="FALTAS">FALTAS</option>
-                                            <option value="CHUTES TOTAIS">CHUTES TOTAIS</option>
-                                            <option value="CHUTES NO GOL">CHUTES NO GOL</option>
-                                            <option value="CHUTES FORA">CHUTES FORA</option>
-                                            <option value="CHUTES DENTRO DA ÁREA">CHUTES DENTRO DA ÁREA</option>
-                                            <option value="CHUTES FORA DA ÁREA">CHUTES FORA DA ÁREA</option>
-                                            <option value="POSSE DE BOLA">POSSE DE BOLA</option>
-                                            <option value="PASSES CERTOS">PASSES CERTOS</option>
-                                            <option value="ATAQUES">ATAQUES</option>
-                                            <option value="ATAQUES PERIGOSOS">ATAQUES PERIGOSOS</option>
+                                            <option value="GERAL">VISÃO GERAL</option>
+                                            <option value="GLOSSARIO">GLOSSÁRIO TÉCNICO</option>
                                         </select>
                                     </div>
 
@@ -645,91 +832,169 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                                         <select
                                             value={statPeriod}
                                             onChange={(e) => setStatPeriod(e.target.value)}
-                                            className="w-full bg-zinc-900 border border-emerald-500 rounded-lg px-4 py-2 text-white appearance-none cursor-pointer focus:outline-none focus:border-emerald-500"
+                                            className="w-full bg-zinc-900 border border-emerald-500 rounded-lg px-4 py-2 text-emerald-400 font-bold appearance-none cursor-pointer focus:outline-none focus:border-emerald-400 text-sm uppercase tracking-wide text-center"
                                         >
-                                            <option value="FT">FT</option>
-                                            <option value="1T">1º PRIMEIRO TEMPO</option>
-                                            <option value="2T">SEGUNDO TEMPO</option>
+                                            <option value="FT">Tempo Regulamentar</option>
+                                            <option value="1T">1º Tempo</option>
+                                            <option value="2T">2º Tempo</option>
                                         </select>
                                     </div>
                                 </div>
 
-                                {(() => {
-                                    const allStats: any = {
-                                        'GOLS': { label: 'GOLS', home: matchData.scoresLocalTeam || 0, away: matchData.scoresVisitorTeam || 0 },
-                                        'ESCANTEIOS': { label: 'ESCANTEIOS', home: matchData.localCorners || 0, away: matchData.visitorCorners || 0 },
-                                        'CARTÕES AMARELOS': { label: 'CARTÕES AMARELOS', home: matchData.localYellowCards || 0, away: matchData.visitorYellowCards || 0 },
-                                        'FALTAS': { label: 'FALTAS', home: matchData.localFouls || 0, away: matchData.visitorFouls || 0 },
-                                        'CHUTES TOTAIS': { label: 'CHUTES TOTAIS', home: matchData.localShotsTotal || 0, away: matchData.visitorShotsTotal || 0 },
-                                        'CHUTES NO GOL': { label: 'CHUTES NO GOL', home: matchData.localShotsOnGoal || 0, away: matchData.visitorShotsOnGoal || 0 },
-                                        'CHUTES FORA': { label: 'CHUTES FORA', home: matchData.localShotsOffGoal || 0, away: matchData.visitorShotsOffGoal || 0 },
-                                        'CHUTES DENTRO DA ÁREA': { label: 'CHUTES DENTRO DA ÁREA', home: matchData.localShotsInsideBox || 0, away: matchData.visitorShotsInsideBox || 0 },
-                                        'CHUTES FORA DA ÁREA': { label: 'CHUTES FORA DA ÁREA', home: matchData.localShotsOutsideBox || 0, away: matchData.visitorShotsOutsideBox || 0 },
-                                        'POSSE DE BOLA': { label: 'POSSE DE BOLA', home: matchData.localBallPossession || 0, away: matchData.visitorBallPossession || 0, isPercentage: true },
-                                        'PASSES CERTOS': { label: 'PASSES CERTOS', home: matchData.localPassesAccurate || 0, away: matchData.visitorPassesAccurate || 0 },
-                                        'ATAQUES': { label: 'ATAQUES', home: matchData.localAttacksAttacks || 0, away: matchData.visitorAttacksAttacks || 0 },
-                                        'ATAQUES PERIGOSOS': { label: 'ATAQUES PERIGOSOS', home: matchData.localAttacksDangerousAttacks || 0, away: matchData.visitorAttacksDangerousAttacks || 0 }
-                                    };
+                                {/* Lista Principal de Estatísticas */}
+                                <div className="space-y-4">
+                                    {(() => {
+                                        // Helper para renderizar barra de estatística
+                                        const renderStatBar = (label: string, valueHome: number, valueAway: number, isPercentage = false) => {
+                                            const total = valueHome + valueAway || 1;
+                                            const homePercent = (valueHome / total) * 100;
+                                            const awayPercent = (valueAway / total) * 100;
 
-                                    const selectedStat = allStats[statType];
-                                    if (!selectedStat) return <div className="text-center py-8 text-slate-400">Estatística não disponível</div>;
+                                            // Correção visual para valores zerados ou muito pequenos
+                                            const safeHomePercent = valueHome === 0 && valueAway === 0 ? 50 : homePercent;
+                                            const safeAwayPercent = valueHome === 0 && valueAway === 0 ? 50 : awayPercent;
 
-                                    const total = selectedStat.home + selectedStat.away || 1;
-                                    const homePercent = (selectedStat.home / total) * 100;
-                                    const awayPercent = (selectedStat.away / total) * 100;
+                                            return (
+                                                <div className="relative mb-2" key={label}>
+                                                    <div className="flex items-center justify-between mb-1.5 px-1">
+                                                        <span className="text-white text-sm font-bold w-12">{isPercentage ? `${valueHome}%` : valueHome}</span>
+                                                        <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest text-center flex-1">{label}</span>
+                                                        <span className="text-white text-sm font-bold w-12 text-right">{isPercentage ? `${valueAway}%` : valueAway}</span>
+                                                    </div>
+                                                    <div className="flex h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden gap-1">
+                                                        <div
+                                                            className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                                                            style={{ width: `${safeHomePercent}%`, opacity: valueHome === 0 && valueAway === 0 ? 0.3 : 1 }}
+                                                        />
+                                                        <div
+                                                            className="bg-red-500 h-full rounded-full transition-all duration-500"
+                                                            style={{ width: `${safeAwayPercent}%`, opacity: valueHome === 0 && valueAway === 0 ? 0.3 : 1 }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        };
 
-                                    return (
-                                        <div className="relative">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-white text-sm font-semibold">{selectedStat.home}</span>
-                                                <span className="text-zinc-400 text-xs text-center flex-1">{selectedStat.label}</span>
-                                                <span className="text-white text-sm font-semibold">{selectedStat.away}</span>
-                                            </div>
-                                            <div className="relative h-6 bg-zinc-800 rounded overflow-hidden">
-                                                <div className="absolute inset-0 flex">
-                                                    <div className="bg-emerald-500" style={{ width: `${homePercent}%` }} />
-                                                    <div className="bg-red-500 ml-auto" style={{ width: `${awayPercent}%` }} />
+                                        // Mapeamento dos dados
+                                        const statsList = [
+                                            { label: 'Posse de Bola', home: getVal(matchData.localBallPossession), away: getVal(matchData.visitorBallPossession), isPerc: true },
+                                            { label: 'Total de Chutes', home: getVal(matchData.localShotsTotal), away: getVal(matchData.visitorShotsTotal) },
+                                            { label: 'Chutes a Gol', home: getVal(matchData.localShotsOnGoal), away: getVal(matchData.visitorShotsOnGoal) },
+                                            { label: 'Chutes ao Lado', home: getVal(matchData.localShotsOffGoal), away: getVal(matchData.visitorShotsOffGoal) },
+                                            { label: 'Escanteios', home: getVal(matchData.localCorners), away: getVal(matchData.visitorCorners) },
+                                            { label: 'Ataques', home: getVal(matchData.localAttacksAttacks), away: getVal(matchData.visitorAttacksAttacks) },
+                                            { label: 'Ataques Perigosos', home: getVal(matchData.localAttacksDangerousAttacks), away: getVal(matchData.visitorAttacksDangerousAttacks) },
+                                            // Novos campos baseados no design solicitado
+                                            { label: 'Defesas do Goleiro', home: getVal(matchData.localGoalkeeperSaves), away: getVal(matchData.visitorGoalkeeperSaves) },
+                                            { label: 'Faltas', home: getVal(matchData.localFouls), away: getVal(matchData.visitorFouls) },
+                                            { label: 'Cartões Amarelos', home: getVal(matchData.localYellowCards), away: getVal(matchData.visitorYellowCards) },
+                                            { label: 'Laterais', home: getVal(matchData.localThrowIns), away: getVal(matchData.visitorThrowIns) },
+                                            { label: 'Tiro de Meta', home: getVal(matchData.localGoalKicks), away: getVal(matchData.visitorGoalKicks) },
+                                        ];
+
+                                        return statsList.map(stat => renderStatBar(stat.label, stat.home, stat.away, stat.isPerc));
+                                    })()}
+                                </div>
+
+                                {/* Seção de Estatísticas Exclusivas (APPM e Derivados) */}
+                                <div className="mt-8 pt-6 border-t border-zinc-800">
+                                    <h3 className="text-center text-emerald-500 text-xs font-bold uppercase tracking-[0.2em] mb-6">
+                                        Estatísticas Exclusivas
+                                    </h3>
+
+                                    {(() => {
+                                        const minutes = parseInt(matchData.minute) || 1; // Evitar divisão por zero
+
+                                        // Cálculos de APPM (Attacks Per Minute)
+                                        const homeAttacks = getVal(matchData.localAttacksAttacks);
+                                        const awayAttacks = getVal(matchData.visitorAttacksAttacks);
+                                        const homeDangAttacks = getVal(matchData.localAttacksDangerousAttacks);
+                                        const awayDangAttacks = getVal(matchData.visitorAttacksDangerousAttacks);
+
+                                        const appmHome = (homeAttacks / minutes).toFixed(2);
+                                        const appmAway = (awayAttacks / minutes).toFixed(2);
+
+                                        const dangAppmHome = (homeDangAttacks / minutes).toFixed(2);
+                                        const dangAppmAway = (awayDangAttacks / minutes).toFixed(2);
+
+                                        // Pontuação Máxima (Simulada baseada em pressão/ataques - placeholder para lógica real)
+                                        const maxPotHome = ((homeDangAttacks * 2 + homeAttacks) / minutes).toFixed(1);
+                                        const maxPotAway = ((awayDangAttacks * 2 + awayAttacks) / minutes).toFixed(1);
+
+                                        const renderExclusiveStat = (label: string, valHome: string | number, valAway: string | number) => (
+                                            <div className="relative mb-4">
+                                                <div className="flex items-center justify-between mb-1.5 px-1">
+                                                    <span className="text-white text-sm font-bold w-12">{valHome}</span>
+                                                    <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest text-center flex-1">{label}</span>
+                                                    <span className="text-white text-sm font-bold w-12 text-right">{valAway}</span>
+                                                </div>
+                                                <div className="flex h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden gap-1">
+                                                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '50%' }} /> {/* Visual fixo ou calculado se houver max known */}
+                                                    <div className="bg-red-500 h-full rounded-full" style={{ width: '50%' }} />
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                })()}
+                                        );
+
+                                        return (
+                                            <div className="space-y-2">
+                                                {renderExclusiveStat('Chutes Dentro da Área', getVal(matchData.localShotsInsideBox), getVal(matchData.visitorShotsInsideBox))}
+                                                {renderExclusiveStat('Chutes Fora da Área', getVal(matchData.localShotsOutsideBox), getVal(matchData.visitorShotsOutsideBox))}
+
+                                                <div className="py-2"></div>
+
+                                                {renderExclusiveStat('Ataques por Minuto', appmHome, appmAway)}
+                                                {renderExclusiveStat('Ataques Perigosos por Minuto', dangAppmHome, dangAppmAway)}
+                                                {renderExclusiveStat('Pontuação Máx. em 1 Min', maxPotHome, maxPotAway)}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
                             </div>
                         )}
 
-                        {activeMainTab === 'possiveis-entradas' && prog && (
+                        {activeMainTab === 'possiveis-entradas' && (
                             <div className="space-y-4">
-                                <div className="text-slate-300 text-sm mb-4">Mostrando apenas probabilidades {'>='} 90%</div>
-                                {(() => {
-                                    const highProbabilities: any[] = [];
-                                    if (prog.mercado_gols) {
-                                        Object.entries(prog.mercado_gols).forEach(([key, value]: [string, any]) => {
-                                            if (value?.res >= 90) highProbabilities.push({ categoria: 'GOLS', periodo: 'JOGO INTEIRO', label: key.replace('over_', 'MAIS DE ').replace('_', '.'), probabilidade: value.res });
-                                        });
-                                    }
-                                    if (prog.mercado_1x2_1t) {
-                                        // Logic simplified for brevity, following pattern
-                                    }
-                                    if (prog.mercado_ambos_marcam) {
-                                        if (prog.mercado_ambos_marcam.ambos_sim?.probabilidade >= 90) highProbabilities.push({ categoria: 'AMBAS', periodo: 'JOGO INTEIRO', label: 'AMBOS MARCAM - SIM', probabilidade: prog.mercado_ambos_marcam.ambos_sim.probabilidade });
-                                    }
-                                    // Add minimal other checks to avoid bloat, user wants data, main ones are goals/ambas
-
-                                    if (highProbabilities.length === 0) return <div className="text-center py-8 text-slate-400">Nenhuma probabilidade {'>='} 90% encontrada</div>;
-
-                                    return (
-                                        <div className="grid gap-4">
-                                            {highProbabilities.map((item, idx) => (
-                                                <div key={idx} className="bg-emerald-500/20 border border-emerald-500 rounded-lg p-4">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div><div className="text-emerald-400 font-semibold text-sm">{item.categoria} • {item.periodo}</div><div className="text-white font-bold text-lg mt-1">{item.label}</div></div>
-                                                        <div className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-xl">{item.probabilidade}%</div>
-                                                    </div>
+                                <div className="text-slate-300 text-sm mb-4">
+                                    Estratégias identificadas baseadas no comportamento ao vivo do jogo.
+                                </div>
+                                {liveStrategies.length === 0 ? (
+                                    <div className="text-center py-8 text-slate-400 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                                        Nenhuma oportunidade identificada com alta confiança no momento.
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-4">
+                                        {liveStrategies.map((strategy, idx) => (
+                                            <div key={idx} className="bg-emerald-500/10 border border-emerald-500/50 rounded-lg p-4 relative overflow-hidden group hover:bg-emerald-500/20 transition-all">
+                                                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                    <i className="fa-solid fa-robot text-4xl text-emerald-500"></i>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    );
-                                })()}
+                                                <div className="flex justify-between items-start relative z-10">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="text-[10px] uppercase font-bold tracking-widest bg-emerald-500 text-black px-2 py-0.5 rounded">
+                                                                {strategy.type}
+                                                            </span>
+                                                            <span className="text-emerald-400 font-semibold text-xs animate-pulse">
+                                                                ● Ao Vivo
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-white font-bold text-lg mt-1">{strategy.name}</div>
+                                                        <div className="text-slate-300 text-sm mt-1">{strategy.description}</div>
+                                                    </div>
+                                                    <a
+                                                        href={`https://www.bet365.com/#/AX/K%5E${match.localTeamName?.replace(/ /g, "+")}/`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-emerald-900/20 flex items-center gap-2"
+                                                    >
+                                                        Abrir na Bet365
+                                                        <i className="fa-solid fa-external-link-alt text-xs"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 

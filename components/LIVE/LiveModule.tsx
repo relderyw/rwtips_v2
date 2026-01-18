@@ -79,9 +79,34 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
 
     useEffect(() => {
         fetchMatches();
-        const interval = setInterval(fetchMatches, 30000); // Poll every 30s
+        const interval = setInterval(fetchMatches, 30000); // Poll list every 30s
         return () => clearInterval(interval);
     }, []);
+
+    // Poll for selected match details
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+
+        if (selectedMatch?.id) {
+            const fetchDetails = async () => {
+                try {
+                    // Don't set loadingMatch to true here to avoid UI flicker
+                    const details = await liveApi.getFixtureDetails(selectedMatch.id);
+                    setMatchData(details.data);
+                } catch (err) {
+                    console.error("Error updating match details:", err);
+                }
+            };
+
+            // Initial fetch is already handled by handleMatchClick, but we set interval for updates
+            interval = setInterval(fetchDetails, 20000); // Poll details every 20s
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [selectedMatch?.id]);
+
 
     const handleMatchClick = async (match: LiveScore) => {
         console.log("DEBUG: Clicked match:", match);
