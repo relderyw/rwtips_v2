@@ -8,7 +8,7 @@ import * as cheerio from 'cheerio';
 import cors from 'cors';
 
 // Configurações
-let API_BASE = process.env.API_BASE || "http://localhost:3001";
+let API_BASE = process.env.API_BASE || "https://rwtips-r943.onrender.com";
 // Remove barras finais para evitar duplicidade //api//v1
 if (API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
 const API_BACKUP = "https://rwtips-r943.onrender.com/api/matches/live";

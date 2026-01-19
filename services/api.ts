@@ -1,7 +1,7 @@
 
 import { HistoryMatch, LiveEvent } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://rwtips-r943.onrender.com";
 const API_BACKUP = "https://rwtips-r943.onrender.com/api/matches/live";
 
 const extractPlayerName = (str: string): string => {
