@@ -4,7 +4,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import LoadingSpinner from './LoadingSpinner';
 import { processPressureData, processProbabilities, processRecentMatches } from '../utils/helpers';
 import { LiveScore } from '../services/liveApi';
-import { calculateStrategies, StrategyResult } from '../utils/liveStrategies';
+import { calculateStrategies, StrategyResult, StrategyConfig } from '../utils/liveStrategies';
+import StrategyDebugPanel from './StrategyDebugPanel';
 
 interface MatchAnalysisModalProps {
     isOpen?: boolean;
@@ -12,6 +13,7 @@ interface MatchAnalysisModalProps {
     matchData: any; // Using any for the complex API response to facilitate porting
     loading: boolean;
     onClose: () => void;
+    strategyConfig?: StrategyConfig;
 }
 
 // Helper Component: Circular Gauge
@@ -56,7 +58,7 @@ const CircularGauge = ({ value, color = "#25ad70", label, subLabel }: { value: n
     );
 };
 
-const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchData, loading, onClose }) => {
+const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchData, loading, onClose, strategyConfig }) => {
     const [activeMainTab, setActiveMainTab] = useState('dicas');
     const [activeTipTab, setActiveTipTab] = useState('vencedor');
     const [activeSection, setActiveSection] = useState('jogo-inteiro');
@@ -93,8 +95,21 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
             homeName: match.localTeamName || 'Casa',
             awayName: match.visitorTeamName || 'Fora'
         };
-        liveStrategies = calculateStrategies(statsForCalc);
+        liveStrategies = calculateStrategies(statsForCalc, strategyConfig);
     }
+
+    // Always calculate debug info for the debug panel
+    const debugInfo = matchData ? {
+        appmHome: parseFloat(((getVal(matchData.localAttacksDangerousAttacks) / (parseInt(matchData.minute) || 1))).toFixed(2)),
+        appmAway: parseFloat(((getVal(matchData.visitorAttacksDangerousAttacks) / (parseInt(matchData.minute) || 1))).toFixed(2)),
+        appmTotal: parseFloat((((getVal(matchData.localAttacksDangerousAttacks) + getVal(matchData.visitorAttacksDangerousAttacks)) / (parseInt(matchData.minute) || 1))).toFixed(2)),
+        cgHome: getVal(matchData.localCorners) + getVal(matchData.localShotsOnGoal) + getVal(matchData.localShotsOffGoal),
+        cgAway: getVal(matchData.visitorCorners) + getVal(matchData.visitorShotsOnGoal) + getVal(matchData.visitorShotsOffGoal),
+        cgTotal: getVal(matchData.localCorners) + getVal(matchData.visitorCorners) + getVal(matchData.localShotsOnGoal) + getVal(matchData.visitorShotsOnGoal) + getVal(matchData.localShotsOffGoal) + getVal(matchData.visitorShotsOffGoal),
+        time: parseInt(matchData.minute) || 0,
+        scoreHome: getVal(matchData.scoresLocalTeam),
+        scoreAway: getVal(matchData.scoresVisitorTeam)
+    } : undefined;
 
     const statusLabel = matchData?.status === 'HT'
         ? 'INTERVALO'
@@ -957,12 +972,20 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                                 <div className="text-slate-300 text-sm mb-4">
                                     Estratégias identificadas baseadas no comportamento ao vivo do jogo.
                                 </div>
+
+                                {/* Debug Panel */}
+                                <StrategyDebugPanel
+                                    debug={debugInfo}
+                                    config={strategyConfig || { htAppm: 1.3, htCorners: 10, ftAppm: 1.1, ftCorners: 15, enableGoals: true, enableCorners: true, enableBothToScore: true }}
+                                />
+
+                                {/* Strategies List */}
                                 {liveStrategies.length === 0 ? (
-                                    <div className="text-center py-8 text-slate-400 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                                    <div className="text-center py-8 text-slate-400 bg-zinc-900/50 rounded-lg border border-zinc-800 mt-4">
                                         Nenhuma oportunidade identificada com alta confiança no momento.
                                     </div>
                                 ) : (
-                                    <div className="grid gap-4">
+                                    <div className="grid gap-4 mt-4">
                                         {liveStrategies.map((strategy, idx) => (
                                             <div key={idx} className="bg-emerald-500/10 border border-emerald-500/50 rounded-lg p-4 relative overflow-hidden group hover:bg-emerald-500/20 transition-all">
                                                 <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">

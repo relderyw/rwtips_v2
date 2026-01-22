@@ -25,8 +25,13 @@ export interface LiveScore {
     visitorAttacksAttacks?: number;
     localShotsOnGoal?: number;
     visitorShotsOnGoal?: number;
-    localBallPossession?: number;
     visitorBallPossession?: number;
+    localAttacksDangerousAttacks?: number;
+    visitorAttacksDangerousAttacks?: number;
+    localShotsOffGoal?: number;
+    visitorShotsOffGoal?: number;
+    localCorners?: number;
+    visitorCorners?: number;
 }
 
 export const liveApi = {

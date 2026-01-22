@@ -19,7 +19,8 @@ const FilterBar: React.FC<FilterBarProps> = ({
         { id: 'ALL', label: 'Todos' },
         { id: 'LIVE', label: 'Ao Vivo' },
         { id: 'FT', label: 'Finalizados' },
-        { id: 'NS', label: 'Agendados' }
+        { id: 'NS', label: 'Agendados' },
+        { id: 'OPPORTUNITY', label: '🎯 Oportunidades' }
     ];
 
     return (

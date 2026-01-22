@@ -4,7 +4,9 @@ import MatchCard from './components/MatchCard';
 import MatchAnalysisModal from './components/MatchAnalysisModal';
 import LoadingSpinner from './components/LoadingSpinner';
 import FilterBar from './components/FilterBar';
+import StrategyConfigModal from './components/StrategyConfigModal';
 import { liveApi, LiveScore } from './services/liveApi';
+import { calculateStrategies, StrategyConfig, defaultStrategyConfig } from './utils/liveStrategies';
 
 interface LiveModuleProps {
     onBack?: () => void;
@@ -22,6 +24,27 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
     // Filters
     const [selectedLeague, setSelectedLeague] = useState('ALL');
     const [selectedStatus, setSelectedStatus] = useState('ALL');
+
+    // Strategy Config
+    const [showStrategyModal, setShowStrategyModal] = useState(false);
+    const [strategyConfig, setStrategyConfig] = useState<StrategyConfig>(defaultStrategyConfig);
+
+    // Load saved config from local storage on mount
+    useEffect(() => {
+        const savedConfig = localStorage.getItem('strategyConfig');
+        if (savedConfig) {
+            try {
+                setStrategyConfig(JSON.parse(savedConfig));
+            } catch (e) {
+                console.error("Failed to parse saved strategy config", e);
+            }
+        }
+    }, []);
+
+    const handleSaveConfig = (newConfig: StrategyConfig) => {
+        setStrategyConfig(newConfig);
+        localStorage.setItem('strategyConfig', JSON.stringify(newConfig));
+    };
 
     const fetchMatches = async () => {
         try {
@@ -140,10 +163,32 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
 
         if (selectedStatus === 'LIVE') {
             statusMatch = match.status === '1st' || match.status === '2nd' || match.status === 'HT';
-        } else if (selectedStatus === 'FINISHED') {
+        } else if (selectedStatus === 'FT') {
             statusMatch = match.status === 'FT';
-        } else if (selectedStatus === 'SCHEDULED') {
+        } else if (selectedStatus === 'NS') {
             statusMatch = match.status === 'NS';
+        } else if (selectedStatus === 'OPPORTUNITY') {
+            // Filter by opportunities based on current config
+            // We need to map match data to stats format expected by calculateStrategies
+            const stats = {
+                time: match.minute || 0,
+                homeScore: match.scoresLocalTeam || 0,
+                awayScore: match.scoresVisitorTeam || 0,
+                homeAttacks: match.localAttacksAttacks || 0,
+                awayAttacks: match.visitorAttacksAttacks || 0,
+                homeDangerousAttacks: match.localAttacksDangerousAttacks || 0,
+                awayDangerousAttacks: match.visitorAttacksDangerousAttacks || 0,
+                homeShootsOn: match.localShotsOnGoal || 0,
+                awayShootsOn: match.visitorShotsOnGoal || 0,
+                homeShootsOff: match.localShotsOffGoal || 0,
+                awayShootsOff: match.visitorShotsOffGoal || 0,
+                homeCorners: match.localCorners || 0,
+                awayCorners: match.visitorCorners || 0,
+                homeName: match.localTeamName,
+                awayName: match.visitorTeamName
+            };
+            const strategies = calculateStrategies(stats, strategyConfig);
+            statusMatch = strategies.length > 0;
         }
 
         return leagueMatch && statusMatch;
@@ -178,6 +223,14 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
 
                     <div className="flex items-center gap-3">
                         <button
+                            onClick={() => setShowStrategyModal(true)}
+                            className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl transition-all text-xs font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300 flex items-center gap-2"
+                        >
+                            <i className="fa-solid fa-crosshairs"></i>
+                            Estratégias
+                        </button>
+
+                        <button
                             onClick={() => fetchMatches()}
                             disabled={loading}
                             className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2"
@@ -186,7 +239,7 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
                             Atualizar
                         </button>
 
-                        {onLogout && (
+                        {/* {onLogout && (
                             <button
                                 onClick={onLogout}
                                 className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-all text-xs font-black uppercase tracking-widest text-red-400 hover:text-red-300 flex items-center gap-2"
@@ -194,7 +247,7 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
                                 <i className="fa-solid fa-power-off"></i>
                                 Sair
                             </button>
-                        )}
+                        )} */}
                     </div>
                 </div>
 
@@ -236,8 +289,16 @@ const LiveModule: React.FC<LiveModuleProps> = ({ onBack, onLogout }) => {
                         match={selectedMatch}
                         matchData={matchData}
                         loading={loadingMatch}
+                        strategyConfig={strategyConfig}
                     />
                 )}
+
+                <StrategyConfigModal
+                    isOpen={showStrategyModal}
+                    onClose={() => setShowStrategyModal(false)}
+                    currentConfig={strategyConfig}
+                    onSave={handleSaveConfig}
+                />
 
             </div>
         </div>
