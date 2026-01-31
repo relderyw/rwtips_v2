@@ -22,6 +22,7 @@ export const STRATEGY_THEMES: Record<string, { label: string, color: string, ico
 };
 
 export const LEAGUE_MAP: Record<string, { name: string, color: string, image: string }> = {
+    // Old English format (backward compatibility)
     "Esoccer Battle - 8 mins play": { 
       name: "BATTLE - 8 MIN", 
       color: "#ef4444", 
@@ -46,6 +47,28 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
       name: "ADRIATIC", 
       color: "#ef4444", 
       image: "https://images.leaguerepublic.com/data/images/311929616/107.png" 
+    },
+    
+    // New Portuguese format from API
+    "E-SOCCER - BATTLE - 8 MINUTOS DE JOGO": { 
+      name: "BATTLE - 8 MIN", 
+      color: "#ef4444", 
+      image: "https://football.esportsbattle.com/favicon.ico" 
+    },
+    "E-SOCCER - BATTLE VOLTA - 6 MINUTOS DE JOGO": { 
+      name: "VOLTA - 6 MIN", 
+      color: "#FACC15", 
+      image: "https://football.esportsbattle.com/favicon.ico" 
+    },
+    "E-SOCCER - GT LEAGUES - 12 MINUTOS DE JOGO": { 
+      name: "GT LEAGUES", 
+      color: "#22C55E", 
+      image: "https://img1.wsimg.com/isteam/ip/8a6541ea-9c44-481b-bcea-c4fbc17257e9/gt2.png/:/cr=t:25%25,l:0%25,w:100%25,h:50%25/rs=w:400,h:200,cg:true" 
+    },
+    "E-SOCCER - H2H GG LEAGUE - 8 MINUTOS DE JOGO": { 
+      name: "H2H GG LEAGUE", 
+      color: "#A855F7", 
+      image: "https://h2h.cdn-hudstats.com/assets/H2H-ltFU8AWE.svg" 
     }
 };
 
