@@ -8,6 +8,32 @@ export const normalize = (name: string) => {
     return name.toString().trim().toLowerCase();
 };
 
+export const isSameLeague = (l1: string, l2: string): boolean => {
+  // Se um dos nomes estiver ausente, consideramos compatível para evitar perda total de dados,
+  // mas sendo ciente de que isso é um fallback para APIs com dados incompletos.
+  if (!l1 || !l2 || l1 === "" || l2 === "") return true;
+  
+  const n1 = l1.toLowerCase();
+  const n2 = l2.toLowerCase();
+  
+  if (n1 === n2) return true;
+  
+  // Agrupamento por tempo de jogo - fundamental para E-soccer
+  // Mapeia variações comuns de nomes de ligas para o mesmo tipo de tempo
+  const is8m = (s: string) => s.includes('8 min') || s.includes('8min') || s.includes('gt8');
+  const is10m = (s: string) => s.includes('10 min') || s.includes('10min') || s.includes('gt10');
+  const is12m = (s: string) => s.includes('12 min') || s.includes('12min') || s.includes('gt12') || s.includes('battle'); 
+  
+  // Nota: "Battle" no Esoccer Battle é geralmente 8 min ou 12 min dependendo da configuração, 
+  // mas aqui tentamos capturar o máximo de contexto.
+  
+  if (is8m(n1) && is8m(n2)) return true;
+  if (is10m(n1) && is10m(n2)) return true;
+  if (is12m(n1) && is12m(n2)) return true;
+  
+  return false;
+};
+
 export const STRATEGY_THEMES: Record<string, { label: string, color: string, icon: string, secondary: string }> = {
   ht_pro: { label: "HT PRO SNIPER", color: "#6366f1", secondary: "rgba(99, 102, 241, 0.15)", icon: "fa-crosshairs" },
   ft_pro: { label: "FT PRO ENGINE", color: "#f97316", secondary: "rgba(249, 115, 22, 0.15)", icon: "fa-fire-flame-simple" },
@@ -49,23 +75,23 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
       image: "https://images.leaguerepublic.com/data/images/311929616/107.png" 
     },
     
-    // New Portuguese format from API
-    "E-SOCCER - BATTLE - 8 MINUTOS DE JOGO": { 
+    // New Portuguese format from API (exact match with proper capitalization)
+    "E-Soccer - Battle - 8 minutos de jogo": { 
       name: "BATTLE - 8 MIN", 
       color: "#ef4444", 
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
-    "E-SOCCER - BATTLE VOLTA - 6 MINUTOS DE JOGO": { 
+    "E-Soccer - Battle Volta - 6 minutos de jogo": { 
       name: "VOLTA - 6 MIN", 
       color: "#FACC15", 
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
-    "E-SOCCER - GT LEAGUES - 12 MINUTOS DE JOGO": { 
+    "E-Soccer - GT Leagues - 12 minutos de jogo": { 
       name: "GT LEAGUES", 
       color: "#22C55E", 
       image: "https://img1.wsimg.com/isteam/ip/8a6541ea-9c44-481b-bcea-c4fbc17257e9/gt2.png/:/cr=t:25%25,l:0%25,w:100%25,h:50%25/rs=w:400,h:200,cg:true" 
     },
-    "E-SOCCER - H2H GG LEAGUE - 8 MINUTOS DE JOGO": { 
+    "E-Soccer - H2H GG League - 8 minutos de jogo": { 
       name: "H2H GG LEAGUE", 
       color: "#A855F7", 
       image: "https://h2h.cdn-hudstats.com/assets/H2H-ltFU8AWE.svg" 
@@ -73,21 +99,96 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
 };
 
 export const getLeagueInfo = (fullName: string) => {
-    const found = Object.entries(LEAGUE_MAP).find(([key]) => fullName.includes(key));
-    if (found) return found[1];
-    return { name: fullName.replace("Esoccer ", "").toUpperCase(), color: "#10B981", image: "https://cdn-icons-png.flaticon.com/512/33/33736.png" };
+    // Try exact match first
+    const exactMatch = Object.entries(LEAGUE_MAP).find(([key]) => fullName.includes(key));
+    if (exactMatch) return exactMatch[1];
+    
+    // Try case-insensitive match
+    const lowerFullName = fullName.toLowerCase();
+    const caseInsensitiveMatch = Object.entries(LEAGUE_MAP).find(([key]) => 
+        lowerFullName.includes(key.toLowerCase())
+    );
+    if (caseInsensitiveMatch) return caseInsensitiveMatch[1];
+    
+    // Fallback to generic
+    return { name: fullName.replace("Esoccer ", "").replace("E-Soccer - ", "").toUpperCase(), color: "#10B981", image: "https://cdn-icons-png.flaticon.com/512/33/33736.png" };
+};
+
+// Mapeamento de nomes da API de Histórico (Inglês) para a API Live (Português)
+const LEAGUE_NAME_MAPPING: Record<string, string> = {
+    "Esoccer Battle - 8 mins play": "E-Soccer - Battle - 8 minutos de jogo",
+    "Esoccer Battle Volta - 6 mins play": "E-Soccer - Battle Volta - 6 minutos de jogo",
+    "Esoccer GT Leagues – 12 mins play": "E-Soccer - GT Leagues - 12 minutos de jogo",
+    "Esoccer H2H GG League - 8 mins play": "E-Soccer - H2H GG League - 8 minutos de jogo",
+    "Esoccer Adriatic League - 10 mins play": "E-Soccer - Adriatic League - 10 minutos de jogo"
+};
+
+// === DATA NORMALIZATION ===
+// Converts API response format (FinishedGame) to internal format (HistoryMatch)
+export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
+    if (!apiData) return [];
+    
+    // Helper function to extract player name from "Team (PlayerName)" format
+    const extractPlayerName = (str: string): string => {
+        if (!str) return "";
+        const parenMatch = str.match(/\((.*?)\)/);
+        if (parenMatch && parenMatch[1]) return parenMatch[1].trim();
+        return str.trim();
+    };
+    
+    // Handle different API response structures
+    let games: any[] = [];
+    if (Array.isArray(apiData)) {
+        games = apiData;
+    } else if (apiData.results) {
+        // New format support
+        games = apiData.results;
+    } else if (apiData.data?.results) {
+        games = apiData.data.results;
+    } else if (apiData.data) {
+        games = Array.isArray(apiData.data) ? apiData.data : [];
+    }
+    
+    // Convert each game to HistoryMatch format
+    const normalized = games.map((game: any) => {
+        const rawLeague = game.league_name || '';
+        const mappedLeague = LEAGUE_NAME_MAPPING[rawLeague] || rawLeague;
+
+        // Construct Date
+        let dateStr = game.time || game.data_realizacao;
+        if (!dateStr && game.match_date && game.match_time) {
+            dateStr = `${game.match_date}T${game.match_time}`;
+        }
+        if (!dateStr) dateStr = new Date().toISOString();
+
+        return {
+            home_player: extractPlayerName(game.home_player || game.player_home_name || game.player_name_1 || ''),
+            away_player: extractPlayerName(game.away_player || game.player_away_name || game.player_name_2 || ''),
+            league_name: mappedLeague,
+            score_home: Number(game.home_score_ft ?? game.total_goals_home ?? game.score_home ?? 0),
+            score_away: Number(game.away_score_ft ?? game.total_goals_away ?? game.score_away ?? 0),
+            halftime_score_home: Number(game.home_score_ht ?? game.ht_goals_home ?? game.halftime_score_home ?? 0),
+            halftime_score_away: Number(game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
+            data_realizacao: dateStr,
+            home_team: game.home_team || game.player_home_team_name || '',
+            away_team: game.away_team || game.player_away_team_name || ''
+        };
+    });
+
+    // Remover duplicatas baseadas em tempo e jogadores (IDs seriam melhores, mas não temos)
+    const seen = new Set<string>();
+    return normalized.filter(game => {
+        const key = `${game.data_realizacao}_${[normalize(game.home_player), normalize(game.away_player)].sort().join('_')}_${game.score_home}_${game.score_away}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 };
 
 // === MÉTRICAS RECENTES DO JOGADOR (CORRIGIDA PARA ACEITAR QUALQUER FORMATO) ===
-const calculateRecentMetrics = (playerName: string, gamesData: any, limit: number = 5) => {
-  // Extrai o array de jogos de qualquer formato possível
-  let games: HistoryMatch[] = [];
-
-  if (Array.isArray(gamesData)) {
-    games = gamesData;
-  } else if (gamesData && typeof gamesData === 'object') {
-    games = gamesData.results || gamesData.data || gamesData.matches || gamesData.games || [];
-  }
+const calculateRecentMetrics = (playerName: string, gamesData: any, limit: number = 5, leagueName: string = '') => {
+  // Normalize API data first
+  const games = normalizeHistoryData(gamesData);
 
   if (!games || games.length === 0) {
     return null;
@@ -95,7 +196,12 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
 
   const targetName = normalize(playerName);
   const playerGames = games
-    .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
+    .filter(g => {
+      const isPlayer = normalize(g.home_player) === targetName || normalize(g.away_player) === targetName;
+      if (!isPlayer) return false;
+      if (leagueName && !isSameLeague(g.league_name || '', leagueName)) return false;
+      return true;
+    })
     .sort((a, b) => {
       const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
       const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
@@ -159,20 +265,20 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
 };
 
 // === PROBABILIDADE DE MÉTRICA ===
-export const calculateMetricProbability = (playerName: string, gamesData: any, metric: string, isHT: boolean = false, limit: number = 5): number => {
-  let games: HistoryMatch[] = [];
-
-  if (Array.isArray(gamesData)) {
-    games = gamesData;
-  } else if (gamesData && typeof gamesData === 'object') {
-    games = gamesData.results || gamesData.data || gamesData.matches || [];
-  }
+export const calculateMetricProbability = (playerName: string, gamesData: any, metric: string, isHT: boolean = false, limit: number = 5, leagueName: string = ''): number => {
+  // Normalize API data first
+  const games = normalizeHistoryData(gamesData);
 
   if (!games || games.length === 0) return 0;
 
   const targetName = normalize(playerName);
   const playerGames = games
-    .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
+    .filter(g => {
+      const isPlayer = normalize(g.home_player) === targetName || normalize(g.away_player) === targetName;
+      if (!isPlayer) return false;
+      if (leagueName && !isSameLeague(g.league_name || '', leagueName)) return false;
+      return true;
+    })
     .sort((a, b) => {
       const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
       const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
@@ -208,13 +314,8 @@ export const calculateMetricProbability = (playerName: string, gamesData: any, m
 
 // === ESTATÍSTICAS POR LIGA (JÁ CORRIGIDA ANTERIORMENTE) ===
 export const calculateLeagueStats = (historyData: any, sampleSize: number = 15): LeagueStats[] => {
-  let allGames: HistoryMatch[] = [];
-
-  if (Array.isArray(historyData)) {
-    allGames = historyData;
-  } else if (historyData && typeof historyData === 'object') {
-    allGames = historyData.results || historyData.data || historyData.matches || historyData.games || [];
-  }
+  // Normalize API data first
+  const allGames = normalizeHistoryData(historyData);
 
   if (!allGames || allGames.length === 0) {
     return [];
@@ -283,18 +384,18 @@ export const calculateLeagueStats = (historyData: any, sampleSize: number = 15):
 };
 
 // === ESTATÍSTICAS DO JOGADOR ===
-export const calculatePlayerStats = (playerName: string, gamesData: any, limit: number = 5): PlayerStats & { lastMatches: any[] } => {
-  let games: HistoryMatch[] = [];
-
-  if (Array.isArray(gamesData)) {
-    games = gamesData;
-  } else if (gamesData && typeof gamesData === 'object') {
-    games = gamesData.results || gamesData.data || gamesData.matches || [];
-  }
+export const calculatePlayerStats = (playerName: string, gamesData: any, limit: number = 5, leagueName: string = ''): PlayerStats & { lastMatches: any[] } => {
+  // Normalize API data first
+  const games = normalizeHistoryData(gamesData);
 
   const targetName = normalize(playerName);
   const playerGames = games
-    .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
+    .filter(g => {
+      const isPlayer = normalize(g.home_player) === targetName || normalize(g.away_player) === targetName;
+      if (!isPlayer) return false;
+      if (leagueName && !isSameLeague(g.league_name || '', leagueName)) return false;
+      return true;
+    })
     .sort((a, b) => {
       const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
       const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
@@ -353,16 +454,16 @@ export const calculatePlayerStats = (playerName: string, gamesData: any, limit: 
     drawRate: (draws / recentSample.length) * 100,
     last5: last5,
     lastMatches: lastMatches,
-    htOver05Rate: calculateMetricProbability(playerName, games, 'over0.5', true, limit),
-    htOver15Rate: calculateMetricProbability(playerName, games, 'over1.5', true, limit),
-    htOver25Rate: calculateMetricProbability(playerName, games, 'over2.5', true, limit),
-    htBttsRate: calculateMetricProbability(playerName, games, 'btts', true, limit),
-    ht0x0Rate: calculateMetricProbability(playerName, games, '0x0', true, limit),
-    ft15Rate: calculateMetricProbability(playerName, games, 'over1.5', false, limit),
-    ftOver25Rate: calculateMetricProbability(playerName, games, 'over2.5', false, limit),
-    ft35Rate: calculateMetricProbability(playerName, games, 'over3.5', false, limit),
-    ftBttsRate: calculateMetricProbability(playerName, games, 'btts', false, limit),
-    ft0x0Rate: calculateMetricProbability(playerName, games, '0x0', false, limit),
+    htOver05Rate: calculateMetricProbability(playerName, games, 'over0.5', true, limit, leagueName),
+    htOver15Rate: calculateMetricProbability(playerName, games, 'over1.5', true, limit, leagueName),
+    htOver25Rate: calculateMetricProbability(playerName, games, 'over2.5', true, limit, leagueName),
+    htBttsRate: calculateMetricProbability(playerName, games, 'btts', true, limit, leagueName),
+    ht0x0Rate: calculateMetricProbability(playerName, games, '0x0', true, limit, leagueName),
+    ft15Rate: calculateMetricProbability(playerName, games, 'over1.5', false, limit, leagueName),
+    ftOver25Rate: calculateMetricProbability(playerName, games, 'over2.5', false, limit, leagueName),
+    ft35Rate: calculateMetricProbability(playerName, games, 'over3.5', false, limit, leagueName),
+    ftBttsRate: calculateMetricProbability(playerName, games, 'btts', false, limit, leagueName),
+    ft0x0Rate: calculateMetricProbability(playerName, games, '0x0', false, limit, leagueName),
   };
 };
 
@@ -374,20 +475,15 @@ export interface AnalysisResult {
 }
 
 export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData: any, leagueName: string = ''): AnalysisResult => {
-  let games: HistoryMatch[] = [];
-
-  if (Array.isArray(gamesData)) {
-    games = gamesData;
-  } else if (gamesData && typeof gamesData === 'object') {
-    games = gamesData.results || gamesData.data || gamesData.matches || [];
-  }
+  // Normalize API data first
+  const games = normalizeHistoryData(gamesData);
 
   const none = { key: 'none', confidence: 0, reasons: [] };
   if (!games || games.length === 0) return none;
 
   // --- Salvaguarda por Liga ---
   if (leagueName) {
-    const leagueGames = games.filter(g => (g.league_name || '') === leagueName);
+    const leagueGames = games.filter(g => isSameLeague(g.league_name || '', leagueName));
     if (leagueGames.length >= 10) {
       const sample = leagueGames.slice(0, 15);
       const uHT = (sample.filter(g => Number(g.halftime_score_home || 0) === 0 && Number(g.halftime_score_away || 0) === 0).length / sample.length) * 100;
@@ -404,8 +500,8 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
     }
   }
 
-  const p1 = calculateRecentMetrics(p1Name, games, 5);
-  const p2 = calculateRecentMetrics(p2Name, games, 5);
+  const p1 = calculateRecentMetrics(p1Name, games, 5, leagueName);
+  const p2 = calculateRecentMetrics(p2Name, games, 5, leagueName);
   
   if (!p1 || !p2) return none;
 
@@ -465,7 +561,7 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
   if (resultKey === 'none') return none;
 
   // --- Sistema de Confiança e Veto por H2H ---
-  const h2h = getH2HStats(p1Name, p2Name, games);
+  const h2h = getH2HStats(p1Name, p2Name, games, leagueName);
   
   // Veto ou Bônus por H2H
   if (h2h.count >= 2) {
@@ -520,20 +616,18 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
 };
 
 // === ESTATÍSTICAS H2H ===
-export const getH2HStats = (p1: string, p2: string, gamesData: any) => {
-  let games: HistoryMatch[] = [];
-
-  if (Array.isArray(gamesData)) {
-    games = gamesData;
-  } else if (gamesData && typeof gamesData === 'object') {
-    games = gamesData.results || gamesData.data || gamesData.matches || [];
-  }
+export const getH2HStats = (p1: string, p2: string, gamesData: any, leagueName: string = '') => {
+  // Normalize API data first
+  const games = normalizeHistoryData(gamesData);
 
   const n1 = normalize(p1), n2 = normalize(p2);
-  const h2h = games.filter(g => 
-    (normalize(g.home_player) === n1 && normalize(g.away_player) === n2) || 
-    (normalize(g.home_player) === n2 && normalize(g.away_player) === n1)
-  );
+  const h2h = games.filter(g => {
+    const isH2H = (normalize(g.home_player) === n1 && normalize(g.away_player) === n2) || 
+                  (normalize(g.home_player) === n2 && normalize(g.away_player) === n1);
+    if (!isH2H) return false;
+    if (leagueName && !isSameLeague(g.league_name || '', leagueName)) return false;
+    return true;
+  });
   
   let p1Wins = 0, p2Wins = 0, draws = 0;
   let p1GoalsHT = 0, p2GoalsHT = 0;
@@ -557,6 +651,17 @@ export const getH2HStats = (p1: string, p2: string, gamesData: any) => {
   });
 
   const count = h2h.length || 1;
+  const metrics = {
+    htOver05Rate: (h2h.filter(g => (Number(g.halftime_score_home || 0) + Number(g.halftime_score_away || 0)) > 0.5).length / count) * 100,
+    htOver15Rate: (h2h.filter(g => (Number(g.halftime_score_home || 0) + Number(g.halftime_score_away || 0)) > 1.5).length / count) * 100,
+    htOver25Rate: (h2h.filter(g => (Number(g.halftime_score_home || 0) + Number(g.halftime_score_away || 0)) > 2.5).length / count) * 100,
+    htBttsRate: (h2h.filter(g => Number(g.halftime_score_home || 0) > 0 && Number(g.halftime_score_away || 0) > 0).length / count) * 100,
+    ft15Rate: (h2h.filter(g => (Number(g.score_home || 0) + Number(g.score_away || 0)) > 1.5).length / count) * 100,
+    ftOver25Rate: (h2h.filter(g => (Number(g.score_home || 0) + Number(g.score_away || 0)) > 2.5).length / count) * 100,
+    ft35Rate: (h2h.filter(g => (Number(g.score_home || 0) + Number(g.score_away || 0)) > 3.5).length / count) * 100,
+    ftBttsRate: (h2h.filter(g => Number(g.score_home || 0) > 0 && Number(g.score_away || 0) > 0).length / count) * 100,
+  };
+
   return { 
     count: h2h.length, 
     p1Wins, p2Wins, draws,
@@ -567,7 +672,8 @@ export const getH2HStats = (p1: string, p2: string, gamesData: any) => {
     p2AvgGoalsHT: p2GoalsHT / count,
     p1AvgGoalsFT: p1GoalsFT / count,
     p2AvgGoalsFT: p2GoalsFT / count,
-    recentGames: h2h.slice(0, 5)
+    metrics,
+    recentGames: h2h.slice(0, 10)
   };
 };
 

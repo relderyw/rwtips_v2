@@ -1,11 +1,13 @@
 import express from 'express';
 // Force Render Update - V2
-import { analyzeMatchPotential, calculatePlayerStats } from './services/analyzer';
+import { analyzeMatchPotential, calculatePlayerStats, normalizeHistoryData } from './services/analyzer';
 import { sendTelegramAlert } from './services/telegram';
 import { LiveEvent, HistoryMatch } from './types';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 
 // Configurações
 let API_BASE = process.env.API_BASE || "https://rwtips-r943.onrender.com";
@@ -281,6 +283,66 @@ app.get('/api/fixture/:id', async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar detalhes da partida' });
     }
 });
+app.all(['/api/app3/history', '/api/history'], (req, res) => {
+    try {
+        console.log(`[API] Servindo histórico (${req.method})`);
+        let filePath = path.join(process.cwd(), 'real_history.json');
+        if (!fs.existsSync(filePath)) {
+            filePath = path.join(process.cwd(), 'history_long.json');
+        }
+
+        if (fs.existsSync(filePath)) {
+            const data = fs.readFileSync(filePath, 'utf8');
+            let history = JSON.parse(data);
+            
+            // Suporte básico a paginação (limit/offset)
+            const limit = parseInt(req.query.limit as string) || 20;
+            const offset = parseInt(req.query.offset as string) || 0;
+            
+            if (Array.isArray(history)) {
+                const results = history.slice(offset, offset + limit);
+                return res.json({ results, count: history.length });
+            }
+            return res.json(history);
+        }
+        res.status(404).json({ error: "History file not found" });
+    } catch (err) {
+        console.error("Erro ao ler histórico:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+app.all('/api/app3/live-events', (req, res) => {
+    try {
+        console.log(`[API] Servindo live-events (${req.method})`);
+        const filePath = path.join(process.cwd(), 'live_events.json');
+        if (fs.existsSync(filePath)) {
+            const data = fs.readFileSync(filePath, 'utf8');
+            return res.json(JSON.parse(data));
+        }
+        res.json({ success: true, events: [] });
+    } catch (err) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+app.all('/api/app3/players', (req, res) => {
+    res.json({ players: [] });
+});
+
+app.all('/api/app3/confronto', (req, res) => {
+    try {
+        const filePath = path.join(process.cwd(), 'confronto.json');
+        if (fs.existsSync(filePath)) {
+            const data = fs.readFileSync(filePath, 'utf8');
+            return res.json(JSON.parse(data));
+        }
+        res.json({});
+    } catch (err) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 // ------------------------------------------------------
 
 const server = app.listen(Number(PORT), '0.0.0.0', () => {
@@ -303,32 +365,20 @@ async function fetchHistory(numPages: number = 40): Promise<HistoryMatch[]> {
 
     for (let i = 0; i < numPages; i++) {
         try {
-            const res = await fetch(`${API_BASE}/api/app3/history`, {
-                method: 'POST',
-                headers: HEADERS,
-                body: JSON.stringify({
-                    query: { sort: "-time", limit: 20, offset: i * 20 },
-                    filters: { status: 3, last_7_days: true, sort: "-time" }
-                })
+            const url = `${API_BASE}/api/app3/history?limit=20&offset=${i * 20}&sort=-time`;
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: HEADERS
             });
 
             if (!res.ok) break;
 
             const d: any = await res.json();
-            const results = d?.data?.results || [];
-            if (results.length === 0) break;
-
-            const mapped = results.map((m: any) => ({
-                home_player: extractPlayerName(m.player_home_name || m.player_name_1 || ""),
-                away_player: extractPlayerName(m.player_away_name || m.player_name_2 || ""),
-                league_name: m.league_name || "Esoccer",
-                score_home: Number(m.total_goals_home ?? 0),
-                score_away: Number(m.total_goals_away ?? 0),
-                halftime_score_home: Number(m.ht_goals_home ?? 0),
-                halftime_score_away: Number(m.ht_goals_away ?? 0),
-                data_realizacao: m.time
-            }));
-            all = all.concat(mapped);
+            // Use a função centralizada de normalização para evitar divergências
+            const normalized = normalizeHistoryData(d);
+            
+            if (normalized.length === 0) break;
+            all = all.concat(normalized);
         } catch (e) {
             console.error(`[BOT] Erro ao buscar página ${i} do histórico:`, e);
             break;

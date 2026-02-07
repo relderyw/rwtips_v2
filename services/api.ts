@@ -1,5 +1,6 @@
 
 import { HistoryMatch, LiveEvent } from '../types';
+import { normalizeHistoryData } from './analyzer';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://rwtips-r943.onrender.com";
 const API_BACKUP = "https://rwtips-r943.onrender.com/api/matches/live";
@@ -17,37 +18,26 @@ export const loginDev3 = async (force: boolean = false): Promise<string | null> 
     return "ok";
 };
 
-export const fetchHistoryGames = async (numPages: number = 15): Promise<HistoryMatch[]> => {
-    let all: HistoryMatch[] = [];
+export const fetchHistoryGames = async (numPages: number = 15): Promise<any[]> => {
+    let all: any[] = [];
     
     for (let i = 0; i < numPages; i++) {
         try {
-            const res = await fetch(`${API_BASE}/api/app3/history`, {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    query: { sort: "-time", limit: 20, offset: i * 20 },
-                    filters: { status: 3, last_7_days: true, sort: "-time" }
-                })
+            const url = `${API_BASE}/api/app3/history?limit=20&offset=${i * 20}&sort=-time`;
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: { "Content-Type": "application/json" }
             });
 
             if (!res.ok) break;
 
             const d = await res.json();
-            const results = d?.data?.results || [];
-            if (results.length === 0) break;
+            // The API now returns a direct array of results
+            const results = Array.isArray(d) ? d : (d.results || d?.data?.results || []);
+            if (!results || results.length === 0) break;
 
-            const mapped = results.map((m: any) => ({
-                home_player: extractPlayerName(m.player_home_name || m.player_name_1 || ""),
-                away_player: extractPlayerName(m.player_away_name || m.player_name_2 || ""),
-                league_name: m.league_name || "Esoccer",
-                score_home: Number(m.total_goals_home ?? 0),
-                score_away: Number(m.total_goals_away ?? 0),
-                halftime_score_home: Number(m.ht_goals_home ?? 0),
-                halftime_score_away: Number(m.ht_goals_away ?? 0),
-                data_realizacao: m.time
-            }));
-            all = all.concat(mapped);
+            const normalizedResults = normalizeHistoryData(results);
+            all = all.concat(normalizedResults);
         } catch (e) { console.error("History fetch error:", e); break; }
     }
     return all;

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { HistoryMatch, LiveEvent, Prediction, LeagueStats, PlayerStats } from './types';
-import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize } from './services/analyzer';
+import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize, isSameLeague } from './services/analyzer';
 import { LiveMatchCard } from './components/LiveMatchCard';
 import { LeagueThermometer } from './components/LeagueThermometer';
 import { fetchHistoryGames, fetchLiveGames, loginDev3 } from './services/api';
@@ -353,13 +353,14 @@ const App: React.FC = () => {
     try {
       const n1 = normalize(match.homePlayer);
       const n2 = normalize(match.awayPlayer);
-      const count1 = history.filter(g => normalize(g.home_player) === n1 || normalize(g.away_player) === n1).length;
-      const count2 = history.filter(g => normalize(g.home_player) === n2 || normalize(g.away_player) === n2).length;
+      const l = match.leagueName;
+      const count1 = history.filter(g => (normalize(g.home_player) === n1 || normalize(g.away_player) === n1) && (!l || isSameLeague(g.league_name || '', l))).length;
+      const count2 = history.filter(g => (normalize(g.home_player) === n2 || normalize(g.away_player) === n2) && (!l || isSameLeague(g.league_name || '', l))).length;
       const syncLimit = Math.max(1, Math.min(count1, count2, 5));
 
-      const homeS = calculatePlayerStats(match.homePlayer, history, syncLimit);
-      const awayS = calculatePlayerStats(match.awayPlayer, history, syncLimit);
-      const h2h = getH2HStats(match.homePlayer, match.awayPlayer, history);
+      const homeS = calculatePlayerStats(match.homePlayer, history, syncLimit, match.leagueName);
+      const awayS = calculatePlayerStats(match.awayPlayer, history, syncLimit, match.leagueName);
+      const h2h = getH2HStats(match.homePlayer, match.awayPlayer, history, match.leagueName);
       setH2hStats({ ...h2h, p1Stats: homeS, p2Stats: awayS, syncLimit });
     } catch (e) { console.error(e); }
     finally { setIsLoadingAnalysis(false); }
@@ -717,6 +718,48 @@ const App: React.FC = () => {
                           <div className="h-3 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5">
                             <div className="h-full bg-rose-500 rounded-full shadow-[0_0_15px_rgba(244,63,94,0.5)] transition-all duration-1000" style={{ width: `${h2hStats.p2WinProb}%` }}></div>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#0a0a0c] p-10 rounded-[3rem] border border-white/10 shadow-inner">
+                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.5em] mb-10">Tendência de Linhas H2H (Confronto Direto)</h3>
+                      <div className="grid grid-cols-2 gap-12">
+                        <div className="space-y-6">
+                          <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest border-l-2 border-emerald-500 pl-3">Mercado 1º Tempo (HT)</h4>
+                          {[
+                            { label: 'MAIS DE 0.5 HT', val: h2hStats.metrics.htOver05Rate },
+                            { label: 'MAIS DE 1.5 HT', val: h2hStats.metrics.htOver15Rate },
+                            { label: 'BTTS HT', val: h2hStats.metrics.htBttsRate }
+                          ].map((item, idx) => (
+                            <div key={idx} className="space-y-2">
+                              <div className="flex justify-between items-baseline">
+                                <span className="text-[9px] font-black text-white/40 tracking-tighter uppercase">{item.label}</span>
+                                <span className="text-xl font-mono-numbers font-black text-white">{item.val.toFixed(0)}%</span>
+                              </div>
+                              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${item.val}%` }}></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="space-y-6">
+                          <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-400 pl-3">Mercado Jogo Todo (FT)</h4>
+                          {[
+                            { label: 'MAIS DE 1.5 FT', val: h2hStats.metrics.ft15Rate },
+                            { label: 'MAIS DE 2.5 FT', val: h2hStats.metrics.ftOver25Rate },
+                            { label: 'BTTS FT', val: h2hStats.metrics.ftBttsRate }
+                          ].map((item, idx) => (
+                            <div key={idx} className="space-y-2">
+                              <div className="flex justify-between items-baseline">
+                                <span className="text-[9px] font-black text-white/40 tracking-tighter uppercase">{item.label}</span>
+                                <span className="text-xl font-mono-numbers font-black text-white">{item.val.toFixed(0)}%</span>
+                              </div>
+                              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${item.val}%` }}></div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
