@@ -150,7 +150,7 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
     }
     
     // Convert each game to HistoryMatch format
-    const normalized = games.map((game: any) => {
+    return games.map((game: any) => {
         const rawLeague = game.league_name || '';
         const mappedLeague = LEAGUE_NAME_MAPPING[rawLeague] || rawLeague;
 
@@ -173,15 +173,6 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             home_team: game.home_team || game.player_home_team_name || '',
             away_team: game.away_team || game.player_away_team_name || ''
         };
-    });
-
-    // Remover duplicatas baseadas em tempo e jogadores (IDs seriam melhores, mas não temos)
-    const seen = new Set<string>();
-    return normalized.filter(game => {
-        const key = `${game.data_realizacao}_${[normalize(game.home_player), normalize(game.away_player)].sort().join('_')}_${game.score_home}_${game.score_away}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
     });
 };
 
