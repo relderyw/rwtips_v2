@@ -26,13 +26,12 @@ BOT_TOKEN = "6569266928:AAHm7pOJVsd3WKzJEgdVDez4ZYdCAlRoYO8"
 CHAT_ID = "-1001981134607"
 
 # APIs
-ALTENAR_LIVE_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveOverview?culture=pt-BR&timezoneOffset=240&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&sportId=66"
-ALTENAR_AUTH = "V2xoc1MyRkhTa2haTW14UVlWVndTbFpZY0VwTlZUVndVMWhPU21Kc1NURlpNRTVLVG10c2NtTkdhRmRSTUc4MVRHMVdOVk51UW1wUk1Hc3lVMWR3U2s1Rk1VVlZWRnBoVWtaS2NGUXlNVTVPUlRGSVZGUmFUbVZyYkROVVZWSjJUa1V4VldGNldsQlNSV3QzVjFod2RrMUdiRmhXVkZKUVlsWmFjMVJxU2twaFZYaEVVMjEwYVUxcVJtOVpWbU13WVZVNWNGTnRPV3RUUmtveldUTndkbVJyZDNwYVJFNXJaVlJXYzFsNlRsTmxWbkJZWlVkb1dtSldXWGRVUnpGTFlrZFNSRTVYYkdwaFZXeDZVMWN4YzJSWFVraFdiVFZxWWxWWmQxbFdZelZrVld4eFlqSnNZVmRGTkhkWk1qRlhZekZzV0ZOdGVHdFJNR3g2VTFjMVYyVnNjRmxUYTBwaFRXeGFNVnBGVGtwT2EyeHlUVmhhYkdKWGVIcFphMlJHWkdzMVZFNUlaRXBSTW1oWldWWmpNV0V5U1hwYVNIQktVbFJXVmxOVlVrWmtNSGh4VVZSa1NsSnRVbmRaYlhCYVRVVTVOVkZxVWs5aGJFWjNVMVZXUjJReVRraGxSM2hYVFd4YWNGVjZTbk5OUlhnMlZsaHdUMlZVVWpaVWJXeENZakZOZDJGR1ZsVldXR1I2VTFWa05HTkhSWGxXVjJSVFRXeGFjVmxVU1RSalJXeEdWRzA1YW1KVWJEQlhiRTAwWlVVMVJWTllWazVSZWxJelZFZHdRbG94VlhsU2JURmFWMFZ3ZDFSSWNGWmxhelUxVGtod1QyRlZTbEZXVlZwS1pHc3hWVk5VU2sxaGEwWXhWRlZOTUdRd2JIQmtNbXhwVFRBeGNGUXliRXRaTUd4eldraENhV0pXU2pKYVJFNVBXVEJzY0ZOWVRrcGlWbGt3V1RCT1NrNXJNVlZaZWs1T1VrWkdOVlJ0Y0ZaTlJURjFUVU0xUjJSVVZsWmpNMmhhV1Zad2EwOVZiekZpYXpsVlZta3hVMDlXUm01a1ZuQXpVVEJ3UkZKdFpFdFNWa0pWVFRCNE5WTllRbGRoU0ZaYQ=="
+LIVE_API_URL = "https://app3.caveiratips.com.br/api/live-events/"
+RECENT_MATCHES_URL = "https://api.caveiratips.com/api/v1/historico/partidas"
+PLAYER_STATS_URL = "https://app3.caveiratips.com.br/app3/api/confronto/"
+H2H_API_URL = "https://rwtips-r943.onrender.com/api/v1/historico/confronto/{player1}/{player2}?page=1&limit=20"
 
-LIVE_API_URL = os.getenv("LIVE_API_URL", "https://rwtips-r943.onrender.com/api/app3/live-events")
-RECENT_MATCHES_URL = os.getenv("RECENT_MATCHES_URL", "https://rwtips-r943.onrender.com/api/app3/history")
-H2H_API_URL = os.getenv("H2H_API_URL", "https://rwtips-r943.onrender.com/api/app3/confronto?player1={player1}&player2={player2}&interval=30")
-PLAYER_STATS_URL = os.getenv("PLAYER_STATS_URL", "https://rwtips-r943.onrender.com/api/app3/confronto/")
+AUTH_HEADER = "Bearer 444c7677f71663b246a40600ff53a8880240086750fda243735e849cdeba9702"
 
 MANAUS_TZ = timezone(timedelta(hours=-4))
 
@@ -54,73 +53,24 @@ league_stats = {}
 # =============================================================================
 
 def fetch_live_matches():
-    """Busca partidas ao vivo diretamente da Altenar (EstrelaBet)"""
-    headers = {
-        "Authorization": ALTENAR_AUTH,
-        "Origin": "https://www.estrelabet.bet.br",
-        "Referer": "https://www.estrelabet.bet.br/",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 OPR/126.0.0.0"
-    }
-    
+    """Busca partidas ao vivo da nova API"""
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            response = requests.get(ALTENAR_LIVE_URL, headers=headers, timeout=15)
+            response = requests.get(LIVE_API_URL, timeout=15)
             response.raise_for_status()
             data = response.json()
-            
-            raw_events = data.get('events', [])
-            champs = {c['id']: c['name'] for c in data.get('champs', [])}
-            
-            normalized_events = []
-            for ev in raw_events:
-                # Normalização simplificada para manter compatibilidade com o bot
-                name = ev.get('name', '')
-                parts = re.split(r' vs\. | vs ', name)
-                home = parts[0] if len(parts) > 0 else "Home"
-                away = parts[1] if len(parts) > 1 else "Away"
-                
-                # Extrai minuto
-                live_time = ev.get('liveTime', '00:00')
-                minute_match = re.search(r'(\d+)', live_time)
-                minute = int(minute_match.group(1)) if minute_match else 0
-                
-                normalized_events.append({
-                    'id': str(ev.get('id')),
-                    'leagueName': champs.get(ev.get('champId'), 'Futebol'),
-                    'eventName': name,
-                    'stage': ev.get('ls', 'Live'),
-                    'timer': {
-                        'minute': minute,
-                        'second': 0,
-                        'formatted': live_time
-                    },
-                    'score': {
-                        'home': ev.get('score', [0, 0])[0],
-                        'away': ev.get('score', [0, 0])[1]
-                    },
-                    'homePlayer': home, # O bot usará isso para buscar stats
-                    'awayPlayer': away,
-                    'homeTeamName': home,
-                    'awayTeamName': away,
-                    'isLive': ev.get('status') == 1 or live_time != "Por iniciar"
-                })
-                
-            print(f"[INFO] {len(normalized_events)} partidas ao vivo carregadas da Altenar")
-            return normalized_events
-            
-        except Exception as e:
-            print(f"[ERROR] fetch_live_matches (Altenar): {e}")
+            events = data.get('events', [])
+            print(f"[INFO] {len(events)} partidas ao vivo encontradas")
+            return events
+        except requests.exceptions.Timeout:
+            print(f"[WARN] Timeout ao buscar partidas ao vivo (tentativa {attempt + 1}/{max_retries})")
             if attempt < max_retries - 1:
                 time.sleep(2)
-                
-    # Fallback se a Altenar falhar totalmente
-    try:
-        response = requests.get(LIVE_API_URL, timeout=15)
-        if response.ok:
-            return response.json().get('events', [])
-    except: pass
-    
+        except Exception as e:
+            print(f"[ERROR] fetch_live_matches: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2)
     return []
 
 def fetch_recent_matches(page=1, page_size=100):
@@ -128,15 +78,14 @@ def fetch_recent_matches(page=1, page_size=100):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            # A API agora usa GET com page e page_size
-            params = {'page': page, 'page_size': page_size, 'sort': '-time'}
+            params = {'page': page, 'limit': page_size}
+            headers = {'Authorization': AUTH_HEADER}
             
-            response = requests.get(RECENT_MATCHES_URL, params=params, timeout=15)
+            response = requests.get(RECENT_MATCHES_URL, headers=headers, params=params, timeout=15)
             response.raise_for_status()
             data = response.json()
             
-            # A API agora retorna um array direto de resultados
-            raw_matches = data if isinstance(data, list) else data.get('results', [])
+            raw_matches = data.get('partidas', [])
             normalized_matches = []
             
             for match in raw_matches:
@@ -147,11 +96,11 @@ def fetch_recent_matches(page=1, page_size=100):
                     'away_player': match.get('away_player'),
                     'home_team': match.get('home_team'),
                     'away_team': match.get('away_team'),
-                    'data_realizacao': match.get('data_realizacao') or match.get('time'),
-                    'home_score_ht': match.get('home_score_ht') or match.get('halftime_score_home') or 0,
-                    'away_score_ht': match.get('away_score_ht') or match.get('halftime_score_away') or 0,
-                    'home_score_ft': match.get('home_score_ft') or match.get('score_home') or 0,
-                    'away_score_ft': match.get('away_score_ft') or match.get('score_away') or 0
+                    'data_realizacao': match.get('data_realizacao'),
+                    'home_score_ht': match.get('halftime_score_home'),
+                    'away_score_ht': match.get('halftime_score_away'),
+                    'home_score_ft': match.get('score_home'),
+                    'away_score_ft': match.get('score_away')
                 })
             
             print(f"[INFO] {len(normalized_matches)} partidas recentes carregadas")
@@ -179,19 +128,15 @@ def fetch_player_individual_stats(player_name, use_cache=True):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            # Usamos o endpoint de histórico com filtro de jogador
-            url = f"{RECENT_MATCHES_URL}"
-            params = {'jogador': player_name, 'limit': 20, 'offset': 0}
+            url = "https://rwtips-r943.onrender.com/api/v1/historico/partidas-assincrono"
+            params = {'jogador': player_name, 'limit': 20, 'page': 1}
                         
             response = requests.get(url, params=params, timeout=15)
             response.raise_for_status()
             data_raw = response.json()
             
-            # A API retorna um array direto
-            raw_matches = data_raw if isinstance(data_raw, list) else data_raw.get('results', [])
             normalized_matches = []
-            
-            for match in raw_matches:
+            for match in data_raw.get('partidas', []):
                 normalized_match = {
                     'id': match.get('id'),
                     'league_name': match.get('league_name'),
@@ -199,17 +144,17 @@ def fetch_player_individual_stats(player_name, use_cache=True):
                     'away_player': match.get('away_player'),
                     'home_team': match.get('home_team'),
                     'away_team': match.get('away_team'),
-                    'data_realizacao': match.get('data_realizacao') or match.get('time'),
-                    'home_score_ht': match.get('home_score_ht') or match.get('halftime_score_home') or 0,
-                    'away_score_ht': match.get('away_score_ht') or match.get('halftime_score_away') or 0,
-                    'home_score_ft': match.get('home_score_ft') or match.get('score_home') or 0,
-                    'away_score_ft': match.get('away_score_ft') or match.get('score_away') or 0
+                    'data_realizacao': match.get('data_realizacao'),
+                    'home_score_ht': match.get('halftime_score_home'),
+                    'away_score_ht': match.get('halftime_score_away'),
+                    'home_score_ft': match.get('score_home'),
+                    'away_score_ft': match.get('score_away')
                 }
                 normalized_matches.append(normalized_match)
                 
             final_data = {
                 'matches': normalized_matches,
-                'total_count': len(normalized_matches) # Simplificado para o bot
+                'total_count': data_raw.get('paginacao', {}).get('total_partidas', 0)
             }
             
             player_stats_cache[player_name] = {
@@ -217,7 +162,7 @@ def fetch_player_individual_stats(player_name, use_cache=True):
                 'timestamp': time.time()
             }
             
-            print(f"[INFO] Stats de {player_name} carregadas ({len(normalized_matches)} jogos)")
+            print(f"[INFO] Stats de {player_name} carregadas ({final_data['total_count']} jogos)")
             return final_data
             
         except requests.exceptions.Timeout:

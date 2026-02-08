@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LiveEvent, HistoryMatch } from '../types';
-import { calculatePlayerStats, getLeagueInfo, calculateMetricProbability, normalize, getH2HStats, isSameLeague } from '../services/analyzer';
+import { calculatePlayerStats, getLeagueInfo, calculateMetricProbability, normalize } from '../services/analyzer';
 
 interface LiveMatchCardProps {
   match: LiveEvent;
@@ -107,15 +107,13 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
   const syncLimit = useMemo(() => {
     const n1 = normalize(match.homePlayer);
     const n2 = normalize(match.awayPlayer);
-    const l = match.leagueName;
-    const count1 = historicalGames.filter(g => (normalize(g.home_player) === n1 || normalize(g.away_player) === n1) && (!l || isSameLeague(g.league_name || '', l))).length;
-    const count2 = historicalGames.filter(g => (normalize(g.home_player) === n2 || normalize(g.away_player) === n2) && (!l || isSameLeague(g.league_name || '', l))).length;
+    const count1 = historicalGames.filter(g => normalize(g.home_player) === n1 || normalize(g.away_player) === n1).length;
+    const count2 = historicalGames.filter(g => normalize(g.home_player) === n2 || normalize(g.away_player) === n2).length;
     return Math.max(1, Math.min(count1, count2, 5));
-  }, [match.homePlayer, match.awayPlayer, match.leagueName, historicalGames]);
+  }, [match.homePlayer, match.awayPlayer, historicalGames]);
 
-  const p1 = useMemo(() => calculatePlayerStats(match.homePlayer, historicalGames, syncLimit, match.leagueName), [match.homePlayer, historicalGames, syncLimit, match.leagueName]);
-  const p2 = useMemo(() => calculatePlayerStats(match.awayPlayer, historicalGames, syncLimit, match.leagueName), [match.awayPlayer, historicalGames, syncLimit, match.leagueName]);
-  const h2h = useMemo(() => getH2HStats(match.homePlayer, match.awayPlayer, historicalGames, match.leagueName), [match.homePlayer, match.awayPlayer, historicalGames, match.leagueName]);
+  const p1 = useMemo(() => calculatePlayerStats(match.homePlayer, historicalGames, syncLimit), [match.homePlayer, historicalGames, syncLimit]);
+  const p2 = useMemo(() => calculatePlayerStats(match.awayPlayer, historicalGames, syncLimit), [match.awayPlayer, historicalGames, syncLimit]);
 
   const [scoreState, setScoreState] = useState({ home: match.score.home, away: match.score.away, animating: false });
   const prevScoreRef = useRef(match.score);
@@ -179,11 +177,11 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
   const playerMetrics = useMemo(() => {
     const name = activePlayerTab === 'H' ? match.homePlayer : match.awayPlayer;
     return {
-      m05: calculateMetricProbability(name, historicalGames, 'target0.5', isHT, syncLimit, match.leagueName),
-      m15: calculateMetricProbability(name, historicalGames, 'target1.5', isHT, syncLimit, match.leagueName),
-      m25: calculateMetricProbability(name, historicalGames, 'target2.5', isHT, syncLimit, match.leagueName),
+      m05: calculateMetricProbability(name, historicalGames, 'target0.5', isHT, syncLimit),
+      m15: calculateMetricProbability(name, historicalGames, 'target1.5', isHT, syncLimit),
+      m25: calculateMetricProbability(name, historicalGames, 'target2.5', isHT, syncLimit),
     };
-  }, [activePlayerTab, match.homePlayer, match.awayPlayer, match.leagueName, historicalGames, isHT, syncLimit]);
+  }, [activePlayerTab, match.homePlayer, match.awayPlayer, historicalGames, isHT, syncLimit]);
 
   const bet365Url = match.bet365EventId
     ? `https://www.bet365.bet.br/#/IP/EV${match.bet365EventId}`
@@ -322,17 +320,17 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           <div className="space-y-0.5">
             {isHT ? (
               <>
-                <MetricRow label="0.5 HT" value={h2h.metrics.htOver05Rate} />
-                <MetricRow label="1.5 HT" value={h2h.metrics.htOver15Rate} />
-                <MetricRow label="2.5 HT" value={h2h.metrics.htOver25Rate} />
-                <MetricRow label="BTTS HT" value={h2h.metrics.htBttsRate} />
+                <MetricRow label="0.5 HT" value={(p1.htOver05Rate + p2.htOver05Rate) / 2} />
+                <MetricRow label="1.5 HT" value={(p1.htOver15Rate + p2.htOver15Rate) / 2} />
+                <MetricRow label="2.5 HT" value={(p1.htOver25Rate + p2.htOver25Rate) / 2} />
+                <MetricRow label="BTTS HT" value={(p1.htBttsRate + p2.htBttsRate) / 2} />
               </>
             ) : (
               <>
-                <MetricRow label="1.5 FT" value={h2h.metrics.ft15Rate} />
-                <MetricRow label="2.5 FT" value={h2h.metrics.ftOver25Rate} />
-                <MetricRow label="3.5 FT" value={h2h.metrics.ft35Rate} />
-                <MetricRow label="BTTS FT" value={h2h.metrics.ftBttsRate} />
+                <MetricRow label="1.5 FT" value={(p1.ft15Rate + p2.ft15Rate) / 2} />
+                <MetricRow label="2.5 FT" value={(p1.ftOver25Rate + p2.ftOver25Rate) / 2} />
+                <MetricRow label="3.5 FT" value={(p1.ft35Rate + p2.ft35Rate) / 2} />
+                <MetricRow label="BTTS FT" value={(p1.ftBttsRate + p2.ftBttsRate) / 2} />
               </>
             )}
           </div>

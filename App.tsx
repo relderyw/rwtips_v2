@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { HistoryMatch, LiveEvent, Prediction, LeagueStats, PlayerStats } from './types';
-import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize, isSameLeague } from './services/analyzer';
+import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize } from './services/analyzer';
 import { LiveMatchCard } from './components/LiveMatchCard';
 import { LeagueThermometer } from './components/LeagueThermometer';
 import { fetchHistoryGames, fetchLiveGames, loginDev3 } from './services/api';
@@ -117,6 +117,8 @@ const App: React.FC = () => {
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [thermometerSearch, setThermometerSearch] = useState('');
+  const [thermometerLeague, setThermometerLeague] = useState('all');
   const [allowedModules, setAllowedModules] = useState<string[]>(['fifa', 'futebol', 'basquete']);
 
   const prevScores = useRef<Record<string, string>>({});
@@ -251,11 +253,27 @@ const App: React.FC = () => {
 
   const leagueStats = useMemo(() => calculateLeagueStats(history, thermometerSampleSize), [history, thermometerSampleSize]);
 
+  const sortedFullHistory = useMemo(() => {
+    return [...history]
+      .filter(game => {
+        const matchesSearch = game.home_player.toLowerCase().includes(thermometerSearch.toLowerCase()) ||
+          game.away_player.toLowerCase().includes(thermometerSearch.toLowerCase());
+        const matchesLeague = thermometerLeague === 'all' || game.league_name === thermometerLeague;
+        return matchesSearch && matchesLeague;
+      })
+      .sort((a, b) => {
+        const timeA = new Date(a.data_realizacao).getTime() || 0;
+        const timeB = new Date(b.data_realizacao).getTime() || 0;
+        return timeB - timeA;
+      });
+  }, [history, thermometerSearch, thermometerLeague]);
+
   const availableLeagues = useMemo(() => {
     const leagues = new Set<string>();
     liveEvents.forEach(e => leagues.add(e.leagueName));
+    history.forEach(h => leagues.add(h.league_name));
     return Array.from(leagues).sort();
-  }, [liveEvents]);
+  }, [liveEvents, history]);
 
   const analyzedLive = useMemo(() => {
     return liveEvents.map(event => {
@@ -353,14 +371,13 @@ const App: React.FC = () => {
     try {
       const n1 = normalize(match.homePlayer);
       const n2 = normalize(match.awayPlayer);
-      const l = match.leagueName;
-      const count1 = history.filter(g => (normalize(g.home_player) === n1 || normalize(g.away_player) === n1) && (!l || isSameLeague(g.league_name || '', l))).length;
-      const count2 = history.filter(g => (normalize(g.home_player) === n2 || normalize(g.away_player) === n2) && (!l || isSameLeague(g.league_name || '', l))).length;
+      const count1 = history.filter(g => normalize(g.home_player) === n1 || normalize(g.away_player) === n1).length;
+      const count2 = history.filter(g => normalize(g.home_player) === n2 || normalize(g.away_player) === n2).length;
       const syncLimit = Math.max(1, Math.min(count1, count2, 5));
 
-      const homeS = calculatePlayerStats(match.homePlayer, history, syncLimit, match.leagueName);
-      const awayS = calculatePlayerStats(match.awayPlayer, history, syncLimit, match.leagueName);
-      const h2h = getH2HStats(match.homePlayer, match.awayPlayer, history, match.leagueName);
+      const homeS = calculatePlayerStats(match.homePlayer, history, syncLimit);
+      const awayS = calculatePlayerStats(match.awayPlayer, history, syncLimit);
+      const h2h = getH2HStats(match.homePlayer, match.awayPlayer, history);
       setH2hStats({ ...h2h, p1Stats: homeS, p2Stats: awayS, syncLimit });
     } catch (e) { console.error(e); }
     finally { setIsLoadingAnalysis(false); }
@@ -579,14 +596,70 @@ const App: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {leagueStats.map((stats, idx) => (
-                          <LeagueThermometer
-                            key={idx}
-                            stats={stats}
-                            onViewGames={(s) => setViewingLeagueStats(s)}
+                      <div className="flex flex-col lg:flex-row gap-4 items-center bg-white/[0.01] p-4 rounded-[2.5rem] border border-white/[0.05] backdrop-blur-3xl shadow-2xl">
+                        <div className="relative group flex-1 w-full">
+                          <i className="fa-solid fa-user-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-white/10 text-base"></i>
+                          <input
+                            type="text"
+                            placeholder="FILTRAR POR JOGADOR NO TERMÔMETRO..."
+                            className="w-full bg-white/[0.01] border border-white/[0.06] rounded-2xl py-4 pl-14 pr-6 text-sm font-bold outline-none focus:border-emerald-500/30 focus:bg-white/[0.03] transition-all placeholder:text-white/10 uppercase tracking-widest shadow-inner placeholder:text-[10px]"
+                            value={thermometerSearch}
+                            onChange={(e) => setThermometerSearch(e.target.value)}
                           />
-                        ))}
+                        </div>
+                        <div className="relative w-full lg:w-72">
+                          <select
+                            value={thermometerLeague}
+                            onChange={(e) => setThermometerLeague(e.target.value)}
+                            className="w-full bg-black border border-white/[0.06] rounded-2xl py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] outline-none appearance-none cursor-pointer focus:border-emerald-500/30 transition-all text-white/60 shadow-lg"
+                          >
+                            <option value="all">🌐 TODAS AS LIGAS</option>
+                            {availableLeagues.map(l => (
+                              <option key={l} value={l}>{getLeagueInfo(l).name}</option>
+                            ))}
+                          </select>
+                          <i className="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-white/10 pointer-events-none"></i>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                          <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">Últimos Jogos Sincronizados</h4>
+                          <span className="text-[9px] font-black text-emerald-500/60 uppercase">{history.length} Partidas Encontradas</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                          {sortedFullHistory.map((game, i) => {
+                            const lInfo = getLeagueInfo(game.league_name);
+                            return (
+                              <div key={i} className="bg-white/[0.01] border border-white/[0.03] p-5 rounded-3xl flex items-center justify-between group hover:bg-white/[0.03] hover:border-emerald-500/20 transition-all card-glow">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="px-2 py-0.5 bg-white/5 rounded text-[7px] font-black text-white/30 uppercase tracking-widest border border-white/5">
+                                      {lInfo.name}
+                                    </span>
+                                    <span className="text-[8px] font-bold text-white/20 uppercase">
+                                      {new Date(game.data_realizacao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-sm font-black text-white/80 truncate uppercase">{game.home_player}</span>
+                                    <span className="text-[8px] text-white/10 italic font-black uppercase">vs</span>
+                                    <span className="text-sm font-black text-white/80 truncate uppercase">{game.away_player}</span>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-center gap-1.5 shrink-0 px-6 border-l border-white/5 ml-4">
+                                  <div className="bg-black/40 border border-white/5 px-4 py-1.5 rounded-xl">
+                                    <span className="text-lg font-black italic tabular-nums text-white">
+                                      {game.score_home}-{game.score_away}
+                                    </span>
+                                  </div>
+                                  <span className="text-[8px] font-black text-white/10 uppercase tracking-widest">HT: {game.halftime_score_home}-{game.halftime_score_away}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   ) : activeMainTab === 'bankroll' ? (
@@ -718,48 +791,6 @@ const App: React.FC = () => {
                           <div className="h-3 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5">
                             <div className="h-full bg-rose-500 rounded-full shadow-[0_0_15px_rgba(244,63,94,0.5)] transition-all duration-1000" style={{ width: `${h2hStats.p2WinProb}%` }}></div>
                           </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-[#0a0a0c] p-10 rounded-[3rem] border border-white/10 shadow-inner">
-                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.5em] mb-10">Tendência de Linhas H2H (Confronto Direto)</h3>
-                      <div className="grid grid-cols-2 gap-12">
-                        <div className="space-y-6">
-                          <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest border-l-2 border-emerald-500 pl-3">Mercado 1º Tempo (HT)</h4>
-                          {[
-                            { label: 'MAIS DE 0.5 HT', val: h2hStats.metrics.htOver05Rate },
-                            { label: 'MAIS DE 1.5 HT', val: h2hStats.metrics.htOver15Rate },
-                            { label: 'BTTS HT', val: h2hStats.metrics.htBttsRate }
-                          ].map((item, idx) => (
-                            <div key={idx} className="space-y-2">
-                              <div className="flex justify-between items-baseline">
-                                <span className="text-[9px] font-black text-white/40 tracking-tighter uppercase">{item.label}</span>
-                                <span className="text-xl font-mono-numbers font-black text-white">{item.val.toFixed(0)}%</span>
-                              </div>
-                              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${item.val}%` }}></div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="space-y-6">
-                          <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest border-l-2 border-indigo-400 pl-3">Mercado Jogo Todo (FT)</h4>
-                          {[
-                            { label: 'MAIS DE 1.5 FT', val: h2hStats.metrics.ft15Rate },
-                            { label: 'MAIS DE 2.5 FT', val: h2hStats.metrics.ftOver25Rate },
-                            { label: 'BTTS FT', val: h2hStats.metrics.ftBttsRate }
-                          ].map((item, idx) => (
-                            <div key={idx} className="space-y-2">
-                              <div className="flex justify-between items-baseline">
-                                <span className="text-[9px] font-black text-white/40 tracking-tighter uppercase">{item.label}</span>
-                                <span className="text-xl font-mono-numbers font-black text-white">{item.val.toFixed(0)}%</span>
-                              </div>
-                              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${item.val}%` }}></div>
-                              </div>
-                            </div>
-                          ))}
                         </div>
                       </div>
                     </div>
