@@ -18,56 +18,52 @@ export const loginDev3 = async (force: boolean = false): Promise<string | null> 
     return "ok";
 };
 
-export const fetchHistoryGames = async (numPages: number = 15): Promise<any[]> => {
-    let all: any[] = [];
-    
-    for (let i = 0; i < numPages; i++) {
-        try {
-            const offset = i * 20;
-            const res = await fetch(
-                `${API_BASE}/api/app3/history?limit=20&offset=${offset}`,
-                {
-                    method: 'GET',
-                    headers: { "Content-Type": "application/json" }
-                }
-            );
+export const fetchHistoryGames = async (numPages: number = 40): Promise<any[]> => {
+    // SensorFIFA API returns the entire history in a single request (~80k matches).
+    // We use a proxy route to avoid CORS and fetch everything at once.
+    try {
+        const isLocal = window.location.hostname === 'localhost';
+        const url = isLocal ? '/api/sensor-matches' : `${API_BASE}/api/sensor-matches`;
 
-            if (!res.ok) {
-                console.error(`Erro ao buscar página ${i + 1}: ${res.status}`);
-                break;
+        const res = await fetch(
+            url,
+            {
+                method: 'GET',
+                headers: { "Content-Type": "application/json" }
             }
+        );
 
-            const data = await res.json();
-            const results = data.results || [];
-            
-            if (!results || results.length === 0) {
-                console.log('Sem mais resultados disponíveis');
-                break;
-            }
-
-            // Normalizar dados antes de adicionar
-            const normalizedResults = normalizeHistoryData(results);
-            all = all.concat(normalizedResults);
-            
-            // Log de progresso (opcional)
-            if (data.pagination) {
-                console.log(
-                    `📊 Histórico: página ${data.pagination.page}/${data.pagination.total_pages} (${results.length} jogos)`
-                );
-            }
-            
-            // Verificar se há próxima página
-            if (data.pagination && !data.pagination.has_next) {
-                console.log('✓ Última página de histórico alcançada');
-                break;
-            }
-            
-        } catch (e) { 
-            console.error("History fetch error:", e); 
-            break; 
+        if (!res.ok) {
+            console.error(`Erro ao buscar SensorFIFA (${url}): ${res.status}`);
+            return [];
         }
+
+        const json = await res.json();
+        const results = Array.isArray(json) ? json : (json.value || json.results || []);
+        
+        // Ensure data is sorted by date descending (most recent first)
+        const sortedResults = results.sort((a: any, b: any) => {
+            const timeA = new Date(a.matchTime || a.time || 0).getTime();
+            const timeB = new Date(b.matchTime || b.time || 0).getTime();
+            return timeB - timeA;
+        });
+        
+        if (sortedResults.length === 0) {
+            console.log('Sem resultados disponíveis na SensorFIFA');
+            return [];
+        }
+
+        // Normalizar dados antes de retornar
+        const normalizedResults = normalizeHistoryData(sortedResults);
+        const limitedResults = normalizedResults.slice(0, 1000); // Limit to latest 1000 games for performance
+        console.log(`📊 SensorFIFA: ${limitedResults.length} jogos carregados (Ordenados: Recentes Primeiro).`);
+        
+        return limitedResults;
+        
+    } catch (e) { 
+        console.error("SensorFIFA fetch error:", e); 
+        return [];
     }
-    return all;
 };
 
 const adaptFallbackLiveEvents = (data: any[]): LiveEvent[] => {

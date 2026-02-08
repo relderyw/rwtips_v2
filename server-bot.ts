@@ -281,6 +281,29 @@ app.get('/api/fixture/:id', async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar detalhes da partida' });
     }
 });
+// Proxy para SensorFIFA (Evitar CORS)
+app.get('/api/sensor-matches', async (req, res) => {
+    try {
+        const { limit, offset } = req.query;
+        console.log(`[API] Buscando SensorFIFA: limit=${limit}, offset=${offset}`);
+        
+        // Se a API não suporta limit/offset, buscamos tudo e filtramos aqui se necessário,
+        // mas por enquanto vamos passar os parâmetros que o usuário sugeriu (limit/offset)
+        const response = await axios.get('https://sensorfifa.com.br/api/matches', {
+            params: { limit, offset },
+            headers: { 
+                'Accept': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
+            timeout: 10000
+        });
+        
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('[API] Erro ao buscar SensorFIFA:', error.message);
+        res.status(500).json({ error: 'Erro ao buscar dados da SensorFIFA' });
+    }
+});
 // ------------------------------------------------------
 
 const server = app.listen(Number(PORT), '0.0.0.0', () => {

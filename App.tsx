@@ -97,7 +97,7 @@ const GoalToast: React.FC<{ notification: GoalNotification; onClose: (id: string
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => checkSession());
   const [isAdminView, setIsAdminView] = useState(false);
-  const [activeMainTab, setActiveMainTab] = useState<'radar' | 'thermometer' | 'bankroll' | 'h2h' | 'relatorios' | 'nba'>('radar');
+  const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'bankroll' | 'h2h' | 'relatorios' | 'nba'>('radar');
   const [selectedModule, setSelectedModule] = useState<'fifa' | 'futebol' | 'basquete' | null>(null);
   const [history, setHistory] = useState<HistoryMatch[]>([]);
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
@@ -109,7 +109,7 @@ const App: React.FC = () => {
   const [isSyncingLive, setIsSyncingLive] = useState(false);
   const [isSyncingHistory, setIsSyncingHistory] = useState(false);
 
-  const [thermometerSampleSize, setThermometerSampleSize] = useState(15);
+  const [resultsSampleSize, setResultsSampleSize] = useState(15);
   const [viewingLeagueStats, setViewingLeagueStats] = useState<LeagueStats | null>(null);
 
   const [selectedMatch, setSelectedMatch] = useState<LiveEvent | null>(null);
@@ -117,9 +117,10 @@ const App: React.FC = () => {
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [thermometerSearch, setThermometerSearch] = useState('');
-  const [thermometerLeague, setThermometerLeague] = useState('all');
+  const [resultsSearch, setResultsSearch] = useState('');
+  const [resultsLeague, setResultsLeague] = useState('all');
   const [allowedModules, setAllowedModules] = useState<string[]>(['fifa', 'futebol', 'basquete']);
+  const historyRef = useRef<HTMLDivElement>(null);
 
   const prevScores = useRef<Record<string, string>>({});
   const sentTelegramTips = useRef<Set<string>>(new Set());
@@ -251,22 +252,32 @@ const App: React.FC = () => {
     }
   }, [isLoggedIn, selectedModule]);
 
-  const leagueStats = useMemo(() => calculateLeagueStats(history, thermometerSampleSize), [history, thermometerSampleSize]);
+  const leagueStats = useMemo(() => calculateLeagueStats(history, resultsSampleSize), [history, resultsSampleSize]);
 
   const sortedFullHistory = useMemo(() => {
     return [...history]
       .filter(game => {
-        const matchesSearch = game.home_player.toLowerCase().includes(thermometerSearch.toLowerCase()) ||
-          game.away_player.toLowerCase().includes(thermometerSearch.toLowerCase());
-        const matchesLeague = thermometerLeague === 'all' || game.league_name === thermometerLeague;
+        const matchesSearch = game.home_player.toLowerCase().includes(resultsSearch.toLowerCase()) ||
+          game.away_player.toLowerCase().includes(resultsSearch.toLowerCase());
+        const matchesLeague = resultsLeague === 'all' || game.league_name === resultsLeague;
         return matchesSearch && matchesLeague;
       })
       .sort((a, b) => {
         const timeA = new Date(a.data_realizacao).getTime() || 0;
         const timeB = new Date(b.data_realizacao).getTime() || 0;
         return timeB - timeA;
-      });
-  }, [history, thermometerSearch, thermometerLeague]);
+      })
+      .slice(0, 500);
+  }, [history, resultsSearch, resultsLeague]);
+
+  const groupedResults = useMemo(() => {
+    return sortedFullHistory.reduce((acc: Record<string, HistoryMatch[]>, game) => {
+      const l = game.league_name;
+      if (!acc[l]) acc[l] = [];
+      acc[l].push(game);
+      return acc;
+    }, {});
+  }, [sortedFullHistory]);
 
   const availableLeagues = useMemo(() => {
     const leagues = new Set<string>();
@@ -450,7 +461,7 @@ const App: React.FC = () => {
                 {selectedModule === 'fifa' && (
                   <>
                     <button onClick={() => setActiveMainTab('radar')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'radar' ? 'bg-white text-black shadow-2xl scale-105' : 'text-white/30 hover:text-white/60'}`}>Radar Live</button>
-                    <button onClick={() => setActiveMainTab('thermometer')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'thermometer' ? 'bg-white text-black shadow-2xl scale-105' : 'text-white/30 hover:text-white/60'}`}>Termômetro</button>
+                    <button onClick={() => setActiveMainTab('results')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'results' ? 'bg-white text-black shadow-2xl scale-105' : 'text-white/30 hover:text-white/60'}`}>Resultados</button>
                     <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'bankroll' ? 'bg-emerald-500 text-black shadow-2xl scale-105' : 'text-white/30 hover:text-emerald-500'}`}>Gestão de Banca</button>
                   </>
                 )}
@@ -570,95 +581,181 @@ const App: React.FC = () => {
                         )}
                       </div>
                     </>
-                  ) : activeMainTab === 'thermometer' ? (
+                  ) : activeMainTab === 'results' ? (
                     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
                       <div className="bg-white/[0.01] border border-white/[0.05] p-6 rounded-[2.5rem] backdrop-blur-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
                         <div className="flex flex-col">
-                          <h3 className="text-xl font-black italic text-white tracking-tighter">TERMÔMETRO <span className="text-emerald-500">PRO</span></h3>
-                          <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mt-1">Amostragem dinâmica para cálculo de probabilidades por liga</p>
+                          <h3 className="text-xl font-black italic text-white tracking-tighter">RESULTADOS <span className="text-emerald-500">PRO</span></h3>
+                          <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mt-1">Histórico completo de jogos e desempenho por liga</p>
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center gap-2 bg-black/40 p-2 rounded-2xl border border-white/5">
                           {[5, 10, 15, 20, 30, 40].map(size => (
                             <button
                               key={size}
-                              onClick={() => setThermometerSampleSize(size)}
-                              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 border ${thermometerSampleSize === size ? 'bg-emerald-500 text-black border-emerald-400 shadow-lg scale-105' : 'text-white/20 border-transparent hover:text-white/40 hover:bg-white/5'}`}
+                              onClick={() => setResultsSampleSize(size)}
+                              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 border ${resultsSampleSize === size ? 'bg-emerald-500 text-black border-emerald-400 shadow-lg scale-105' : 'text-white/20 border-transparent hover:text-white/40 hover:bg-white/5'}`}
                             >
-                              Últimos {size}
+                              Amostra: {size}
                             </button>
                           ))}
                         </div>
 
                         <div className="flex items-center gap-3 px-6 py-3 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
                           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
-                          <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">Live Engine Active</span>
+                          <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">Database Sync Active</span>
                         </div>
                       </div>
 
-                      <div className="flex flex-col lg:flex-row gap-4 items-center bg-white/[0.01] p-4 rounded-[2.5rem] border border-white/[0.05] backdrop-blur-3xl shadow-2xl">
+                      {/* League Summary Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {leagueStats.map((stats, i) => (
+                          <LeagueThermometer
+                            key={i}
+                            stats={stats}
+                            onViewGames={(st) => {
+                              setResultsLeague(st.leagueName);
+                              historyRef.current?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      <div ref={historyRef} className="flex flex-col lg:flex-row gap-4 items-center bg-white/[0.01] p-4 rounded-[2.5rem] border border-white/[0.05] backdrop-blur-3xl shadow-2xl" id="history-filter">
                         <div className="relative group flex-1 w-full">
                           <i className="fa-solid fa-user-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-white/10 text-base"></i>
                           <input
                             type="text"
-                            placeholder="FILTRAR POR JOGADOR NO TERMÔMETRO..."
+                            placeholder="PESQUISAR JOGADOR NO HISTÓRICO..."
                             className="w-full bg-white/[0.01] border border-white/[0.06] rounded-2xl py-4 pl-14 pr-6 text-sm font-bold outline-none focus:border-emerald-500/30 focus:bg-white/[0.03] transition-all placeholder:text-white/10 uppercase tracking-widest shadow-inner placeholder:text-[10px]"
-                            value={thermometerSearch}
-                            onChange={(e) => setThermometerSearch(e.target.value)}
+                            value={resultsSearch}
+                            onChange={(e) => setResultsSearch(e.target.value)}
                           />
                         </div>
-                        <div className="relative w-full lg:w-72">
-                          <select
-                            value={thermometerLeague}
-                            onChange={(e) => setThermometerLeague(e.target.value)}
-                            className="w-full bg-black border border-white/[0.06] rounded-2xl py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] outline-none appearance-none cursor-pointer focus:border-emerald-500/30 transition-all text-white/60 shadow-lg"
-                          >
-                            <option value="all">🌐 TODAS AS LIGAS</option>
-                            {availableLeagues.map(l => (
-                              <option key={l} value={l}>{getLeagueInfo(l).name}</option>
-                            ))}
-                          </select>
-                          <i className="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-white/10 pointer-events-none"></i>
+                        <div className="flex items-center gap-2 w-full lg:w-auto">
+                          <div className="relative w-full lg:w-72">
+                            <select
+                              value={resultsLeague}
+                              onChange={(e) => setResultsLeague(e.target.value)}
+                              className="w-full bg-black border border-white/[0.06] rounded-2xl py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] outline-none appearance-none cursor-pointer focus:border-emerald-500/30 transition-all text-white/60 shadow-lg"
+                            >
+                              <option value="all">🌐 TODAS AS LIGAS</option>
+                              {availableLeagues.map(l => (
+                                <option key={l} value={l}>{getLeagueInfo(l).name}</option>
+                              ))}
+                            </select>
+                            <i className="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-white/10 pointer-events-none"></i>
+                          </div>
+                          {(resultsSearch || resultsLeague !== 'all') && (
+                            <button
+                              onClick={() => { setResultsSearch(''); setResultsLeague('all'); }}
+                              className="shrink-0 w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
+                              title="Limpar Filtros"
+                            >
+                              <i className="fa-solid fa-filter-circle-xmark"></i>
+                            </button>
+                          )}
                         </div>
                       </div>
 
-                      <div className="space-y-6">
+                      <div className="space-y-12">
                         <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                          <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">Últimos Jogos Sincronizados</h4>
-                          <span className="text-[9px] font-black text-emerald-500/60 uppercase">{history.length} Partidas Encontradas</span>
+                          <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">Histórico de Confrontos</h4>
+                          <span className="text-[9px] font-black text-emerald-500/60 uppercase">{sortedFullHistory.length} Partidas Encontradas</span>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4">
-                          {sortedFullHistory.map((game, i) => {
-                            const lInfo = getLeagueInfo(game.league_name);
-                            return (
-                              <div key={i} className="bg-white/[0.01] border border-white/[0.03] p-5 rounded-3xl flex items-center justify-between group hover:bg-white/[0.03] hover:border-emerald-500/20 transition-all card-glow">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="px-2 py-0.5 bg-white/5 rounded text-[7px] font-black text-white/30 uppercase tracking-widest border border-white/5">
-                                      {lInfo.name}
-                                    </span>
-                                    <span className="text-[8px] font-bold text-white/20 uppercase">
-                                      {new Date(game.data_realizacao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                    </span>
+                        <div className="max-h-[1500px] overflow-y-auto pr-4 custom-scroll space-y-12">
+                          {resultsLeague === 'all' ? (
+                            <div className="grid grid-cols-1 gap-2">
+                              {sortedFullHistory.map((game, i) => {
+                                const lInfo = getLeagueInfo(game.league_name);
+                                return (
+                                  <div
+                                    key={i}
+                                    className="bg-[#0c0c0e]/80 border py-2.5 px-6 rounded-2xl flex items-center gap-6 group hover:bg-white/[0.03] transition-all card-glow"
+                                    style={{ borderColor: `${lInfo.color}20`, borderLeft: `4px solid ${lInfo.color}` }}
+                                  >
+                                    <div className="flex flex-col gap-0.5 shrink-0 min-w-[90px]">
+                                      <span className="text-[8px] font-black uppercase tracking-tighter opacity-70" style={{ color: lInfo.color }}>
+                                        {lInfo.name}
+                                      </span>
+                                      <span className="text-[11px] font-black tabular-nums tracking-tight" style={{ color: `${lInfo.color}EE` }}>
+                                        {new Date(game.data_realizacao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex-1 flex items-center justify-center gap-4 min-w-0">
+                                      <span className="text-sm font-black uppercase truncate text-right flex-1" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
+                                      <span className="text-[8px] italic font-black uppercase opacity-20" style={{ color: lInfo.color }}>vs</span>
+                                      <span className="text-sm font-black uppercase truncate flex-1" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6">
+                                      <div className="bg-black/40 border border-white/5 px-3 py-1 rounded-lg">
+                                        <span className="text-base font-black italic tabular-nums text-white" style={{ textShadow: `0 0 10px ${lInfo.color}80` }}>
+                                          {game.score_home}-{game.score_away}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.02] border border-white/[0.05]">
+                                        <span className="text-[6px] font-black uppercase text-white/10">HT</span>
+                                        <span className="text-[10px] font-black tabular-nums" style={{ color: `${lInfo.color}AA` }}>
+                                          {game.halftime_score_home}-{game.halftime_score_away}
+                                        </span>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-sm font-black text-white/80 truncate uppercase">{game.home_player}</span>
-                                    <span className="text-[8px] text-white/10 italic font-black uppercase">vs</span>
-                                    <span className="text-sm font-black text-white/80 truncate uppercase">{game.away_player}</span>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            Object.entries(groupedResults).map(([leagueName, games]) => {
+                              const lInfo = getLeagueInfo(leagueName);
+                              return (
+                                <section key={leagueName} className="space-y-3">
+                                  <div className="flex items-center gap-3 px-2">
+                                    <div className="w-1 h-3 rounded-full" style={{ backgroundColor: lInfo.color }}></div>
+                                    <h5 className="text-[10px] font-black uppercase tracking-wider" style={{ color: lInfo.color }}>{lInfo.name}</h5>
+                                    <span className="text-[7px] font-bold uppercase opacity-30">{games.length} Jogos</span>
                                   </div>
-                                </div>
-                                <div className="flex flex-col items-center gap-1.5 shrink-0 px-6 border-l border-white/5 ml-4">
-                                  <div className="bg-black/40 border border-white/5 px-4 py-1.5 rounded-xl">
-                                    <span className="text-lg font-black italic tabular-nums text-white">
-                                      {game.score_home}-{game.score_away}
-                                    </span>
+                                  <div className="grid grid-cols-1 gap-2">
+                                    {games.map((game, i) => (
+                                      <div
+                                        key={i}
+                                        className="bg-[#0c0c0e]/80 border py-2.5 px-6 rounded-2xl flex items-center gap-6 group hover:bg-white/[0.03] transition-all card-glow"
+                                        style={{ borderColor: `${lInfo.color}20`, borderLeft: `4px solid ${lInfo.color}` }}
+                                      >
+                                        <div className="flex flex-col gap-0.5 shrink-0 min-w-[90px]">
+                                          <span className="text-[11px] font-black tabular-nums tracking-tight" style={{ color: `${lInfo.color}EE` }}>
+                                            {new Date(game.data_realizacao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                          </span>
+                                        </div>
+
+                                        <div className="flex-1 flex items-center justify-center gap-4 min-w-0">
+                                          <span className="text-sm font-black uppercase truncate text-right flex-1" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
+                                          <span className="text-[8px] italic font-black uppercase opacity-20" style={{ color: lInfo.color }}>vs</span>
+                                          <span className="text-sm font-black uppercase truncate flex-1" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6">
+                                          <div className="bg-black/40 border border-white/5 px-3 py-1 rounded-lg">
+                                            <span className="text-base font-black italic tabular-nums text-white" style={{ textShadow: `0 0 10px ${lInfo.color}80` }}>
+                                              {game.score_home}-{game.score_away}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.02] border border-white/[0.05]">
+                                            <span className="text-[6px] font-black uppercase text-white/10">HT</span>
+                                            <span className="text-[10px] font-black tabular-nums" style={{ color: `${lInfo.color}AA` }}>
+                                              {game.halftime_score_home}-{game.halftime_score_away}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
-                                  <span className="text-[8px] font-black text-white/10 uppercase tracking-widest">HT: {game.halftime_score_home}-{game.halftime_score_away}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
+                                </section>
+                              );
+                            })
+                          )}
                         </div>
                       </div>
                     </div>
