@@ -230,7 +230,7 @@ app.get('/api/f-team-tournaments', async (req, res) => {
 // ------------------------------------------------------
 // --- NOVAS ROTAS PARA MÓDULO LIVE (SOKKERPRO) ---
 // Proxy para LiveScores
-    app.get('/api/livescores', async (req, res) => {
+app.get('/api/livescores', async (req, res) => {
     try {
         console.log('[API] Buscando LiveScores de m2.sokkerpro.com');
         const response = await axios.get('https://m2.sokkerpro.com/livescores', {
@@ -283,46 +283,144 @@ app.get('/api/fixture/:id', async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar detalhes da partida' });
     }
 });
-app.all(['/api/app3/history', '/api/history'], (req, res) => {
+app.all(['/api/app3/history', '/api/history', '/api/app3/matches/recent/', '/api/matches/recent/'], async (req, res) => {
     try {
-        console.log(`[API] Servindo histórico (${req.method})`);
-        let filePath = path.join(process.cwd(), 'real_history.json');
-        if (!fs.existsSync(filePath)) {
-            filePath = path.join(process.cwd(), 'history_long.json');
+        // Suporte total a limit/offset e page/page_size
+        const limit = parseInt(req.query.limit as string || req.query.page_size as string) || 20;
+        const offset = parseInt(req.query.offset as string) || 0;
+        
+        let page = parseInt(req.query.page as string);
+        let page_size = limit;
+
+        if (isNaN(page)) {
+            page = Math.floor(offset / limit) + 1;
         }
 
-        if (fs.existsSync(filePath)) {
-            const data = fs.readFileSync(filePath, 'utf8');
-            let history = JSON.parse(data);
+        console.log(`[API] Proxy Histórico: page=${page}, page_size=${page_size} (Path: ${req.path})`);
+
+        const fetchFromSource = async (token: string, retry = true): Promise<any> => {
+            // URL com double slash conforme solicitado pelo usuário em sessões anteriores
+            const externalUrl = 'https://app3.caveiratips.com.br/app3//api/matches/recent/';
             
-            // Suporte básico a paginação (limit/offset)
-            const limit = parseInt(req.query.limit as string) || 20;
-            const offset = parseInt(req.query.offset as string) || 0;
-            
-            if (Array.isArray(history)) {
-                const results = history.slice(offset, offset + limit);
-                return res.json({ results, count: history.length });
+            try {
+                const response = await axios.get(externalUrl, {
+                    params: { page, page_size, sort: '-time' },
+                    headers: {
+                        'Accept': 'application/json, text/plain, */*',
+                        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+                        'Origin': 'https://app3.caveiratips.com.br',
+                        'Referer': 'https://app3.caveiratips.com.br/',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    timeout: 12000
+                });
+                return response.data;
+            } catch (error: any) {
+                if (retry && error.response?.status === 401) {
+                    console.log("[API] Token expirado na Caveira. Renovando...");
+                    const newToken = await refreshCaveiraToken();
+                    return fetchFromSource(newToken, false);
+                }
+                throw error;
             }
-            return res.json(history);
+        };
+
+        const data = await fetchFromSource(CAVEIRA_TOKEN);
+        res.json(data);
+    } catch (err: any) {
+        console.error(`[API] Erro no Proxy Histórico:`, err.message);
+        
+        // Fallback para arquivo local
+        try {
+            console.log("[API] Fallback para arquivo local...");
+            let filePath = path.join(process.cwd(), 'real_history.json');
+            if (!fs.existsSync(filePath)) filePath = path.join(process.cwd(), 'history_long.json');
+
+            if (fs.existsSync(filePath)) {
+                const localData = fs.readFileSync(filePath, 'utf8');
+                let history = JSON.parse(localData);
+                const limit = parseInt(req.query.limit as string) || 20;
+                const offset = parseInt(req.query.offset as string) || 0;
+                
+                if (Array.isArray(history)) {
+                    const results = history.slice(offset, offset + limit);
+                    return res.json({ results, count: history.length });
+                }
+                return res.json(history);
+            }
+        } catch (localErr) {
+            console.error("Erro no fallback local:", localErr);
         }
-        res.status(404).json({ error: "History file not found" });
-    } catch (err) {
-        console.error("Erro ao ler histórico:", err);
-        res.status(500).json({ error: "Internal server error" });
+
+        res.status(err.response?.status || 500).json({ 
+            error: "Erro na API de Histórico", 
+            details: err.message 
+        });
     }
 });
 
-app.all('/api/app3/live-events', (req, res) => {
+app.all('/api/app3/live-events', async (req, res) => {
     try {
-        console.log(`[API] Servindo live-events (${req.method})`);
+        console.log(`[API] Buscando live-events da Altenar (${req.method})`);
+        const url = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveOverview?culture=pt-BR&timezoneOffset=240&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&sportId=66";
+        const auth = "V2xoc1MyRkhTa2haTW14UVlWVndTbFpZY0VwTlZUVndVMWhPU21Kc1NURlpNRTVLVG10c2NtTkdhRmRSTUc4MVRHMVdOVk51UW1wUk1Hc3lVMWR3U2s1Rk1VVlZWRnBoVWtaS2NGUXlNVTVPUlRGSVZGUmFUbVZyYkROVVZWSjJUa1V4VldGNldsQlNSV3QzVjFod2RrMUdiRmhXVkZKUVlsWmFjMVJxU2twaFZYaEVVMjEwYVUxcVJtOVpWbU13WVZVNWNGTnRPV3RUUmtveldUTndkbVJyZDNwYVJFNXJaVlJXYzFsNlRsTmxWbkJZWlVkb1dtSldXWGRVUnpGTFlrZFNSRTVYYkdwaFZXeDZVMWN4YzJSWFVraFdiVFZxWWxWWmQxbFdZelZrVld4eFlqSnNZVmRGTkhkWk1qRlhZekZzV0ZOdGVHdFJNR3g2VTFjMVYyVnNjRmxUYTBwaFRXeGFNVnBGVGtwT2EyeHlUVmhhYkdKWGVIcFphMlJHWkdzMVZFNUlaRXBSTW1oWldWWmpNV0V5U1hwYVNIQktVbFJXVmxOVlVrWmtNSGh4VVZSa1NsSnRVbmRaYlhCYVRVVTVOVkZxVWs5aGJFWjNVMVZXUjJReVRraGxSM2hYVFd4YWNGVjZTbk5OUlhnMlZsaHdUMlZVVWpaVWJXeENZakZOZDJGR1ZsVldXR1I2VTFWa05HTkhSWGxXVjJSVFRXeGFjVmxVU1RSalJXeEdWRzA1YW1KVWJEQlhiRTAwWlVVMVJWTllWazVSZWxJelZFZHdRbG94VlhsU2JURmFWMFZ3ZDFSSWNGWmxhelUxVGtod1QyRlZTbEZXVlZwS1pHc3hWVk5VU2sxaGEwWXhWRlZOTUdRd2JIQmtNbXhwVFRBeGNGUXliRXRaTUd4eldraENhV0pXU2pKYVJFNVBXVEJzY0ZOWVRrcGlWbGt3V1RCT1NrNXJNVlZaZWs1T1VrWkdOVlJ0Y0ZaTlJURjFUVU0xUjJSVVZsWmpNMmhhV1Zad2EwOVZiekZpYXpsVlZta3hVMDlXUm01a1ZuQXpVVEJ3UkZKdFpFdFNWa0pWVFRCNE5WTllRbGRoU0ZaYQ==";
+
+        const response = await axios.get(url, {
+            headers: {
+                "Authorization": auth,
+                "Origin": "https://www.estrelabet.bet.br",
+                "Referer": "https://www.estrelabet.bet.br/",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 OPR/126.0.0.0"
+            }
+        });
+
+        const data = response.data;
+        const events = data.events || [];
+        const champsMap = new Map((data.champs || []).map((c: any) => [c.id, c.name]));
+
+        const normalizedEvents = events.map((ev: any) => {
+            const leagueName = champsMap.get(ev.champId) || "Futebol";
+            const nameParts = ev.name.split(/ vs\. | vs /);
+            const home = nameParts[0] || "Home";
+            const away = nameParts[1] || "Away";
+
+            const minuteMatch = ev.liveTime?.match(/(\d+)/);
+            const minute = minuteMatch ? parseInt(minuteMatch[1]) : 0;
+
+            return {
+                id: String(ev.id),
+                leagueName,
+                eventName: ev.name,
+                stage: ev.ls || "Live",
+                timer: {
+                    minute,
+                    second: 0,
+                    formatted: ev.liveTime || "00:00"
+                },
+                score: {
+                    home: ev.score?.[0] ?? 0,
+                    away: ev.score?.[1] ?? 0
+                },
+                homePlayer: extractPlayerName(home),
+                awayPlayer: extractPlayerName(away),
+                homeTeamName: home,
+                awayTeamName: away,
+                isLive: ev.status === 1 || ev.liveTime !== "Por iniciar",
+                bet365EventId: undefined
+            };
+        });
+
+        res.json({ success: true, events: normalizedEvents });
+    } catch (err: any) {
+        console.error("Erro ao buscar live-events da Altenar:", err.message);
+        // Fallback para arquivo local se a API falhar
         const filePath = path.join(process.cwd(), 'live_events.json');
         if (fs.existsSync(filePath)) {
             const data = fs.readFileSync(filePath, 'utf8');
             return res.json(JSON.parse(data));
         }
         res.json({ success: true, events: [] });
-    } catch (err) {
-        res.status(500).json({ error: "Internal server error" });
     }
 });
 
@@ -365,7 +463,9 @@ async function fetchHistory(numPages: number = 40): Promise<HistoryMatch[]> {
 
     for (let i = 0; i < numPages; i++) {
         try {
-            const url = `${API_BASE}/api/app3/history?limit=20&offset=${i * 20}&sort=-time`;
+            const page = i + 1;
+            const page_size = 20;
+            const url = `${API_BASE}/api/app3/matches/recent/?page=${page}&page_size=${page_size}&sort=-time`;
             const res = await fetch(url, {
                 method: 'GET',
                 headers: HEADERS

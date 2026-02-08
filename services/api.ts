@@ -2,7 +2,8 @@
 import { HistoryMatch, LiveEvent } from '../types';
 import { normalizeHistoryData } from './analyzer';
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://rwtips-r943.onrender.com";
+const isDev = import.meta.env.MODE === 'development';
+const API_BASE = import.meta.env.VITE_API_BASE || (isDev ? "http://localhost:8080" : "https://rwtips-r943.onrender.com");
 const API_BACKUP = "https://rwtips-r943.onrender.com/api/matches/live";
 
 const extractPlayerName = (str: string): string => {
@@ -23,7 +24,9 @@ export const fetchHistoryGames = async (numPages: number = 15): Promise<any[]> =
     
     for (let i = 0; i < numPages; i++) {
         try {
-            const url = `${API_BASE}/api/app3/history?limit=20&offset=${i * 20}&sort=-time`;
+            const page = i + 1;
+            const page_size = 20;
+            const url = `${API_BASE}/api/app3/matches/recent/?page=${page}&page_size=${page_size}&sort=-time`;
             const res = await fetch(url, {
                 method: 'GET',
                 headers: { "Content-Type": "application/json" }
@@ -68,13 +71,63 @@ const adaptFallbackLiveEvents = (data: any[]): LiveEvent[] => {
 };
 
 export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
+    const altenarUrl = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveOverview?culture=pt-BR&timezoneOffset=240&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&sportId=66";
+    const altenarAuth = "V2xoc1MyRkhTa2haTW14UVlWVndTbFpZY0VwTlZUVndVMWhPU21Kc1NURlpNRTVLVG10c2NtTkdhRmRSTUc4MVRHMVdOVk51UW1wUk1Hc3lVMWR3U2s1Rk1VVlZWRnBoVWtaS2NGUXlNVTVPUlRGSVZGUmFUbVZyYkROVVZWSjJUa1V4VldGNldsQlNSV3QzVjFod2RrMUdiRmhXVkZKUVlsWmFjMVJxU2twaFZYaEVVMjEwYVUxcVJtOVpWbU13WVZVNWNGTnRPV3RUUmtveldUTndkbVJyZDNwYVJFNXJaVlRXYzFsNlRsTmxWbkJZWlVkb1dtSldXWGRVUnpGTFlrZFNSRTVYYkdwaFZXeDZVMWN4YzJSWFVraFdiVFZxWWxWWmQxbFdZelZrVld4eFlqSnNZVmRGTkhkWk1qRlhZekZzV0ZOdGVHdFJNR3g2VTFjMVYyVnNjRmxUYTBwaFRXeGFNVnBGVGtwT2EyeHlUVmhhYkdKWGVIcFphMlJHWkdzMVZFNUlaRXBSTW1oWldWWmpNV0V5U1hwYVNIQktVbFJXVmxOVlVrWmtNSGh4VVZSa1NsSnRVbmRaYlhCYVRVVTVOVkZxVWs5aGJFWjNVMVZXUjJReVRraGxSM2hYVFd4YWNGVjZTbk5OUlhnMlZsaHdUMlZVVWpaVWJXeENZakZOZDJGR1ZsVldXR1I2VTFWa05HTkhSWGxXVjJSVFRXeGFjVmxVU1RSalJXeEdWRzA1YW1KVWJEQlhiRTAwWlVVMVJWTllWazVSZWxJelZFZHdRbG94VlhsU2JURmFWMFZ3ZDFSSWNGWmxhelUxVGtod1QyRlZTbEZXVlZwS1pHc3hWVk5VU2sxaGEwWXhWRlZOTUdRd2JIQmtNbXhwVFRBeGNGUXliRXRaTUd4eldraENhV0pXU2pKYVJFNVBXVEJzY0ZOWVRrcGlWbGt3V1RCT1NrNXJNVlZaZWs1T1VrWkdOVlJ0Y0ZaTlJURjFUVU0xUjJSVVZsWmpNMmhhV1Zad2EwOVZiekZpYXpsVlZta3hVMDlXUm01a1ZuQXpVVEJ3UkZKdFpFdFNWa0pWVFRCNE5WTllRbGRoU0ZaYQ==";
+
     try {
-        let json;
+        console.log("[FETCH] Buscando jogos ao vivo da Altenar...");
+        const response = await fetch(altenarUrl, {
+            headers: {
+                "Authorization": altenarAuth,
+                "Origin": "https://www.estrelabet.bet.br",
+                "Referer": "https://www.estrelabet.bet.br/"
+            }
+        });
+
+        if (!response.ok) throw new Error(`Altenar API error: ${response.status}`);
+        
+        const data = await response.json();
+        const events = data.events || [];
+        const champsMap = new Map((data.champs || []).map((c: any) => [c.id, c.name]));
+
+        return events.map((ev: any) => {
+            const leagueName = champsMap.get(ev.champId) || "Futebol";
+            const nameParts = ev.name.split(/ vs\. | vs /);
+            const home = nameParts[0] || "Home";
+            const away = nameParts[1] || "Away";
+
+            const minuteMatch = ev.liveTime?.match(/(\d+)/);
+            const minute = minuteMatch ? parseInt(minuteMatch[1]) : 0;
+
+            return {
+                id: String(ev.id),
+                leagueName,
+                eventName: ev.name,
+                stage: ev.ls || "Live",
+                timer: {
+                    minute,
+                    second: 0,
+                    formatted: ev.liveTime || "00:00"
+                },
+                score: {
+                    home: ev.score?.[0] ?? 0,
+                    away: ev.score?.[1] ?? 0
+                },
+                homePlayer: extractPlayerName(home),
+                awayPlayer: extractPlayerName(away),
+                homeTeamName: home,
+                awayTeamName: away,
+                isLive: ev.status === 1 || ev.liveTime !== "Por iniciar",
+                bet365EventId: undefined
+            };
+        });
+
+    } catch (error) {
+        console.warn("Altenar API failed, falling back to Render API...", error);
         try {
             const response = await fetch(`${API_BASE}/api/app3/live-events`);
-            if (!response.ok) throw new Error("Live events fetch failed");
-            json = await response.json();
-            
+            if (!response.ok) throw new Error("Fallback API failed");
+            const json = await response.json();
             const events = json.events || [];
             return events.map((m: any) => ({
                 id: String(m.id),
@@ -94,19 +147,10 @@ export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
                 isLive: m.isLive,
                 bet365EventId: m.bet365EventId
             }));
-
-        } catch (primaryError) {
-            console.warn("Primary API failed, attempting backup...", primaryError);
-            const backupResponse = await fetch(API_BACKUP);
-            if (!backupResponse.ok) throw new Error("Backup API fetch failed");
-            
-            const backupJson = await backupResponse.json();
-            const backupData = backupJson.data || [];
-            return adaptFallbackLiveEvents(backupData);
+        } catch (fallbackError) {
+            console.error("All Live APIs failed:", fallbackError);
+            return [];
         }
-    } catch (error) {
-        console.error("Live Games Error:", error);
-        return [];
     }
 };
 

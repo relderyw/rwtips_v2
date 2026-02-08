@@ -26,12 +26,13 @@ BOT_TOKEN = "6569266928:AAHm7pOJVsd3WKzJEgdVDez4ZYdCAlRoYO8"
 CHAT_ID = "-1001981134607"
 
 # APIs
-LIVE_API_URL = "https://rwtips-r943.onrender.com/api/app3/live-events"
-RECENT_MATCHES_URL = "https://rwtips-r943.onrender.com/api/app3/history"
-H2H_API_URL = "https://rwtips-r943.onrender.com/api/app3/confronto?player1={player1}&player2={player2}&interval=30"
-PLAYER_STATS_URL = "https://rwtips-r943.onrender.com/api/app3/confronto/"
+ALTENAR_LIVE_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveOverview?culture=pt-BR&timezoneOffset=240&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&sportId=66"
+ALTENAR_AUTH = "V2xoc1MyRkhTa2haTW14UVlWVndTbFpZY0VwTlZUVndVMWhPU21Kc1NURlpNRTVLVG10c2NtTkdhRmRSTUc4MVRHMVdOVk51UW1wUk1Hc3lVMWR3U2s1Rk1VVlZWRnBoVWtaS2NGUXlNVTVPUlRGSVZGUmFUbVZyYkROVVZWSjJUa1V4VldGNldsQlNSV3QzVjFod2RrMUdiRmhXVkZKUVlsWmFjMVJxU2twaFZYaEVVMjEwYVUxcVJtOVpWbU13WVZVNWNGTnRPV3RUUmtveldUTndkbVJyZDNwYVJFNXJaVlJXYzFsNlRsTmxWbkJZWlVkb1dtSldXWGRVUnpGTFlrZFNSRTVYYkdwaFZXeDZVMWN4YzJSWFVraFdiVFZxWWxWWmQxbFdZelZrVld4eFlqSnNZVmRGTkhkWk1qRlhZekZzV0ZOdGVHdFJNR3g2VTFjMVYyVnNjRmxUYTBwaFRXeGFNVnBGVGtwT2EyeHlUVmhhYkdKWGVIcFphMlJHWkdzMVZFNUlaRXBSTW1oWldWWmpNV0V5U1hwYVNIQktVbFJXVmxOVlVrWmtNSGh4VVZSa1NsSnRVbmRaYlhCYVRVVTVOVkZxVWs5aGJFWjNVMVZXUjJReVRraGxSM2hYVFd4YWNGVjZTbk5OUlhnMlZsaHdUMlZVVWpaVWJXeENZakZOZDJGR1ZsVldXR1I2VTFWa05HTkhSWGxXVjJSVFRXeGFjVmxVU1RSalJXeEdWRzA1YW1KVWJEQlhiRTAwWlVVMVJWTllWazVSZWxJelZFZHdRbG94VlhsU2JURmFWMFZ3ZDFSSWNGWmxhelUxVGtod1QyRlZTbEZXVlZwS1pHc3hWVk5VU2sxaGEwWXhWRlZOTUdRd2JIQmtNbXhwVFRBeGNGUXliRXRaTUd4eldraENhV0pXU2pKYVJFNVBXVEJzY0ZOWVRrcGlWbGt3V1RCT1NrNXJNVlZaZWs1T1VrWkdOVlJ0Y0ZaTlJURjFUVU0xUjJSVVZsWmpNMmhhV1Zad2EwOVZiekZpYXpsVlZta3hVMDlXUm01a1ZuQXpVVEJ3UkZKdFpFdFNWa0pWVFRCNE5WTllRbGRoU0ZaYQ=="
 
-AUTH_HEADER = "Bearer 444c7677f71663b246a40600ff53a8880240086750fda243735e849cdeba9702"
+LIVE_API_URL = os.getenv("LIVE_API_URL", "https://rwtips-r943.onrender.com/api/app3/live-events")
+RECENT_MATCHES_URL = os.getenv("RECENT_MATCHES_URL", "https://rwtips-r943.onrender.com/api/app3/history")
+H2H_API_URL = os.getenv("H2H_API_URL", "https://rwtips-r943.onrender.com/api/app3/confronto?player1={player1}&player2={player2}&interval=30")
+PLAYER_STATS_URL = os.getenv("PLAYER_STATS_URL", "https://rwtips-r943.onrender.com/api/app3/confronto/")
 
 MANAUS_TZ = timezone(timedelta(hours=-4))
 
@@ -53,24 +54,73 @@ league_stats = {}
 # =============================================================================
 
 def fetch_live_matches():
-    """Busca partidas ao vivo da nova API"""
+    """Busca partidas ao vivo diretamente da Altenar (EstrelaBet)"""
+    headers = {
+        "Authorization": ALTENAR_AUTH,
+        "Origin": "https://www.estrelabet.bet.br",
+        "Referer": "https://www.estrelabet.bet.br/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 OPR/126.0.0.0"
+    }
+    
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            response = requests.get(LIVE_API_URL, timeout=15)
+            response = requests.get(ALTENAR_LIVE_URL, headers=headers, timeout=15)
             response.raise_for_status()
             data = response.json()
-            events = data.get('events', [])
-            print(f"[INFO] {len(events)} partidas ao vivo encontradas")
-            return events
-        except requests.exceptions.Timeout:
-            print(f"[WARN] Timeout ao buscar partidas ao vivo (tentativa {attempt + 1}/{max_retries})")
-            if attempt < max_retries - 1:
-                time.sleep(2)
+            
+            raw_events = data.get('events', [])
+            champs = {c['id']: c['name'] for c in data.get('champs', [])}
+            
+            normalized_events = []
+            for ev in raw_events:
+                # Normalização simplificada para manter compatibilidade com o bot
+                name = ev.get('name', '')
+                parts = re.split(r' vs\. | vs ', name)
+                home = parts[0] if len(parts) > 0 else "Home"
+                away = parts[1] if len(parts) > 1 else "Away"
+                
+                # Extrai minuto
+                live_time = ev.get('liveTime', '00:00')
+                minute_match = re.search(r'(\d+)', live_time)
+                minute = int(minute_match.group(1)) if minute_match else 0
+                
+                normalized_events.append({
+                    'id': str(ev.get('id')),
+                    'leagueName': champs.get(ev.get('champId'), 'Futebol'),
+                    'eventName': name,
+                    'stage': ev.get('ls', 'Live'),
+                    'timer': {
+                        'minute': minute,
+                        'second': 0,
+                        'formatted': live_time
+                    },
+                    'score': {
+                        'home': ev.get('score', [0, 0])[0],
+                        'away': ev.get('score', [0, 0])[1]
+                    },
+                    'homePlayer': home, # O bot usará isso para buscar stats
+                    'awayPlayer': away,
+                    'homeTeamName': home,
+                    'awayTeamName': away,
+                    'isLive': ev.get('status') == 1 or live_time != "Por iniciar"
+                })
+                
+            print(f"[INFO] {len(normalized_events)} partidas ao vivo carregadas da Altenar")
+            return normalized_events
+            
         except Exception as e:
-            print(f"[ERROR] fetch_live_matches: {e}")
+            print(f"[ERROR] fetch_live_matches (Altenar): {e}")
             if attempt < max_retries - 1:
                 time.sleep(2)
+                
+    # Fallback se a Altenar falhar totalmente
+    try:
+        response = requests.get(LIVE_API_URL, timeout=15)
+        if response.ok:
+            return response.json().get('events', [])
+    except: pass
+    
     return []
 
 def fetch_recent_matches(page=1, page_size=100):
@@ -78,9 +128,8 @@ def fetch_recent_matches(page=1, page_size=100):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            # A API agora usa GET com limit e offset em vez de page
-            offset = (page - 1) * page_size
-            params = {'limit': page_size, 'offset': offset, 'sort': '-time'}
+            # A API agora usa GET com page e page_size
+            params = {'page': page, 'page_size': page_size, 'sort': '-time'}
             
             response = requests.get(RECENT_MATCHES_URL, params=params, timeout=15)
             response.raise_for_status()
