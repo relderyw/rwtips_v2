@@ -23,8 +23,31 @@ let isRunning = true;
 
 // Servidor de Health Check (Necessário para Koyeb/Render/Heroku não derrubarem o bot)
 const app = express();
-app.use(cors()); // Habilita CORS para todas as origens
-app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀 [V2 - WITH NEXT GAMES]'));
+app.use(cors());
+app.use(express.json());
+app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀 [V2.1 - SENSOR PROXY FIXED]'));
+
+// Proxy para SensorFIFA (Evitar CORS) - Movido para cima para prioridade
+app.get('/api/sensor-matches', async (req, res) => {
+    try {
+        const { limit, offset } = req.query;
+        console.log(`[API] Buscando SensorFIFA: limit=${limit}, offset=${offset}`);
+        
+        const response = await axios.get('https://sensorfifa.com.br/api/matches/', {
+            params: { limit, offset },
+            headers: { 
+                'Accept': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
+            timeout: 15000 // Aumentado timeout para 15s
+        });
+        
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('[API] Erro ao buscar SensorFIFA:', error.message);
+        res.status(500).json({ error: 'Erro ao buscar dados da SensorFIFA', details: error.message });
+    }
+});
 
 // Função para buscar próximos jogos via BetsAPI (RapidAPI)
 // Adaptação do código Python fornecido pelo usuário
@@ -279,29 +302,6 @@ app.get('/api/fixture/:id', async (req, res) => {
     } catch (error) {
         console.error(`[API] Erro em /api/fixture/${req.params.id}:`, error);
         res.status(500).json({ error: 'Erro ao buscar detalhes da partida' });
-    }
-});
-// Proxy para SensorFIFA (Evitar CORS)
-app.get('/api/sensor-matches', async (req, res) => {
-    try {
-        const { limit, offset } = req.query;
-        console.log(`[API] Buscando SensorFIFA: limit=${limit}, offset=${offset}`);
-        
-        // Se a API não suporta limit/offset, buscamos tudo e filtramos aqui se necessário,
-        // mas por enquanto vamos passar os parâmetros que o usuário sugeriu (limit/offset)
-        const response = await axios.get('https://sensorfifa.com.br/api/matches/', {
-            params: { limit, offset },
-            headers: { 
-                'Accept': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            },
-            timeout: 10000
-        });
-        
-        res.json(response.data);
-    } catch (error: any) {
-        console.error('[API] Erro ao buscar SensorFIFA:', error.message);
-        res.status(500).json({ error: 'Erro ao buscar dados da SensorFIFA' });
     }
 });
 // ------------------------------------------------------
