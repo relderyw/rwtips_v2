@@ -289,7 +289,7 @@ app.get('/api/sensor-matches', async (req, res) => {
         
         // Se a API não suporta limit/offset, buscamos tudo e filtramos aqui se necessário,
         // mas por enquanto vamos passar os parâmetros que o usuário sugeriu (limit/offset)
-        const response = await axios.get('https://sensorfifa.com.br/api/matches', {
+        const response = await axios.get('https://sensorfifa.com.br/api/matches/', {
             params: { limit, offset },
             headers: { 
                 'Accept': 'application/json',
