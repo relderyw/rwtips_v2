@@ -2,7 +2,7 @@
 import { HistoryMatch, LiveEvent } from '../types';
 import { normalizeHistoryData } from './analyzer';
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://rwtips-r943.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE || ""; 
 const API_BACKUP = "https://rwtips-r943.onrender.com/api/matches/live";
 
 const extractPlayerName = (str: string): string => {

@@ -82,6 +82,73 @@ export const handler: Handler = async (event: HandlerEvent) => {
       if (match) {
           targetPath = `/fixture/${match[1]}`;
       }
+  } else if (event.path.includes('sensor-matches')) {
+      // Direct call to SensorFIFA API from Netlify Function
+      console.log("[Proxy] Fetching from SensorFIFA directly...");
+      try {
+          const response = await axios.get('https://sensorfifa.com.br/api/matches/', {
+              params: event.queryStringParameters,
+              headers: {
+                  'Accept': 'application/json',
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+              },
+              timeout: 10000
+          });
+          return {
+              statusCode: 200,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+              },
+              body: JSON.stringify(response.data),
+          };
+      } catch (error: any) {
+          console.error('[Proxy Error] SensorFIFA:', error.message);
+          return {
+              statusCode: error.response?.status || 500,
+              body: JSON.stringify({ error: 'Failed to fetch SensorFIFA data', details: error.message }),
+          };
+      }
+  } else if (event.path.includes('app3')) {
+      // Proxy to CaveiraTips API
+      console.log(`[Proxy] Forwarding to CaveiraTips: ${event.path}`);
+      const baseUrl = "https://app3.caveiratips.com.br";
+      
+      // Clean up path: remove /api/app3 prefixes to get the target path
+      let caveiraPath = event.path.replace(/^\/api\/app3/, '/api').replace(/^\/\.netlify\/functions\/api\/app3/, '/api');
+      
+      try {
+          const config: any = {
+              method: event.httpMethod,
+              url: `${baseUrl}${caveiraPath}`,
+              params: event.queryStringParameters,
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+              }
+          };
+
+          if (event.body) {
+              config.data = JSON.parse(event.body);
+          }
+
+          const response = await axios(config);
+          return {
+              statusCode: 200,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+              },
+              body: JSON.stringify(response.data),
+          };
+      } catch (error: any) {
+          console.error('[Proxy Error] CaveiraTips:', error.message);
+          return {
+              statusCode: error.response?.status || 500,
+              body: JSON.stringify({ error: 'Failed to fetch CaveiraTips data', details: error.message }),
+          };
+      }
   }
 
   if (!targetPath) {
