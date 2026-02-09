@@ -248,10 +248,10 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             <img src={leagueInfo.image} className="w-full h-full object-contain brightness-110" alt="" />
           </div>
           <div className="flex flex-col min-w-0">
-            <h4 className="text-[14px] font-black text-white uppercase tracking-tight truncate leading-tight mb-1">
+            <h4 className="text-[14px] font-black uppercase tracking-tight truncate leading-tight mb-1" style={{ color: leagueInfo.color }}>
               {match.homePlayer} <span className="text-white/20 italic mx-0.5">vs</span> {match.awayPlayer}
             </h4>
-            <span className="text-[10px] font-bold text-white/30 uppercase tracking-wider truncate">
+            <span className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: `${leagueInfo.color}80` }}>
               {leagueInfo.name}
             </span>
           </div>
@@ -279,11 +279,11 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           <div className="flex flex-col items-center mx-1 shrink-0">
             <div className={`bg-[#050505] px-3 py-1.5 rounded-xl border border-white/10 shadow-[inset_0_2px_12px_rgba(0,0,0,0.8)] min-w-[70px] text-center transform scale-105 transition-all duration-300 ${scoreState.animating ? 'animate-score-pop border-emerald-500/50' : ''}`}>
               <div className="flex items-center justify-center italic font-black text-2xl tabular-nums drop-shadow-xl">
-                <span className={`transition-all duration-300 ${scoreState.animating && prevScoreRef.current.home !== match.score.home ? 'text-white scale-125' : 'text-emerald-400'}`}>
+                <span className={`transition-all duration-300 ${scoreState.animating && prevScoreRef.current.home !== match.score.home ? 'text-white scale-125' : ''}`} style={{ color: leagueInfo.color }}>
                   {match.score.home}
                 </span>
                 <span className="text-white/20 mx-0.5">–</span>
-                <span className={`transition-all duration-300 ${scoreState.animating && prevScoreRef.current.away !== match.score.away ? 'text-white scale-125' : 'text-emerald-400'}`}>
+                <span className={`transition-all duration-300 ${scoreState.animating && prevScoreRef.current.away !== match.score.away ? 'text-white scale-125' : ''}`} style={{ color: leagueInfo.color }}>
                   {match.score.away}
                 </span>
               </div>

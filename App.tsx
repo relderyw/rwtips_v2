@@ -692,13 +692,13 @@ const App: React.FC = () => {
 
                                     <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6">
                                       <div className="bg-black/40 border border-white/5 px-3 py-1 rounded-lg">
-                                        <span className="text-base font-black italic tabular-nums text-white" style={{ textShadow: `0 0 10px ${lInfo.color}80` }}>
+                                        <span className="text-base font-black italic tabular-nums" style={{ color: lInfo.color, textShadow: `0 0 15px ${lInfo.color}40` }}>
                                           {game.score_home}-{game.score_away}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.02] border border-white/[0.05]">
-                                        <span className="text-[6px] font-black uppercase text-white/10">HT</span>
-                                        <span className="text-[10px] font-black tabular-nums" style={{ color: `${lInfo.color}AA` }}>
+                                      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/[0.03] border border-white/[0.08] shadow-inner">
+                                        <span className="text-[7px] font-black uppercase text-white/20">HT</span>
+                                        <span className="text-[12px] font-black tabular-nums" style={{ color: lInfo.color }}>
                                           {game.halftime_score_home}-{game.halftime_score_away}
                                         </span>
                                       </div>
@@ -738,13 +738,13 @@ const App: React.FC = () => {
 
                                         <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6">
                                           <div className="bg-black/40 border border-white/5 px-3 py-1 rounded-lg">
-                                            <span className="text-base font-black italic tabular-nums text-white" style={{ textShadow: `0 0 10px ${lInfo.color}80` }}>
+                                            <span className="text-base font-black italic tabular-nums" style={{ color: lInfo.color, textShadow: `0 0 15px ${lInfo.color}40` }}>
                                               {game.score_home}-{game.score_away}
                                             </span>
                                           </div>
-                                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.02] border border-white/[0.05]">
-                                            <span className="text-[6px] font-black uppercase text-white/10">HT</span>
-                                            <span className="text-[10px] font-black tabular-nums" style={{ color: `${lInfo.color}AA` }}>
+                                          <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/[0.03] border border-white/[0.08] shadow-inner">
+                                            <span className="text-[7px] font-black uppercase text-white/20">HT</span>
+                                            <span className="text-[12px] font-black tabular-nums" style={{ color: lInfo.color }}>
                                               {game.halftime_score_home}-{game.halftime_score_away}
                                             </span>
                                           </div>

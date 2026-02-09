@@ -78,7 +78,7 @@ export const LeagueThermometer: React.FC<LeagueThermometerProps> = ({ stats, onV
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-[16px] font-black text-white uppercase tracking-tighter truncate leading-tight mb-0.5">{info.name}</h4>
+          <h4 className="text-[16px] font-black uppercase tracking-tighter truncate leading-tight mb-0.5" style={{ color: info.color }}>{info.name}</h4>
           <div className="flex items-center gap-2">
             <span className={`text-[8px] font-black uppercase tracking-[0.3em] ${status.color}`}>
               {status.label}
