@@ -25,13 +25,20 @@ let isRunning = true;
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀 [V2.1 - SENSOR PROXY FIXED]'));
 
-// Proxy para SensorFIFA (Evitar CORS) - Movido para cima para prioridade
-app.get('/api/sensor-matches', async (req, res) => {
+// Log de todas as requisições para debug
+app.use((req, res, next) => {
+    console.log(`[DEBUG] ${req.method} ${req.url}`);
+    next();
+});
+
+app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀 [V2.2 - SENSOR PROXY DEBUG]'));
+
+// Proxy para SensorFIFA (Evitar CORS) - Usando .all para capturar qualquer método
+app.all('/api/sensor-matches', async (req, res) => {
     try {
         const { limit, offset } = req.query;
-        console.log(`[API] Buscando SensorFIFA: limit=${limit}, offset=${offset}`);
+        console.log(`[API] Requisição SensorFIFA recebida: limit=${limit}, offset=${offset}`);
         
         const response = await axios.get('https://sensorfifa.com.br/api/matches/', {
             params: { limit, offset },
@@ -39,13 +46,18 @@ app.get('/api/sensor-matches', async (req, res) => {
                 'Accept': 'application/json',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             },
-            timeout: 15000 // Aumentado timeout para 15s
+            timeout: 20000 // Aumentado para 20s para evitar 502/timeouts
         });
         
+        console.log(`[API] SensorFIFA retornou ${response.data?.partidas?.length || 0} partidas.`);
         res.json(response.data);
     } catch (error: any) {
         console.error('[API] Erro ao buscar SensorFIFA:', error.message);
-        res.status(500).json({ error: 'Erro ao buscar dados da SensorFIFA', details: error.message });
+        res.status(500).json({ 
+            error: 'Erro ao buscar dados da SensorFIFA', 
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
