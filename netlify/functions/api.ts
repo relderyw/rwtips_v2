@@ -84,16 +84,21 @@ export const handler: Handler = async (event: HandlerEvent) => {
       }
   } else if (event.path.includes('sensor-matches')) {
       // Direct call to SensorFIFA API from Netlify Function
-      console.log("[Proxy] Fetching from SensorFIFA directly...");
+      const limit = event.queryStringParameters?.limit || '200';
+      const offset = event.queryStringParameters?.offset || '0';
+      console.log(`[Proxy] Fetching from SensorFIFA: limit=${limit}, offset=${offset}`);
+      
       try {
           const response = await axios.get('https://sensorfifa.com.br/api/matches/', {
-              params: event.queryStringParameters || { limit: 1000 },
+              params: { limit, offset },
               headers: {
                   'Accept': 'application/json',
                   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
               },
-              timeout: 10000
+              timeout: 8000 // Tight timeout to avoid Netlify 10s limit
           });
+          
+          console.log(`[Proxy] SensorFIFA success: ${response.data?.partidas?.length || 0} matches`);
           return {
               statusCode: 200,
               headers: {
@@ -106,7 +111,11 @@ export const handler: Handler = async (event: HandlerEvent) => {
           console.error('[Proxy Error] SensorFIFA:', error.message);
           return {
               statusCode: error.response?.status || 500,
-              body: JSON.stringify({ error: 'Failed to fetch SensorFIFA data', details: error.message }),
+              body: JSON.stringify({ 
+                  error: 'Failed to fetch SensorFIFA data', 
+                  details: error.message,
+                  source: 'Netlify Function'
+              }),
           };
       }
   } else if (event.path.includes('app3')) {

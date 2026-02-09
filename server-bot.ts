@@ -316,6 +316,31 @@ app.get('/api/fixture/:id', async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar detalhes da partida' });
     }
 });
+// Proxy para CaveiraTips (App3) - Usado pelo bot internamente e legado
+app.all('/api/app3/*', async (req, res) => {
+    try {
+        const caveiraPath = req.url.replace('/api/app3', '/api');
+        console.log(`[API] Proxy App3: ${req.method} ${caveiraPath}`);
+        
+        const response = await axios({
+            method: req.method,
+            url: `https://app3.caveiratips.com.br${caveiraPath}`,
+            data: req.body,
+            params: req.query,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
+            timeout: 15000
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('[API] Erro Proxy App3:', error.message);
+        res.status(error.response?.status || 500).json({ error: error.message });
+    }
+});
+
 // ------------------------------------------------------
 
 const server = app.listen(Number(PORT), '0.0.0.0', () => {
