@@ -22,8 +22,8 @@ export const fetchHistoryGames = async (numPages: number = 40): Promise<any[]> =
     // SensorFIFA API returns the entire history in a single request (~80k matches).
     // We use a proxy route to avoid CORS and fetch everything at once.
     try {
-        const url = `${API_BASE}/api/sensor-matches?limit=200`;
-        console.log(`📡 Buscando SensorFIFA via proxy (limit=200): ${url}`);
+        const url = API_BACKUP;
+        console.log(`📡 Buscando rw-matches via Render: ${url}`);
 
         const res = await fetch(
             url,
