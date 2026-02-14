@@ -155,7 +155,9 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             halftime_score_away: Number(game.awayHT ?? game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
             data_realizacao: dateStr,
             home_team: game.homeClub || game.home_team || game.player_home_team_name || '',
-            away_team: game.awayClub || game.away_team || game.player_away_team_name || ''
+            away_team: game.awayClub || game.away_team || game.player_away_team_name || '',
+            home_team_logo: game.home_team_logo || game.homeTeamLogo || '',
+            away_team_logo: game.away_team_logo || game.awayTeamLogo || ''
         };
     });
 };

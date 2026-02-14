@@ -11,7 +11,7 @@ import cors from 'cors';
 let API_BASE = process.env.API_BASE || "https://rwtips-r943.onrender.com";
 // Remove barras finais para evitar duplicidade //api//v1
 if (API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
-const API_BACKUP = "https://rwtips-r943.onrender.com/api/rw-matches";
+const API_BACKUP = "https://api-v2.green365.com.br/api/v2/sport-events?page=1&limit=50&sport=esoccer&status=inplay";
 
 const PORT = process.env.PORT || 8080;
 const POLL_INTERVAL = 15000;
@@ -35,30 +35,9 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀 [V2.2 - SENSOR PROXY DEBUG]'));
 
 // Proxy para SensorFIFA (Evitar CORS) - Usando .all para capturar qualquer método
+// Rota /api/sensor-matches removida conforme solicitação
 app.all('/api/sensor-matches', async (req, res) => {
-    try {
-        const { limit, offset } = req.query;
-        console.log(`[API] Requisição SensorFIFA recebida: limit=${limit}, offset=${offset}`);
-        
-        const response = await axios.get('https://sensorfifa.com.br/api/matches/', {
-            params: { limit, offset },
-            headers: { 
-                'Accept': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            },
-            timeout: 20000 // Aumentado para 20s para evitar 502/timeouts
-        });
-        
-        console.log(`[API] SensorFIFA retornou ${response.data?.partidas?.length || 0} partidas.`);
-        res.json(response.data);
-    } catch (error: any) {
-        console.error('[API] Erro ao buscar SensorFIFA:', error.message);
-        res.status(500).json({ 
-            error: 'Erro ao buscar dados da SensorFIFA', 
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
-    }
+    res.status(410).json({ error: 'Route removed' });
 });
 
 // Função para buscar próximos jogos via BetsAPI (RapidAPI)
@@ -357,43 +336,47 @@ const extractPlayerName = (str: string): string => {
 
 const sentTips = new Set<string>();
 
-async function fetchHistory(numPages: number = 40): Promise<HistoryMatch[]> {
+async function fetchHistory(numPages: number = 10): Promise<HistoryMatch[]> {
     let all: HistoryMatch[] = [];
-    console.log(`[BOT] Coletando histórico (${numPages} páginas)...`);
+    console.log(`[BOT] Coletando histórico via Green365 (${numPages} páginas) em paralelo...`);
 
-    for (let i = 0; i < numPages; i++) {
-        try {
-            const res = await fetch(`${API_BASE}/api/app3/history`, {
-                method: 'POST',
-                headers: HEADERS,
-                body: JSON.stringify({
-                    query: { sort: "-time", limit: 20, offset: i * 20 },
-                    filters: { status: 3, last_7_days: true, sort: "-time" }
-                })
-            });
-
-            if (!res.ok) break;
-
-            const d: any = await res.json();
-            const results = d?.data?.results || [];
-            if (results.length === 0) break;
-
-            const mapped = results.map((m: any) => ({
-                home_player: extractPlayerName(m.player_home_name || m.player_name_1 || ""),
-                away_player: extractPlayerName(m.player_away_name || m.player_name_2 || ""),
-                league_name: m.league_name || "Esoccer",
-                score_home: Number(m.total_goals_home ?? 0),
-                score_away: Number(m.total_goals_away ?? 0),
-                halftime_score_home: Number(m.ht_goals_home ?? 0),
-                halftime_score_away: Number(m.ht_goals_away ?? 0),
-                data_realizacao: m.time
+    const promises = Array.from({ length: numPages }, (_, i) => {
+        const page = i + 1;
+        const url = `https://api-v2.green365.com.br/api/v2/sport-events?page=${page}&limit=24&sport=esoccer&status=ended`;
+        return fetch(url, {
+            method: 'GET',
+            headers: { "Content-Type": "application/json" }
+        }).then(async res => {
+            if (!res.ok) {
+                console.error(`[BOT] Erro ao buscar Green365 página ${page}: ${res.status}`);
+                return [];
+            }
+            const json: any = await res.json();
+            const items = json.items || [];
+            
+            return items.map((item: any) => ({
+                home_player: extractPlayerName(item.home?.name || ""),
+                away_player: extractPlayerName(item.away?.name || ""),
+                league_name: item.competition?.name || "Esoccer",
+                score_home: Number(item.score?.home ?? 0),
+                score_away: Number(item.score?.away ?? 0),
+                halftime_score_home: Number(item.scoreHT?.home ?? 0),
+                halftime_score_away: Number(item.scoreHT?.away ?? 0),
+                data_realizacao: item.startTime || new Date().toISOString(),
+                home_team: item.home?.teamName || "",
+                away_team: item.away?.teamName || "",
+                home_team_logo: item.home?.imageUrl || "",
+                away_team_logo: item.away?.imageUrl || ""
             }));
-            all = all.concat(mapped);
-        } catch (e) {
-            console.error(`[BOT] Erro ao buscar página ${i} do histórico:`, e);
-            break;
-        }
-    }
+        }).catch(err => {
+            console.error(`[BOT] Erro na requisição da página ${page}:`, err);
+            return [];
+        });
+    });
+
+    const results = await Promise.all(promises);
+    all = results.flat();
+
     console.log(`[BOT] Histórico coletado: ${all.length} jogos.`);
     return all;
 }
@@ -402,23 +385,23 @@ async function fetchHistory(numPages: number = 40): Promise<HistoryMatch[]> {
 
 const adaptFallbackLiveEvents = (data: any[]): LiveEvent[] => {
     return data.map((item: any) => ({
-        id: String(item.id),
-        leagueName: item.league?.name || "Esoccer",
+        id: String(item.eventId || item.id),
+        leagueName: item.competition?.name || item.league?.name || "Esoccer",
         eventName: `${item.home?.name || "Player 1"} vs ${item.away?.name || "Player 2"}`,
-        stage: String(item.time_status),
+        stage: "Live",
         timer: {
             minute: Number(item.timer?.tm || 0),
             second: Number(item.timer?.ts || 0),
-            formatted: `${item.timer?.tm || 0}:${String(item.timer?.ts || 0).padStart(2, '0')}`
+            formatted: "00:00"
         },
         score: {
-            home: Number(item.ss?.split('-')[0] || 0),
-            away: Number(item.ss?.split('-')[1] || 0)
+            home: Number(item.score?.home ?? item.ss?.split('-')[0] ?? 0),
+            away: Number(item.score?.away ?? item.ss?.split('-')[1] ?? 0)
         },
         homePlayer: extractPlayerName(item.home?.name || ""),
         awayPlayer: extractPlayerName(item.away?.name || ""),
-        homeTeamName: item.home?.name || "",
-        awayTeamName: item.away?.name || "",
+        homeTeamName: item.home?.teamName || "",
+        awayTeamName: item.away?.teamName || "",
         isLive: true,
         bet365EventId: undefined
     }));
@@ -449,7 +432,7 @@ async function fetchLive() {
             if (!backupResponse.ok) throw new Error(`Backup Status ${backupResponse.status}`);
             
             const backupJson: any = await backupResponse.json();
-            const backupData = backupJson.data || [];
+            const backupData = backupJson.items || backupJson.data || [];
             
             console.log(`[BOT] ✅ API Backup sucesso: ${backupData.length} eventos recuperados.`);
             return adaptFallbackLiveEvents(backupData);

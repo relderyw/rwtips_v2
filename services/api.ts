@@ -3,7 +3,7 @@ import { HistoryMatch, LiveEvent } from '../types';
 import { normalizeHistoryData } from './analyzer';
 
 const API_BASE = import.meta.env.VITE_API_BASE || ""; 
-const API_BACKUP = "https://rwtips-r943.onrender.com/api/rw-matches";
+const API_BACKUP = "https://api-v2.green365.com.br/api/v2/sport-events?page=1&limit=50&sport=esoccer&status=inplay";
 
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
@@ -18,75 +18,107 @@ export const loginDev3 = async (force: boolean = false): Promise<string | null> 
     return "ok";
 };
 
-export const fetchHistoryGames = async (numPages: number = 40): Promise<any[]> => {
-    // SensorFIFA API returns the entire history in a single request (~80k matches).
-    // We use a proxy route to avoid CORS and fetch everything at once.
+export const fetchHistoryGames = async (numPages: number = 10): Promise<any[]> => {
     try {
-        const url = API_BACKUP;
-        console.log(`📡 Buscando rw-matches via Render: ${url}`);
+        console.log(`📡 Buscando histórico via Green365 (${numPages} páginas) em paralelo...`);
 
-        const res = await fetch(
-            url,
-            {
+        // Cria array de promessas para buscar todas as páginas simultaneamente
+        const promises = Array.from({ length: numPages }, (_, i) => {
+            const page = i + 1;
+            const url = `https://api-v2.green365.com.br/api/v2/sport-events?page=${page}&limit=24&sport=esoccer&status=ended`;
+            return fetch(url, {
                 method: 'GET',
                 headers: { "Content-Type": "application/json" }
-            }
-        );
+            }).then(async res => {
+                if (!res.ok) {
+                    console.error(`Erro ao buscar Green365 página ${page}: ${res.status}`);
+                    return [];
+                }
+                const json = await res.json();
+                return json.items || [];
+            }).catch(err => {
+                console.error(`Erro na requisição da página ${page}:`, err);
+                return [];
+            });
+        });
 
-        if (!res.ok) {
-            console.error(`Erro ao buscar SensorFIFA (${url}): ${res.status}`);
+        // Aguarda todas as requisições
+        const results = await Promise.all(promises);
+        
+        // Flatten array de arrays em um único array
+        const allItems = results.flat();
+        
+        if (allItems.length === 0) {
+            console.log('Sem resultados disponíveis na Green365');
             return [];
         }
 
-        const json = await res.json();
-        const results = Array.isArray(json) ? json : (json.value || json.results || []);
-        
+        // Map Green365 data to HistoryMatch format
+        const mappedResults: HistoryMatch[] = allItems.map((item: any) => {
+            const leagueName = item.competition?.name || "";
+            const homeScore = item.score?.home ?? 0;
+            const awayScore = item.score?.away ?? 0;
+            const homeScoreHT = item.scoreHT?.home ?? 0;
+            const awayScoreHT = item.scoreHT?.away ?? 0;
+            const matchTime = item.startTime || new Date().toISOString();
+
+            return {
+                home_player: extractPlayerName(item.home?.name || ""),
+                away_player: extractPlayerName(item.away?.name || ""),
+                league_name: leagueName,
+                score_home: homeScore,
+                score_away: awayScore,
+                halftime_score_home: homeScoreHT,
+                halftime_score_away: awayScoreHT,
+                data_realizacao: matchTime,
+                home_team: item.home?.teamName || "",
+                away_team: item.away?.teamName || "",
+                home_team_logo: item.home?.imageUrl || "",
+                away_team_logo: item.away?.imageUrl || ""
+            };
+        });
+
         // Ensure data is sorted by date descending (most recent first)
-        const sortedResults = results.sort((a: any, b: any) => {
-            const timeA = new Date(a.matchTime || a.time || 0).getTime();
-            const timeB = new Date(b.matchTime || b.time || 0).getTime();
+        const sortedResults = mappedResults.sort((a, b) => {
+            const timeA = new Date(a.data_realizacao).getTime();
+            const timeB = new Date(b.data_realizacao).getTime();
             return timeB - timeA;
         });
-        
-        if (sortedResults.length === 0) {
-            console.log('Sem resultados disponíveis na SensorFIFA');
-            return [];
-        }
 
-        // Normalizar dados antes de retornar
+        // RE-NORMALIZE to ensure league names regularizations from analyzer.ts are applied!
         const normalizedResults = normalizeHistoryData(sortedResults);
-        const limitedResults = normalizedResults.slice(0, 1000); // Limit to latest 1000 games for performance
-        console.log(`📊 SensorFIFA: ${limitedResults.length} jogos carregados (Ordenados: Recentes Primeiro).`);
         
-        return limitedResults;
+        console.log(`📊 Green365: ${normalizedResults.length} jogos carregados (Total de ${numPages} páginas).`);
+        
+        return normalizedResults;
         
     } catch (e) { 
-        console.error("SensorFIFA fetch error:", e); 
+        console.error("Green365 fetch error:", e); 
         return [];
     }
 };
 
 const adaptFallbackLiveEvents = (data: any[]): LiveEvent[] => {
     return data.map((item: any) => ({
-        id: String(item.id),
-        leagueName: item.league?.name || "Esoccer",
+        id: String(item.eventId || item.id),
+        leagueName: item.competition?.name || item.league?.name || "Esoccer",
         eventName: `${item.home?.name || "Player 1"} vs ${item.away?.name || "Player 2"}`,
-        stage: String(item.time_status), // Mapear se necessário, ex: "1" -> "1H"
+        stage: "Live", 
         timer: {
             minute: Number(item.timer?.tm || 0),
             second: Number(item.timer?.ts || 0),
-            formatted: `${item.timer?.tm || 0}:${String(item.timer?.ts || 0).padStart(2, '0')}`
+            formatted: "00:00" // Green365 might not send detailed timer in this endpoint
         },
         score: {
-            home: Number(item.ss?.split('-')[0] || 0),
-            away: Number(item.ss?.split('-')[1] || 0)
+            home: Number(item.score?.home ?? item.ss?.split('-')[0] ?? 0),
+            away: Number(item.score?.away ?? item.ss?.split('-')[1] ?? 0)
         },
         homePlayer: extractPlayerName(item.home?.name || ""),
         awayPlayer: extractPlayerName(item.away?.name || ""),
-        homeTeamName: item.home?.name || "",
-        awayTeamName: item.away?.name || "",
+        homeTeamName: item.home?.teamName || "",
+        awayTeamName: item.away?.teamName || "",
         isLive: true,
-        bet365EventId: undefined // Desabilita link da Bet365
+        bet365EventId: undefined
     }));
 };
 
@@ -124,7 +156,7 @@ export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
             if (!backupResponse.ok) throw new Error("Backup API fetch failed");
             
             const backupJson = await backupResponse.json();
-            const backupData = backupJson.data || [];
+            const backupData = backupJson.items || backupJson.data || [];
             return adaptFallbackLiveEvents(backupData);
         }
     } catch (error) {

@@ -62,13 +62,18 @@ export function PreLiveMatches() {
     useEffect(() => {
         async function fetchMatches() {
             try {
+                console.log('[PreLiveMatches] Fetching from /api/pre-live...')
                 const response = await fetch(`/api/pre-live`)
 
                 if (!response.ok) {
+                    console.error('[PreLiveMatches] Response not OK:', response.status)
                     throw new Error(`HTTP error! status: ${response.status}`)
                 }
 
                 const data = await response.json()
+                console.log('[PreLiveMatches] API Response:', data)
+                console.log('[PreLiveMatches] Matches count:', data.data?.length || 0)
+
                 setMatches(data.data || [])
             } catch (error) {
                 console.error("[PreLive] Error fetching matches:", error)
@@ -79,6 +84,7 @@ export function PreLiveMatches() {
 
         fetchMatches()
     }, [])
+
 
     // Get unique teams and leagues for filters
     const uniqueTeams = useMemo(() => {

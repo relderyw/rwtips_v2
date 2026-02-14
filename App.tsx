@@ -180,7 +180,7 @@ const App: React.FC = () => {
     try {
       const authData = await loginDev3();
       const [hist, live] = await Promise.all([
-        authData ? fetchHistoryGames(40) : Promise.resolve([]),
+        authData ? fetchHistoryGames(10) : Promise.resolve([]),
         fetchLiveGames()
       ]);
       setHistory(hist || []);
@@ -234,7 +234,7 @@ const App: React.FC = () => {
         const historySyncInterval = setInterval(async () => {
           setIsSyncingHistory(true);
           const authData = await loginDev3();
-          const hist = authData ? await fetchHistoryGames(40) : [];
+          const hist = authData ? await fetchHistoryGames(10) : [];
           if (hist.length > 0) setHistory(hist);
           setIsSyncingHistory(false);
         }, 1000 * 60 * 5); // A cada 5 minutos

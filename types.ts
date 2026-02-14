@@ -10,6 +10,8 @@ export interface HistoryMatch {
   data_realizacao: string;
   home_team?: string;
   away_team?: string;
+  home_team_logo?: string;
+  away_team_logo?: string;
 }
 
 export interface FinishedGame {
