@@ -368,9 +368,10 @@ const App: React.FC = () => {
   const groupedMatches = useMemo(() => {
     const groups: Record<string, typeof filteredLive> = {};
     filteredLive.forEach(item => {
-      const league = item.event.leagueName;
-      if (!groups[league]) groups[league] = [];
-      groups[league].push(item);
+      // Use normalized league name to avoid duplicates
+      const normalizedLeagueName = getLeagueInfo(item.event.leagueName).name;
+      if (!groups[normalizedLeagueName]) groups[normalizedLeagueName] = [];
+      groups[normalizedLeagueName].push(item);
     });
     return groups;
   }, [filteredLive]);
@@ -672,11 +673,11 @@ const App: React.FC = () => {
                                 return (
                                   <div
                                     key={i}
-                                    className="bg-[#0c0c0e]/80 border py-2.5 px-6 rounded-2xl flex items-center gap-6 group hover:bg-white/[0.03] transition-all card-glow"
+                                    className="bg-[#0c0c0e]/80 border py-2.5 px-6 rounded-2xl grid grid-cols-[90px_1fr_auto] items-center gap-6 group hover:bg-white/[0.03] transition-all card-glow"
                                     style={{ borderColor: `${lInfo.color}20`, borderLeft: `4px solid ${lInfo.color}` }}
                                   >
-                                    <div className="flex flex-col gap-0.5 shrink-0 min-w-[90px]">
-                                      <span className="text-[8px] font-black uppercase tracking-tighter opacity-70" style={{ color: lInfo.color }}>
+                                    <div className="flex flex-col gap-0.5 shrink-0">
+                                      <span className="text-[8px] font-black uppercase tracking-tighter opacity-70 truncate" style={{ color: lInfo.color }}>
                                         {lInfo.name}
                                       </span>
                                       <span className="text-[11px] font-black tabular-nums tracking-tight" style={{ color: `${lInfo.color}EE` }}>
@@ -684,19 +685,19 @@ const App: React.FC = () => {
                                       </span>
                                     </div>
 
-                                    <div className="flex-1 flex items-center justify-center gap-4 min-w-0">
-                                      <span className="text-sm font-black uppercase truncate text-right flex-1" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
-                                      <span className="text-[8px] italic font-black uppercase opacity-20" style={{ color: lInfo.color }}>vs</span>
-                                      <span className="text-sm font-black uppercase truncate flex-1" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
+                                    <div className="grid grid-cols-[1fr_20px_1fr] items-center gap-2">
+                                      <span className="text-sm font-black uppercase truncate text-right" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
+                                      <span className="text-[8px] italic font-black uppercase opacity-20 text-center" style={{ color: lInfo.color }}>vs</span>
+                                      <span className="text-sm font-black uppercase truncate text-left" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
                                     </div>
 
-                                    <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6">
-                                      <div className="bg-black/40 border border-white/5 px-3 py-1 rounded-lg">
+                                    <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6 justify-end">
+                                      <div className="bg-black/40 border border-white/5 px-3 py-1 rounded-lg w-[60px] text-center">
                                         <span className="text-base font-black italic tabular-nums" style={{ color: lInfo.color, textShadow: `0 0 15px ${lInfo.color}40` }}>
                                           {game.score_home}-{game.score_away}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/[0.03] border border-white/[0.08] shadow-inner">
+                                      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/[0.03] border border-white/[0.08] shadow-inner w-[80px] justify-center">
                                         <span className="text-[7px] font-black uppercase text-white/20">HT</span>
                                         <span className="text-[12px] font-black tabular-nums" style={{ color: lInfo.color }}>
                                           {game.halftime_score_home}-{game.halftime_score_away}
@@ -721,28 +722,28 @@ const App: React.FC = () => {
                                     {games.map((game, i) => (
                                       <div
                                         key={i}
-                                        className="bg-[#0c0c0e]/80 border py-2.5 px-6 rounded-2xl flex items-center gap-6 group hover:bg-white/[0.03] transition-all card-glow"
+                                        className="bg-[#0c0c0e]/80 border py-2.5 px-6 rounded-2xl grid grid-cols-[90px_1fr_auto] items-center gap-6 group hover:bg-white/[0.03] transition-all card-glow"
                                         style={{ borderColor: `${lInfo.color}20`, borderLeft: `4px solid ${lInfo.color}` }}
                                       >
-                                        <div className="flex flex-col gap-0.5 shrink-0 min-w-[90px]">
+                                        <div className="flex flex-col gap-0.5 shrink-0">
                                           <span className="text-[11px] font-black tabular-nums tracking-tight" style={{ color: `${lInfo.color}EE` }}>
                                             {new Date(game.data_realizacao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                                           </span>
                                         </div>
 
-                                        <div className="flex-1 flex items-center justify-center gap-4 min-w-0">
-                                          <span className="text-sm font-black uppercase truncate text-right flex-1" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
-                                          <span className="text-[8px] italic font-black uppercase opacity-20" style={{ color: lInfo.color }}>vs</span>
-                                          <span className="text-sm font-black uppercase truncate flex-1" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
+                                        <div className="grid grid-cols-[1fr_20px_1fr] items-center gap-2">
+                                          <span className="text-sm font-black uppercase truncate text-right" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
+                                          <span className="text-[8px] italic font-black uppercase opacity-20 text-center" style={{ color: lInfo.color }}>vs</span>
+                                          <span className="text-sm font-black uppercase truncate text-left" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
                                         </div>
 
-                                        <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6">
-                                          <div className="bg-black/40 border border-white/5 px-3 py-1 rounded-lg">
+                                        <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6 justify-end">
+                                          <div className="bg-black/40 border border-white/5 px-3 py-1 rounded-lg w-[60px] text-center">
                                             <span className="text-base font-black italic tabular-nums" style={{ color: lInfo.color, textShadow: `0 0 15px ${lInfo.color}40` }}>
                                               {game.score_home}-{game.score_away}
                                             </span>
                                           </div>
-                                          <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/[0.03] border border-white/[0.08] shadow-inner">
+                                          <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/[0.03] border border-white/[0.08] shadow-inner w-[80px] justify-center">
                                             <span className="text-[7px] font-black uppercase text-white/20">HT</span>
                                             <span className="text-[12px] font-black tabular-nums" style={{ color: lInfo.color }}>
                                               {game.halftime_score_home}-{game.halftime_score_away}

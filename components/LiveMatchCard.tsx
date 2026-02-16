@@ -244,7 +244,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
       {/* Header do Card */}
       <div className="p-3.5 pb-2.5 flex items-center justify-between border-b border-white/[0.04] bg-white/[0.005] rounded-t-2xl relative z-10">
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
-          <div className="w-10 h-10 rounded-xl bg-black/40 p-2 border border-white/5 shrink-0 flex items-center justify-center shadow-2xl">
+          <div className="w-10 h-10 rounded-xl bg-black/40 p-2.5 border border-white/5 shrink-0 flex items-center justify-center shadow-2xl">
             <img src={leagueInfo.image} className="w-full h-full object-contain brightness-110" alt="" />
           </div>
           <div className="flex flex-col min-w-0">

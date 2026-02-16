@@ -2,8 +2,9 @@
 import { HistoryMatch, LiveEvent } from '../types';
 import { normalizeHistoryData } from './analyzer';
 
-const API_BASE = import.meta.env.VITE_API_BASE || ""; 
-const API_BACKUP = "https://api-v2.green365.com.br/api/v2/sport-events?page=1&limit=50&sport=esoccer&status=inplay";
+const HISTORY_API_BASE = "https://rwtips-r943.onrender.com/api/app3/history";
+const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=-180&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=66&catIds=2085,1571,1728,1594,2086,1729,2130";
+const API_BASE = "https://rwtips-r943.onrender.com";
 
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
@@ -13,29 +14,24 @@ const extractPlayerName = (str: string): string => {
 };
 
 export const loginDev3 = async (force: boolean = false): Promise<string | null> => {
-    // A autenticação agora é gerenciada pelo backend (rotas.js)
-    // Mantemos a função para compatibilidade, mas ela apenas retorna "ok" ou checa o health
     return "ok";
 };
 
-export const fetchHistoryGames = async (numPages: number = 10): Promise<any[]> => {
+export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryMatch[]> => {
     try {
-        console.log(`📡 Buscando histórico via Green365 (${numPages} páginas) em paralelo...`);
+        console.log(`📡 Buscando histórico via Nova API (${numPages} páginas) em paralelo...`);
 
         // Cria array de promessas para buscar todas as páginas simultaneamente
         const promises = Array.from({ length: numPages }, (_, i) => {
             const page = i + 1;
-            const url = `https://api-v2.green365.com.br/api/v2/sport-events?page=${page}&limit=24&sport=esoccer&status=ended`;
-            return fetch(url, {
-                method: 'GET',
-                headers: { "Content-Type": "application/json" }
-            }).then(async res => {
+            const url = `${HISTORY_API_BASE}?page=${page}&page_size=20`;
+            return fetch(url).then(async res => {
                 if (!res.ok) {
-                    console.error(`Erro ao buscar Green365 página ${page}: ${res.status}`);
+                    console.error(`Erro ao buscar Histórico página ${page}: ${res.status}`);
                     return [];
                 }
                 const json = await res.json();
-                return json.items || [];
+                return json.results || [];
             }).catch(err => {
                 console.error(`Erro na requisição da página ${page}:`, err);
                 return [];
@@ -49,116 +45,104 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<any[]> =
         const allItems = results.flat();
         
         if (allItems.length === 0) {
-            console.log('Sem resultados disponíveis na Green365');
+            console.log('Sem resultados disponíveis no Histórico');
             return [];
         }
 
-        // Map Green365 data to HistoryMatch format
-        const mappedResults: HistoryMatch[] = allItems.map((item: any) => {
-            const leagueName = item.competition?.name || "";
-            const homeScore = item.score?.home ?? 0;
-            const awayScore = item.score?.away ?? 0;
-            const homeScoreHT = item.scoreHT?.home ?? 0;
-            const awayScoreHT = item.scoreHT?.away ?? 0;
-            const matchTime = item.startTime || new Date().toISOString();
-
-            return {
-                home_player: extractPlayerName(item.home?.name || ""),
-                away_player: extractPlayerName(item.away?.name || ""),
-                league_name: leagueName,
-                score_home: homeScore,
-                score_away: awayScore,
-                halftime_score_home: homeScoreHT,
-                halftime_score_away: awayScoreHT,
-                data_realizacao: matchTime,
-                home_team: item.home?.teamName || "",
-                away_team: item.away?.teamName || "",
-                home_team_logo: item.home?.imageUrl || "",
-                away_team_logo: item.away?.imageUrl || ""
-            };
-        });
-
-        // Ensure data is sorted by date descending (most recent first)
-        const sortedResults = mappedResults.sort((a, b) => {
-            const timeA = new Date(a.data_realizacao).getTime();
-            const timeB = new Date(b.data_realizacao).getTime();
-            return timeB - timeA;
-        });
-
-        // RE-NORMALIZE to ensure league names regularizations from analyzer.ts are applied!
-        const normalizedResults = normalizeHistoryData(sortedResults);
+        // Normalize History Data using the sanitizer in analyzer.ts
+        const normalizedResults = normalizeHistoryData(allItems);
         
-        console.log(`📊 Green365: ${normalizedResults.length} jogos carregados (Total de ${numPages} páginas).`);
+        console.log(`📊 Histórico: ${normalizedResults.length} jogos carregados (Total de ${numPages} páginas).`);
         
         return normalizedResults;
         
     } catch (e) { 
-        console.error("Green365 fetch error:", e); 
+        console.error("History fetch error:", e); 
         return [];
     }
 };
 
-const adaptFallbackLiveEvents = (data: any[]): LiveEvent[] => {
-    return data.map((item: any) => ({
-        id: String(item.eventId || item.id),
-        leagueName: item.competition?.name || item.league?.name || "Esoccer",
-        eventName: `${item.home?.name || "Player 1"} vs ${item.away?.name || "Player 2"}`,
-        stage: "Live", 
-        timer: {
-            minute: Number(item.timer?.tm || 0),
-            second: Number(item.timer?.ts || 0),
-            formatted: "00:00" // Green365 might not send detailed timer in this endpoint
-        },
-        score: {
-            home: Number(item.score?.home ?? item.ss?.split('-')[0] ?? 0),
-            away: Number(item.score?.away ?? item.ss?.split('-')[1] ?? 0)
-        },
-        homePlayer: extractPlayerName(item.home?.name || ""),
-        awayPlayer: extractPlayerName(item.away?.name || ""),
-        homeTeamName: item.home?.teamName || "",
-        awayTeamName: item.away?.teamName || "",
-        isLive: true,
-        bet365EventId: undefined
-    }));
-};
+import { AltenarResponse, AltenarCompetitor, AltenarChampionship } from '../types';
 
 export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
     try {
-        let json;
-        try {
-            const response = await fetch(`${API_BASE}/api/app3/live-events`);
-            if (!response.ok) throw new Error("Live events fetch failed");
-            json = await response.json();
-            
-            const events = json.events || [];
-            return events.map((m: any) => ({
-                id: String(m.id),
-                leagueName: m.leagueName || "Esoccer",
-                eventName: m.eventName,
-                stage: m.stage,
-                timer: {
-                    minute: m.timer?.minute ?? 0,
-                    second: m.timer?.second ?? 0,
-                    formatted: m.timer?.formatted ?? "00:00"
-                },
-                score: m.score,
-                homePlayer: extractPlayerName(m.homePlayer || ""),
-                awayPlayer: extractPlayerName(m.awayPlayer || ""),
-                homeTeamName: m.homeTeamName,
-                awayTeamName: m.awayTeamName,
-                isLive: m.isLive,
-                bet365EventId: m.bet365EventId
-            }));
+        const response = await fetch(LIVE_API_URL, {
+            method: 'GET',
+            headers: {
+                'Accept': '*/*',
+                'Origin': 'https://www.estrelabet.bet.br',
+                'Referer': 'https://www.estrelabet.bet.br/'
+            }
+        });
 
-        } catch (primaryError) {
-            console.warn("Primary API failed, attempting backup...", primaryError);
-            const backupResponse = await fetch(API_BACKUP);
-            if (!backupResponse.ok) throw new Error("Backup API fetch failed");
-            
-            const backupJson = await backupResponse.json();
-            const backupData = backupJson.items || backupJson.data || [];
-            return adaptFallbackLiveEvents(backupData);
+        if (!response.ok) throw new Error(`Live API Error: ${response.status}`);
+        
+        const data: AltenarResponse = await response.json();
+        
+        // Mapeamentos para lookup rápido
+        const competitorsMap = new Map<number, AltenarCompetitor>();
+        if (data.competitors) {
+            data.competitors.forEach(c => competitorsMap.set(c.id, c));
         }
+
+        const champsMap = new Map<number, AltenarChampionship>();
+        if (data.champs) {
+            data.champs.forEach(c => champsMap.set(c.id, c));
+        }
+
+        const events = data.events || [];
+
+        return events
+            .filter((evt) => evt.sportId === 66)
+            .map(evt => {
+            const homeId = evt.competitorIds[0];
+            const awayId = evt.competitorIds[1];
+            
+            const homeComp = competitorsMap.get(homeId);
+            const awayComp = competitorsMap.get(awayId);
+            const champ = champsMap.get(evt.champId);
+
+            const homeNameFull = homeComp?.name || "Player 1";
+            const awayNameFull = awayComp?.name || "Player 2";
+
+            const homePlayer = extractPlayerName(homeNameFull);
+            const awayPlayer = extractPlayerName(awayNameFull);
+            
+            // Extract Team Name if available (removes the player name part)
+            const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
+            const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
+
+            const scoreHome = evt.score[0] || 0;
+            const scoreAway = evt.score[1] || 0;
+
+            // Timer parsing logick? Altenar sends "lst" (last server time) and "ls" (live status)
+            // Example lst: "2026-02-16T02:08:36Z"
+            // We might need to correct the time based on parsing, but for now we format nicely
+            const timerFormatted = evt.liveTime || evt.ls || "Ao Vivo";
+
+            return {
+                id: String(evt.id),
+                leagueName: champ?.name || "Esoccer",
+                eventName: `${homeNameFull} vs ${awayNameFull}`,
+                stage: evt.ls || "Live", 
+                timer: {
+                    minute: 0, // Altenar doesn't reliably send exact minute in this summary endpoint
+                    second: 0,
+                    formatted: timerFormatted
+                },
+                score: {
+                    home: scoreHome,
+                    away: scoreAway
+                },
+                homePlayer: homePlayer,
+                awayPlayer: awayPlayer,
+                homeTeamName: homeTeam,
+                awayTeamName: awayTeam,
+                isLive: true,
+                bet365EventId: undefined
+            };
+        });
+
     } catch (error) {
         console.error("Live Games Error:", error);
         return [];

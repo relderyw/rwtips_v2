@@ -69,23 +69,63 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
       name: "H2H GG LEAGUE", 
       color: "#A855F7", 
       image: "https://h2h.cdn-hudstats.com/assets/H2H-ltFU8AWE.svg" 
+    },
+    // New mappings for Altenar/History API
+    "Valhalla": { 
+      name: "VALHALLA CUP", 
+      color: "#06b6d4", // Cyan
+      image: "https://drafted.gg/images/valhalla_cup/valhalla_cup_logo.svg" 
+    },
+    "Valkyrie": { 
+      name: "VALKYRIE CUP", 
+      color: "#f472b6", // Pink
+      image: "https://drafted.gg/images/valkyrie_cup/valkyrie_cup_logo.svg" 
+    },
+    "CLA": { 
+      name: "CLA LEAGUE", 
+      color: "#fbbf24", // Amber
+      image: "https://static.wixstatic.com/media/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png" 
+    },
+    "Cyber Live Arena": { 
+      name: "CLA LEAGUE", 
+      color: "#fbbf24", // Amber 
+      image: "https://static.wixstatic.com/media/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png" 
     }
 };
 
 export const getLeagueInfo = (fullName: string) => {
+    if (!fullName) return { name: "UNKNOWN", color: "#10B981", image: "" };
+    
+    const normalized = fullName.toLowerCase();
+    
+    
+    // Specific pattern matching to avoid duplicates
+    // H2H must be checked first to avoid matching other patterns
+    if (normalized.includes('h2h gg')) {
+        return LEAGUE_MAP["E-Soccer - H2H GG League - 8 minutos de jogo"];
+    }
+    if (normalized.includes('valhalla')) {
+        return LEAGUE_MAP["Valhalla"];
+    }
+    if (normalized.includes('valkyrie')) {
+        return LEAGUE_MAP["Valkyrie"];
+    }
+    if (normalized.includes('cla') || normalized.includes('cyber live arena')) {
+        return LEAGUE_MAP["CLA"];
+    }
+    
     // Try exact match first
     const exactMatch = Object.entries(LEAGUE_MAP).find(([key]) => fullName.includes(key));
     if (exactMatch) return exactMatch[1];
     
     // Try case-insensitive match
-    const lowerFullName = fullName.toLowerCase();
     const caseInsensitiveMatch = Object.entries(LEAGUE_MAP).find(([key]) => 
-        lowerFullName.includes(key.toLowerCase())
+        normalized.includes(key.toLowerCase())
     );
     if (caseInsensitiveMatch) return caseInsensitiveMatch[1];
     
     // Fallback to generic
-    return { name: fullName.replace("Esoccer ", "").replace("E-Soccer - ", "").toUpperCase(), color: "#10B981", image: "https://cdn-icons-png.flaticon.com/512/33/33736.png" };
+    return { name: fullName.replace("Esoccer ", "").replace("E-Soccer - ", "").toUpperCase(), color: "#10B981", image: "https://football.esportsbattle.com/favicon.ico" };
 };
 
 // Mapeamento de nomes da API de Histórico (Inglês) para a API Live (Português)

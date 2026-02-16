@@ -53,6 +53,45 @@ export interface LiveEvent {
   bet365EventId?: string;
 }
 
+// === Altenar API Types ===
+export interface AltenarCompetitor {
+    id: number;
+    name: string;
+}
+
+export interface AltenarChampionship {
+    id: number;
+    name: string;
+    hasLiveEvents: boolean;
+}
+
+export interface AltenarEvent {
+    id: number;
+    name: string;
+    liveTime: string;
+    score: number[]; // [home, away]
+    competitorIds: number[]; // [homeId, awayId]
+    champId: number;
+    startDate: string;
+    status: number;
+    ls: string; // "1ª parte" etc
+    lst: string; // timestamp
+    sportId: number;
+}
+
+export interface AltenarResponse {
+    headers: any[];
+    pageCount: number;
+    page: number;
+    markets: any[];
+    odds: any[];
+    events: AltenarEvent[];
+    sports: any[];
+    categories: any[];
+    champs: AltenarChampionship[];
+    competitors: AltenarCompetitor[];
+}
+
 export interface PlayerStats {
   name: string;
   matchesPlayed: number;
