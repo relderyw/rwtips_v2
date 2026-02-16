@@ -19,42 +19,55 @@ export const loginDev3 = async (force: boolean = false): Promise<string | null> 
 
 export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryMatch[]> => {
     try {
-        console.log(`📡 Buscando histórico via Nova API (${numPages} páginas) em paralelo...`);
+        console.log(`📡 Buscando histórico via Múltiplas APIs (${numPages} páginas) em paralelo...`);
 
-        // Cria array de promessas para buscar todas as páginas simultaneamente
-        const promises = Array.from({ length: numPages }, (_, i) => {
+        // Busca da API Interna
+        const internalPromises = Array.from({ length: numPages }, (_, i) => {
             const page = i + 1;
             const url = `${HISTORY_API_BASE}?page=${page}&page_size=20`;
             return fetch(url).then(async res => {
-                if (!res.ok) {
-                    console.error(`Erro ao buscar Histórico página ${page}: ${res.status}`);
-                    return [];
-                }
+                if (!res.ok) return [];
                 const json = await res.json();
                 return json.results || [];
-            }).catch(err => {
-                console.error(`Erro na requisição da página ${page}:`, err);
-                return [];
-            });
+            }).catch(() => []);
         });
 
+        // Busca da API Green365 (5 páginas é suficiente conforme pedido)
+        const green365Promise = fetchGreen365History(5);
+
         // Aguarda todas as requisições
-        const results = await Promise.all(promises);
+        const [internalResults, green365Results] = await Promise.all([
+            Promise.all(internalPromises),
+            green365Promise
+        ]);
         
-        // Flatten array de arrays em um único array
-        const allItems = results.flat();
+        // Flatten e normalização
+        const allInternalRaw = internalResults.flat();
+        const normalizedInternal = normalizeHistoryData(allInternalRaw);
         
-        if (allItems.length === 0) {
+        // Unificar resultados (os green365Results já vêm normalizados da fetchGreen365History)
+        const allMatches = [...normalizedInternal, ...green365Results];
+        
+        if (allMatches.length === 0) {
             console.log('Sem resultados disponíveis no Histórico');
             return [];
         }
 
-        // Normalize History Data using the sanitizer in analyzer.ts
-        const normalizedResults = normalizeHistoryData(allItems);
+        // Remover duplicatas por data e jogadores (opcional, mas recomendado)
+        const uniqueMatches = allMatches.filter((match, index, self) =>
+            index === self.findIndex((m) => (
+                m.data_realizacao === match.data_realizacao &&
+                m.home_player === match.home_player &&
+                m.away_player === match.away_player
+            ))
+        );
+
+        // Ordenar por data (recente primeiro)
+        uniqueMatches.sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime());
         
-        console.log(`📊 Histórico: ${normalizedResults.length} jogos carregados (Total de ${numPages} páginas).`);
+        console.log(`📊 Histórico Unificado: ${uniqueMatches.length} jogos carregados (${normalizedInternal.length} internos, ${green365Results.length} Green365).`);
         
-        return normalizedResults;
+        return uniqueMatches;
         
     } catch (e) { 
         console.error("History fetch error:", e); 
@@ -158,6 +171,55 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
     } catch (err) {
         console.error("H2H Error:", err);
         return null;
+    }
+};
+
+const GREEN365_API_BASE = "https://api-v2.green365.com.br/api/v2/sport-events";
+const GREEN365_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImY1MzMwMzNhMTMzYWQyM2EyYzlhZGNmYzE4YzRlM2E3MWFmYWY2MjkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZXVncmVlbi0yZTljMCIsImF1ZCI6ImV1Z3JlZW4tMmU5YzAiLCJhdXRoX3RpbWUiOjE3NjM4NzY2NTcsInVzZXJfaWQiOiJwM09CaFI3Wmd3VENwNnFBWFpFZWl0RGt4T0czIiwic3ViIjoicDNPQmhSN1pnd1RDcDZxQVhaRWVpdERreE9HMyIsImlhdCI6MTc3MTI0ODI2NiwiZXhwIjoxNzcxMjUxODI2LCJlbWFpbCI6InJlbGRlcnkxNDIyQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbInJlbGRlcnkxNDIyQGdtYWlsLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.yHo_igBbWbi8PUrKpUFpH9yB7mf4E3gW2eg1tVnHDJ7isFiI66Vyde2oCttLXlYLtYZMoU_Epl1Lu_OBAfoaa3IoBO359Cb5cf1gFd-E9wS8pBiZB-QVh0xMHmf29va0CURg3zvlwnpE-MChlmVj2zNzlAhj818VMnsTB3DKPzqIa-n-WklIUYbAWkwVj6qpjAOCWgPUs22mas_-mSbjV6og5OvA-6yKWELWDzAqtjnm0Vpcg92V-YOZ96ymFVqB4t5DlLQmrS53byAYa_uwNRtKB8NdzVVJlm5hjjpfUWYNDnIbZRchroIcpk081R5fqfS6WJ0vDbrCh_E2XCTGgA";
+
+export const fetchGreen365History = async (numPages: number = 5): Promise<HistoryMatch[]> => {
+    try {
+        console.log(`📡 Buscando histórico H2H GG via Green365 (${numPages} páginas) em paralelo...`);
+
+        const promises = Array.from({ length: numPages }, (_, i) => {
+            const page = i + 1;
+            const url = `${GREEN365_API_BASE}?page=${page}&limit=24&sport=esoccer&status=ended`;
+            return fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Authorization': `Bearer ${GREEN365_TOKEN}`,
+                    'Origin': 'https://green365.com.br',
+                    'Referer': 'https://green365.com.br/'
+                }
+            }).then(async res => {
+                if (!res.ok) {
+                    console.error(`Erro ao buscar Green365 página ${page}: ${res.status}`);
+                    return [];
+                }
+                const json = await res.json();
+                // A API da Green365 parece retornar os jogos em data.results ou similar
+                return json.data || json.results || json || [];
+            }).catch(err => {
+                console.error(`Erro Green365 página ${page}:`, err);
+                return [];
+            });
+        });
+
+        const results = await Promise.all(promises);
+        const allItems = results.flat();
+        
+        if (allItems.length === 0) return [];
+
+        // Normalização específica para Green365 no analyzer.ts
+        const normalizedResults = normalizeHistoryData(allItems);
+        
+        console.log(`📊 Green365: ${normalizedResults.length} jogos H2H GG carregados.`);
+        return normalizedResults;
+        
+    } catch (e) { 
+        console.error("Green365 fetch error:", e); 
+        return [];
     }
 };
 

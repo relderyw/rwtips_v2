@@ -470,6 +470,60 @@ export const calculatePlayerStats = (playerName: string, gamesData: any, limit: 
 };
 
 // === ANÁLISE DE POTENCIAL DO JOGO ===
+// === CÁLCULO DE CONFIDENCE (NOVO PLANO 4 FATORES) ===
+const calculateConfidence = (playerName: string, games: HistoryMatch[], stats: any, playerLimit: number = 5) => {
+    let score = 0;
+    const targetName = normalize(playerName);
+    const lastGames = games
+        .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
+        .slice(0, playerLimit);
+
+    if (lastGames.length < 3) return { score: 0, cooling: false };
+
+    // 1️⃣ Consistência (40 pontos) - Desvio Padrão
+    const goalsList = lastGames.map(g => {
+        const isHome = normalize(g.home_player) === targetName;
+        return Number(isHome ? g.score_home : g.score_away);
+    });
+
+    const mean = goalsList.reduce((a, b) => a + b, 0) / goalsList.length;
+    const variance = goalsList.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / goalsList.length;
+    const stdDev = Math.sqrt(variance);
+
+    if (stdDev <= 0.5) score += 40;
+    else if (stdDev <= 1.0) score += 30;
+    else if (stdDev <= 1.5) score += 20;
+    else if (stdDev <= 2.0) score += 10;
+
+    // 2️⃣ Média de Gols (30 pontos)
+    const avg = stats.avgGoalsFT;
+    if (avg >= 3.5) score += 30;
+    else if (avg >= 3.0) score += 25;
+    else if (avg >= 2.5) score += 20;
+    else if (avg >= 2.0) score += 15;
+    else if (avg >= 1.5) score += 10;
+
+    // 3️⃣ Regime/Tendência (20 pontos)
+    // HEATING (últimos 3 jogos > jogos anteriores)
+    const last3 = goalsList.slice(0, 3);
+    const prevGames = goalsList.slice(3);
+    const avgLast3 = last3.reduce((a, b) => a + b, 0) / (last3.length || 1);
+    const avgPrev = prevGames.length > 0 ? prevGames.reduce((a, b) => a + b, 0) / prevGames.length : avgLast3;
+
+    if (avgLast3 > avgPrev) score += 20; // HEATING 🔥
+    else if (avgLast3 === avgPrev) score += 10; // STABLE ❄️
+
+    // 4️⃣ Consistência no HT (10 pontos)
+    const htRate = stats.over05HT;
+    if (htRate >= 100) score += 10;
+    else if (htRate >= 80) score += 7;
+    else if (htRate >= 60) score += 5;
+    else if (htRate >= 40) score += 3;
+
+    return { score, cooling: avgLast3 < avgPrev };
+};
+
+// === ANÁLISE DE POTENCIAL DO JOGO ===
 export interface AnalysisResult {
   key: string;
   confidence: number;
@@ -492,13 +546,7 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
       const uFT = (sample.filter(g => Number(g.score_home || 0) === 0 && Number(g.score_away || 0) === 0).length / sample.length) * 100;
       const o25 = (sample.filter(g => (Number(g.score_home || 0) + Number(g.score_away || 0)) > 2.5).length / sample.length) * 100;
 
-      // Veto se a liga estiver muito "Under" ou baixa média
-      if (uHT > 35 || uFT > 25 || o25 < 45) {
-        if (typeof window === 'undefined') {
-          console.log(`[ANALYZER] Veto por Liga (${leagueName}): uHT:${uHT.toFixed(0)}% uFT:${uFT.toFixed(0)}% o25:${o25.toFixed(0)}%`);
-        }
-        return none; // VETO POR LIGA FRACA
-      }
+      if (uHT > 35 || uFT > 25 || o25 < 45) return none; 
     }
   }
 
@@ -510,109 +558,57 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
   // Validação de Amostra Mínima
   if (p1.last3Results.length < 3 || p2.last3Results.length < 3) return none;
 
+  const conf1 = calculateConfidence(p1Name, games, p1, 5);
+  const conf2 = calculateConfidence(p2Name, games, p2, 5);
+
+  // BLOQUEIO COOLING (Opcional conforme plano)
+  // if (conf1.cooling || conf2.cooling) return none;
+
   let resultKey = 'none';
-  let confidence = 70;
   const reasons: string[] = [];
 
-  // 1. HT PRO
-  // User: +1.5 HT = 100% | +2.5 HT >= 88% | BTTS HT <= 77% | MD_GOLS_CASA_HT >= 1.5 | MD_GOLS_FORA_HT >= 1.5 | +2.5 FT <= 75%
-  if (p1.over15HT === 100 && p1.over25HT >= 88 && p1.bttsHT <= 77 && p1.avgGoalsHT >= 1.5 && p2.avgGoalsHT >= 1.5 && p1.over25FT <= 75) {
+  // Estratégias
+  if (p1.over15HT === 100 && p1.over25HT >= 88 && p1.avgGoalsHT >= 1.5 && p2.avgGoalsHT >= 1.5 && p1.over25FT <= 75) {
       resultKey = 'ht_pro';
   }
-
-  // 2. FT PRO
-  // User: +2.5 FT = 100% | +3.5 FT >= 88% | BTTS FT: <= 77% | MD_GOLS_CASA >= 2.5 | MD_GOLS_FORA >= 2.5 | +2.5 HT <= 60%
-  if (resultKey === 'none' && p1.over25FT === 100 && p1.over35FT >= 88 && p1.bttsFT <= 77 && p1.avgGoalsFT >= 2.5 && p2.avgGoalsFT >= 2.5 && p1.over25HT <= 60) {
+  else if (p1.over25FT === 100 && p1.over35FT >= 88 && p1.avgGoalsFT >= 2.5 && p2.avgGoalsFT >= 2.5 && p1.over25HT <= 60) {
       resultKey = 'ft_pro';
   }
-
-  // 3. BTTS HT
-  // User: = 100% | MD_GOLS_CASA_HT: >= 1.8 | MD_GOLS_FORA_HT: >= 1.8 | +2.5 HT <= 60%
-  if (resultKey === 'none' && p1.bttsHT === 100 && p1.avgGoalsHT >= 1.8 && p2.avgGoalsHT >= 1.8 && p1.over25HT <= 60) {
+  else if (p1.bttsHT === 100 && p1.avgGoalsHT >= 1.8 && p2.avgGoalsHT >= 1.8 && p1.over25HT <= 60) {
       resultKey = 'btts_pro_ht';
   }
-
-  // 4. BTTS FT
-  // User: = 100% | MD_GOLS_CASA_FT: >= 2.0 | MD_GOLS_FORA_FT: >= 2.0 | +2.5 FT <= 88%
-  if (resultKey === 'none' && p1.bttsFT === 100 && p1.avgGoalsFT >= 2.0 && p2.avgGoalsFT >= 2.0 && p1.over25FT <= 88) {
+  else if (p1.bttsFT === 100 && p1.avgGoalsFT >= 2.0 && p2.avgGoalsFT >= 2.0 && p1.over25FT <= 88) {
       resultKey = 'btts_pro_ft';
   }
-
-  // 5. DOMINANTE
-  // User Casa: Win Casa >= 70% | Win Fora <= 20%
-  // User Fora: Win Fora >= 70% | Win Casa <= 20%
-  if (resultKey === 'none') {
-    if (p1.winRate >= 70 && p2.winRate <= 20) resultKey = 'casa_pro';
-    else if (p2.winRate >= 70 && p1.winRate <= 20) resultKey = 'fora_pro';
-  }
-
-  // 6. ENGINE PRO
-  // User Casa: MD_GOLS_HT_CASA >= 2.5 | MD_GOLS_FT_CASA >= 3.7 | MD_GOLS_HT_FORA <= 0.7 | MD_GOLS_FT_FORA <= 1.7
-  // User Fora: MD_GOLS_HT_FORA >= 2.5 | MD_GOLS_FT_FORA >= 3.7 | MD_GOLS_HT_CASA <= 0.7 | MD_GOLS_FT_CASA <= 1.7
-  if (resultKey === 'none') {
-    if (p1.avgGoalsHT >= 2.5 && p1.avgGoalsFT >= 3.7 && p2.avgGoalsHT <= 0.7 && p2.avgGoalsFT <= 1.7) resultKey = 'casa_engine_pro';
-    else if (p2.avgGoalsHT >= 2.5 && p2.avgGoalsFT >= 3.7 && p1.avgGoalsHT <= 0.7 && p1.avgGoalsFT <= 1.7) resultKey = 'fora_engine_pro';
-  }
-
-  // 7. ELITE CLASH
-  // User: Win Casa: >= 60% | Win Fora: >= 60% | %Draw Casa: <= 25% | %Draw Fora: <= 25%
-  if (resultKey === 'none' && p1.winRate >= 60 && p2.winRate >= 60 && p1.drawRate <= 25 && p2.drawRate <= 25) {
+  else if (p1.winRate >= 70 && p2.winRate <= 20) resultKey = 'casa_pro';
+  else if (p2.winRate >= 70 && p1.winRate <= 20) resultKey = 'fora_pro';
+  else if (p1.avgGoalsHT >= 2.5 && p1.avgGoalsFT >= 3.7 && p2.avgGoalsHT <= 0.7 && p2.avgGoalsFT <= 1.7) resultKey = 'casa_engine_pro';
+  else if (p2.avgGoalsHT >= 2.5 && p2.avgGoalsFT >= 3.7 && p1.avgGoalsHT <= 0.7 && p1.avgGoalsFT <= 1.7) resultKey = 'fora_engine_pro';
+  else if (p1.winRate >= 60 && p2.winRate >= 60 && p1.drawRate <= 25 && p2.drawRate <= 25) {
     resultKey = 'top_clash';
   }
 
   if (resultKey === 'none') return none;
 
-  // --- Sistema de Confiança e Veto por H2H ---
+  // Confidence final baseada na média dos dois jogadores
+  let finalConfidence = (conf1.score + conf2.score) / 2;
+
+  // Ajuste por H2H (Bonus)
   const h2h = getH2HStats(p1Name, p2Name, games);
-  
-  // Veto ou Bônus por H2H
   if (h2h.count >= 2) {
-    const p1WinProb = h2h.p1WinProb;
-    const p2WinProb = h2h.p2WinProb;
-
-    if (resultKey === 'casa_pro' || resultKey === 'casa_engine_pro') {
-      if (p1WinProb >= 60) {
-        confidence += 15;
+    if (resultKey.includes('casa') && h2h.p1WinProb >= 60) {
+        finalConfidence += 10;
         reasons.push("H2H amplamente favorável ao mandante");
-      } else if (p1WinProb < 30) {
-        return none; // VETO: Histórico ruim contra esse adversário
-      }
     }
-
-    if (resultKey === 'fora_pro' || resultKey === 'fora_engine_pro') {
-      if (p2WinProb >= 60) {
-        confidence += 15;
-        reasons.push("H2H amplamente favorável ao visitante");
-      } else if (p2WinProb < 30) {
-        return none; // VETO
-      }
-    }
-
-    if (resultKey === 'ht_pro' || resultKey === 'btts_pro_ht') {
-      if (h2h.p1AvgGoalsHT + h2h.p2AvgGoalsHT >= 1.5) {
-        confidence += 10;
+    if (resultKey === 'ht_pro' && h2h.p1AvgGoalsHT + h2h.p2AvgGoalsHT >= 1.5) {
+        finalConfidence += 10;
         reasons.push("H2H com alta média de gols no HT");
-      }
-    }
-
-    if (resultKey === 'ft_pro' || resultKey === 'top_clash') {
-      if (h2h.p1AvgGoalsFT + h2h.p2AvgGoalsFT >= 2.5) {
-        confidence += 15;
-        reasons.push("H2H amplamente favorável a gols");
-      }
     }
   }
 
-  // Bônus por Forma Recente (Last 2)
-  const p1Last2 = p1.last3Results.slice(0, 2);
-  const p2Last2 = p2.last3Results.slice(0, 2);
-  
-  if (resultKey.includes('casa') && p1Last2.every(r => r === 'W')) confidence += 5;
-  if (resultKey.includes('fora') && p2Last2.every(r => r === 'W')) confidence += 5;
-
   return {
     key: resultKey,
-    confidence: Math.min(confidence, 100),
+    confidence: Math.min(finalConfidence, 100),
     reasons
   };
 };

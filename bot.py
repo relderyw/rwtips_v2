@@ -27,12 +27,11 @@ BOT_TOKEN = "6569266928:AAHm7pOJVsd3WKzJEgdVDez4ZYdCAlRoYO8"
 CHAT_ID = "-1001981134607"
 
 # APIs
-# Primary Live API (Backup will be Green365)
-LIVE_API_URL = "https://rwtips.dpdns.org/api/app3/live-events"
-# Green365 for History
-RECENT_MATCHES_URL = "https://api-v2.green365.com.br/api/v2/sport-events"
-# Green365 for Live Backup
-LIVE_API_BACKUP = "https://api-v2.green365.com.br/api/v2/sport-events?page=1&limit=50&sport=esoccer&status=inplay"
+# Altenar Live API (same as frontend) - includes auth parameters
+LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=-180&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=66&catIds=2085,1571,1728,1594,2086,1729,2130"
+# Internal History API
+HISTORY_API_URL = "https://rwtips-r943.onrender.com/api/app3/history"
+# Legacy URLs (kept for reference/fallback)
 PLAYER_STATS_URL = "https://app3.caveiratips.com.br/app3/api/confronto/"
 H2H_API_URL = "https://rwtips-r943.onrender.com/api/v1/historico/confronto/{player1}/{player2}?page=1&limit=20"
 
@@ -52,6 +51,12 @@ LIVE_LEAGUE_MAPPING = {
     "Esoccer GT Leagues – 12 mins play": "GT LEAGUE 12 MIN",
     "E-Soccer - Battle Volta - 6 minutos de jogo": "VOLTA 6 MIN",
     "Esoccer Battle Volta - 6 mins play": "VOLTA 6 MIN",
+    # New Altenar leagues
+    "Valhalla Cup": "VALHALLA CUP",
+    "Valhalla League": "VALHALLA CUP",
+    "Valkyrie Cup": "VALKYRIE CUP",
+    "CLA": "CLA LEAGUE",
+    "Cyber Live Arena": "CLA LEAGUE",
 }
 
 # History API format → Internal format
@@ -61,6 +66,10 @@ HISTORY_LEAGUE_MAPPING = {
     "H2H 8m": "H2H 8 MIN",
     "GT Leagues 12m": "GT LEAGUE 12 MIN",
     "GT League 12m": "GT LEAGUE 12 MIN",
+    # New leagues from internal API
+    "Valhalla Cup": "VALHALLA CUP",
+    "Valkyrie Cup": "VALKYRIE CUP",
+    "CLA League": "CLA LEAGUE",
 }
 
 # =============================================================================
@@ -88,82 +97,107 @@ league_stats = {}
 # =============================================================================
 
 def fetch_live_matches():
-    """Busca partidas ao vivo (Primary API -> Backup Green365)"""
+    """Busca partidas ao vivo da Altenar API"""
     
-    # 1. Tentar API Primária
     try:
+        print(f"[INFO] Buscando partidas ao vivo da Altenar API...")
         response = requests.get(LIVE_API_URL, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            events = data.get('events', [])
-            
-            # Normalizar dados da API Primária
-            normalized_events = []
-            for event in events:
-                league_name = event.get('leagueName', '')
-                mapped_league = LIVE_LEAGUE_MAPPING.get(league_name, league_name)
-                
-                normalized_event = event.copy()
-                normalized_event['leagueName'] = league_name
-                normalized_event['mappedLeague'] = mapped_league
-                normalized_events.append(normalized_event)
-            
-            print(f"[INFO] {len(normalized_events)} partidas ao vivo (Primary API)")
-            return normalized_events
-            
-    except Exception as e:
-        print(f"[WARN] Primary Live API falhou: {e}")
-
-    # 2. Tentar Backup (Green365)
-    print(f"[INFO] Tentando Backup API (Green365)...")
-    try:
-        response = requests.get(LIVE_API_BACKUP, timeout=10)
         response.raise_for_status()
         data = response.json()
-        items = data.get('items', []) or data.get('data', [])
+        
+        events = data.get('events', [])
+        competitors_list = data.get('competitors', [])
+        champs_list = data.get('champs', [])
+        
+        # Criar mapas para lookup rápido
+        competitors_map = {c['id']: c['name'] for c in competitors_list}
+        champs_map = {c['id']: c['name'] for c in champs_list}
+        
+        print(f"[DEBUG] Altenar API: {len(events)} eventos, {len(competitors_map)} competidores, {len(champs_map)} campeonatos")
+        
+        # Filtrar apenas futebol (sportId 66)
+        football_events = [e for e in events if e.get('sportId') == 66]
+        print(f"[DEBUG] {len(football_events)} eventos de futebol após filtro")
+        
+        def extract_player_name(competitor_name):
+            """Extrai nome do jogador de 'Team (PlayerName)'"""
+            if not competitor_name:
+                return ""
+            match = re.search(r'\((.*?)\)', competitor_name)
+            return match.group(1).strip() if match else competitor_name.strip()
+        
+        def parse_live_time(live_time_str):
+            """Parseia tempo ao vivo (ex: '1ª parte', '2ª parte')"""
+            # Altenar não fornece minuto exato, apenas período
+            # Retornar 0 por enquanto (pode ser melhorado)
+            return 0, 0
         
         normalized_events = []
         
-        def extract_name(s):
-            if not s: return ""
-            m = re.search(r'\((.*?)\)', s)
-            return m.group(1).strip() if m else s.strip()
-
-        for item in items:
-            league_name = item.get('competition', {}).get('name') or item.get('league', {}).get('name') or "Esoccer"
-            mapped_league = LIVE_LEAGUE_MAPPING.get(league_name, league_name)
-            
-            # Construir objeto compatível com o esperado pelo bot
-            event = {
-                'id': str(item.get('eventId') or item.get('id')),
-                'leagueName': league_name,
-                'mappedLeague': mapped_league,
-                'homePlayer': extract_name(item.get('home', {}).get('name', '')),
-                'awayPlayer': extract_name(item.get('away', {}).get('name', '')),
-                'homeTeamName': item.get('home', {}).get('teamName', ''),
-                'awayTeamName': item.get('away', {}).get('teamName', ''),
-                'timer': {
-                    'minute': int(item.get('timer', {}).get('tm', 0) or 0),
-                    'second': int(item.get('timer', {}).get('ts', 0) or 0),
-                    'formatted': "00:00" # Green365 pode não enviar formatted
-                },
-                'score': {
-                    'home': int(item.get('score', {}).get('home') or item.get('ss', '0-0').split('-')[0] or 0),
-                    'away': int(item.get('score', {}).get('away') or item.get('ss', '0-0').split('-')[1] or 0)
-                },
-                'scoreboard': item.get('ss', '0-0')
-            }
-            normalized_events.append(event)
-            
-        print(f"[INFO] {len(normalized_events)} partidas ao vivo (Backup API)")
+        for event in football_events:
+            try:
+                event_id = event.get('id')
+                champ_id = event.get('champId')
+                competitor_ids = event.get('competitorIds', [])
+                score = event.get('score', [0, 0])
+                live_time = event.get('liveTime', '')
+                
+                # Obter nomes dos competidores
+                if len(competitor_ids) >= 2:
+                    home_competitor_name = competitors_map.get(competitor_ids[0], '')
+                    away_competitor_name = competitors_map.get(competitor_ids[1], '')
+                else:
+                    print(f"[WARN] Evento {event_id} sem competidores suficientes")
+                    continue
+                
+                # Extrair nomes dos jogadores
+                home_player = extract_player_name(home_competitor_name)
+                away_player = extract_player_name(away_competitor_name)
+                
+                # Obter nome da liga
+                league_name = champs_map.get(champ_id, 'Unknown League')
+                
+                # Mapear nome da liga
+                mapped_league = LIVE_LEAGUE_MAPPING.get(league_name, league_name)
+                
+                # Parsear tempo
+                minute, second = parse_live_time(live_time)
+                
+                normalized_event = {
+                    'id': str(event_id),
+                    'leagueName': league_name,
+                    'mappedLeague': mapped_league,
+                    'homePlayer': home_player,
+                    'awayPlayer': away_player,
+                    'homeTeamName': home_competitor_name.split('(')[0].strip() if '(' in home_competitor_name else home_competitor_name,
+                    'awayTeamName': away_competitor_name.split('(')[0].strip() if '(' in away_competitor_name else away_competitor_name,
+                    'timer': {
+                        'minute': minute,
+                        'second': second,
+                        'formatted': f"{minute:02d}:{second:02d}"
+                    },
+                    'score': {
+                        'home': score[0] if len(score) > 0 else 0,
+                        'away': score[1] if len(score) > 1 else 0
+                    },
+                    'scoreboard': f"{score[0] if len(score) > 0 else 0}-{score[1] if len(score) > 1 else 0}"
+                }
+                
+                normalized_events.append(normalized_event)
+                
+            except Exception as e:
+                print(f"[WARN] Erro ao processar evento {event.get('id')}: {e}")
+                continue
+        
+        print(f"[INFO] {len(normalized_events)} partidas ao vivo normalizadas (Altenar API)")
         return normalized_events
         
     except Exception as e:
-        print(f"[ERROR] Backup Live API falhou: {e}")
+        print(f"[ERROR] Altenar Live API falhou: {e}")
         return []
 
 def fetch_recent_matches(num_pages=10, use_cache=True):
-    """Busca partidas recentes finalizadas - Green365 API com Fetch Paralelo"""
+    """Busca partidas recentes finalizadas - Internal History API com Fetch Paralelo"""
     global global_history_cache
     
     # Verificar cache global
@@ -173,20 +207,20 @@ def fetch_recent_matches(num_pages=10, use_cache=True):
             print(f"[CACHE] Usando histórico do cache global ({len(global_history_cache['matches'])} partidas)")
             return global_history_cache['matches']
             
-    print(f"[INFO] Buscando histórico via Green365 ({num_pages} páginas) em paralelo...")
+    print(f"[INFO] Buscando histórico via Internal API ({num_pages} páginas) em paralelo...")
     
     all_matches = []
     
     def fetch_page(page):
         try:
-            params = {'page': page, 'limit': 24, 'sport': 'esoccer', 'status': 'ended'}
-            response = requests.get(RECENT_MATCHES_URL, params=params, timeout=10)
+            params = {'page': page, 'limit': 24}
+            response = requests.get(HISTORY_API_URL, params=params, timeout=10)
             if response.status_code != 200:
                 print(f"[WARN] Erro na página {page}: {response.status_code}")
                 return []
             
             data = response.json()
-            items = data.get('items', [])
+            items = data.get('results', [])  # API retorna 'results', não 'data'
             return items
         except Exception as e:
             print(f"[ERROR] Erro ao buscar página {page}: {e}")
@@ -200,46 +234,36 @@ def fetch_recent_matches(num_pages=10, use_cache=True):
             all_matches.extend(items)
             
     if not all_matches:
-        print("[WARN] Nenhuma partida encontrada no histórico Green365")
+        print("[WARN] Nenhuma partida encontrada no histórico (Internal API)")
         return []
 
-    # Normalizar dados
+    # Normalizar dados (API interna já retorna no formato correto, apenas mapear nomes)
     normalized_matches = []
     
-    def extract_name(s):
-        if not s: return ""
-        # Remove parentesis content mostly
-        m = re.search(r'\((.*?)\)', s)
-        return m.group(1).strip() if m else s.strip()
-
     for match in all_matches:
-        home_team_obj = match.get('home', {})
-        away_team_obj = match.get('away', {})
-        score_obj = match.get('score', {})
-        score_ht_obj = match.get('scoreHT', {})
-        competition = match.get('competition', {})
-
-        home_player = extract_name(home_team_obj.get('name', ''))
-        away_player = extract_name(away_team_obj.get('name', ''))
+        # A API interna retorna os dados com nomes de campos ligeiramente diferentes
+        league_name = match.get('league_name', 'Unknown')
+        league_mapped = HISTORY_LEAGUE_MAPPING.get(league_name, league_name)
         
-        # Mapeamento do nome da liga
-        league_raw = competition.get('name', 'Esoccer')
-        league_mapped = HISTORY_LEAGUE_MAPPING.get(league_raw, league_raw)
+        # Combinar data e hora para criar timestamp
+        match_date = match.get('match_date', '')
+        match_time = match.get('match_time', '')
+        data_realizacao = f"{match_date}T{match_time}" if match_date and match_time else datetime.now().isoformat()
         
         normalized_matches.append({
-            'id': match.get('eventId'),
+            'id': match.get('id', ''),
             'league_name': league_mapped,
-            'home_player': home_player,
-            'away_player': away_player,
-            'home_team': home_team_obj.get('teamName', ''),
-            'away_team': away_team_obj.get('teamName', ''),
-            'home_team_logo': home_team_obj.get('imageUrl', ''),
-            'away_team_logo': away_team_obj.get('imageUrl', ''),
-            'data_realizacao': match.get('startTime', datetime.now().isoformat()),
-            'home_score_ht': score_ht_obj.get('home', 0) if score_ht_obj.get('home') is not None else 0,
-            'away_score_ht': score_ht_obj.get('away', 0) if score_ht_obj.get('away') is not None else 0,
-            'home_score_ft': score_obj.get('home', 0) if score_obj.get('home') is not None else 0,
-            'away_score_ft': score_obj.get('away', 0) if score_obj.get('away') is not None else 0
+            'home_player': match.get('home_player', ''),
+            'away_player': match.get('away_player', ''),
+            'home_team': match.get('home_team', ''),
+            'away_team': match.get('away_team', ''),
+            'home_team_logo': match.get('home_team_logo', ''),
+            'away_team_logo': match.get('away_team_logo', ''),
+            'data_realizacao': data_realizacao,
+            'home_score_ht': match.get('home_score_ht', 0) or 0,
+            'away_score_ht': match.get('away_score_ht', 0) or 0,
+            'home_score_ft': match.get('home_score_ft', 0) or 0,
+            'away_score_ft': match.get('away_score_ft', 0) or 0
         })
     
     # Ordenar por data (recente primeiro)
@@ -249,7 +273,7 @@ def fetch_recent_matches(num_pages=10, use_cache=True):
     global_history_cache['matches'] = normalized_matches
     global_history_cache['timestamp'] = time.time()
     
-    print(f"[INFO] {len(normalized_matches)} partidas recentes carregadas e cacheadas (Green365)")
+    print(f"[INFO] {len(normalized_matches)} partidas recentes carregadas e cacheadas (Internal API)")
     return normalized_matches
 
 
@@ -263,7 +287,8 @@ def fetch_player_individual_stats(player_name, use_cache=True):
             return cached['stats']
     
     # Buscar histórico global (usa cache se disponível)
-    all_matches = fetch_recent_matches(page_size=500, use_cache=True)
+    # 500 jogos ~= 21 páginas de 24 jogos
+    all_matches = fetch_recent_matches(num_pages=15, use_cache=True)
     
     if not all_matches:
         print(f"[WARN] Nenhum histórico disponível para filtrar {player_name}")
@@ -1152,7 +1177,8 @@ async def check_results(bot):
     global last_summary, last_league_summary, last_league_message_id
     
     try:
-        recent = fetch_recent_matches(page=1, page_size=50)
+        # Buscar 3 páginas para ter ~72 partidas recentes (limit=24 por página)
+        recent = fetch_recent_matches(num_pages=3)
         
         # Agrupar partidas por jogadores, mantendo múltiplas partidas
         finished_matches = defaultdict(list)
