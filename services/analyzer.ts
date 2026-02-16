@@ -171,15 +171,19 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
     
     // Convert each game to HistoryMatch format
     return games.map((game: any) => {
-        // SensorFIFA mapping
-        const home_player = extractPlayerName(game.homeTeam || game.home_player || game.player_home_name || game.player_name_1 || '');
-        const away_player = extractPlayerName(game.awayTeam || game.away_player || game.player_away_name || game.player_name_2 || '');
+        // Green365 specific mapping
+        const home_player = extractPlayerName(
+            game.home?.name || game.homeTeam || game.home_player || game.player_home_name || game.player_name_1 || ''
+        );
+        const away_player = extractPlayerName(
+            game.away?.name || game.awayTeam || game.away_player || game.player_away_name || game.player_name_2 || ''
+        );
         
-        const rawLeague = game.league || game.league_name || '';
+        const rawLeague = game.competition?.name || game.league || game.league_name || '';
         const mappedLeague = LEAGUE_NAME_MAPPING[rawLeague] || rawLeague;
 
         // Construct Date
-        let dateStr = game.matchTime || game.time || game.data_realizacao;
+        let dateStr = game.startTime || game.matchTime || game.time || game.data_realizacao;
         if (!dateStr && game.match_date && game.match_time) {
             dateStr = `${game.match_date}T${game.match_time}`;
         }
@@ -189,15 +193,15 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             home_player: home_player,
             away_player: away_player,
             league_name: mappedLeague,
-            score_home: Number(game.homeFT ?? game.home_score_ft ?? game.total_goals_home ?? game.score_home ?? 0),
-            score_away: Number(game.awayFT ?? game.away_score_ft ?? game.total_goals_away ?? game.score_away ?? 0),
-            halftime_score_home: Number(game.homeHT ?? game.home_score_ht ?? game.ht_goals_home ?? game.halftime_score_home ?? 0),
-            halftime_score_away: Number(game.awayHT ?? game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
+            score_home: Number(game.score?.home ?? game.homeFT ?? game.home_score_ft ?? game.total_goals_home ?? game.score_home ?? 0),
+            score_away: Number(game.score?.away ?? game.awayFT ?? game.away_score_ft ?? game.total_goals_away ?? game.score_away ?? 0),
+            halftime_score_home: Number(game.scoreHT?.home ?? game.homeHT ?? game.home_score_ht ?? game.ht_goals_home ?? game.halftime_score_home ?? 0),
+            halftime_score_away: Number(game.scoreHT?.away ?? game.awayHT ?? game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
             data_realizacao: dateStr,
-            home_team: game.homeClub || game.home_team || game.player_home_team_name || '',
-            away_team: game.awayClub || game.away_team || game.player_away_team_name || '',
-            home_team_logo: game.home_team_logo || game.homeTeamLogo || '',
-            away_team_logo: game.away_team_logo || game.awayTeamLogo || ''
+            home_team: game.home?.teamName || game.homeClub || game.home_team || game.player_home_team_name || '',
+            away_team: game.away?.teamName || game.awayClub || game.away_team || game.player_away_team_name || '',
+            home_team_logo: game.home?.imageUrl || game.home_team_logo || game.homeTeamLogo || '',
+            away_team_logo: game.away?.imageUrl || game.away_team_logo || game.awayTeamLogo || ''
         };
     });
 };

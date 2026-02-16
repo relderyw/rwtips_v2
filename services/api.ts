@@ -199,7 +199,7 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
                 }
                 const json = await res.json();
                 // A API da Green365 parece retornar os jogos em data.results ou similar
-                return json.data || json.results || json || [];
+                return json.items || json.data || json.results || [];
             }).catch(err => {
                 console.error(`Erro Green365 página ${page}:`, err);
                 return [];
