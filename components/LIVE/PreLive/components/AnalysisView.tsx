@@ -60,7 +60,7 @@ const TeamAnalysisCard: React.FC<{
                 <div className="w-1 h-1 rounded-full bg-primary/50"></div>
                 Performance Recente
             </h3>
-            <div className="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar">
+            <div className="flex gap-2.5 overflow-x-auto pb-4 custom-scrollbar">
                 {matches.slice(0, 10).map((m, index) => {
                     const isSuccess = stats.matchResults[index];
                     const statValue = stats.matchValues?.[index] || 0;
@@ -71,22 +71,22 @@ const TeamAnalysisCard: React.FC<{
                     const opponentId = isHome ? (m.away_team_id || m.awayTeam?.id) : (m.home_team_id || m.homeTeam?.id);
 
                     return (
-                        <div key={index} className="flex-shrink-0 w-20 group/match">
+                        <div key={index} className="flex-shrink-0 w-28 group/match">
                             <div className={clsx(
-                                "rounded-xl border p-2.5 flex flex-col items-center gap-2 transition-all duration-300",
+                                "rounded-xl border p-2 flex flex-col items-center gap-2 transition-all duration-300",
                                 "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04]",
                                 isSuccess ? "hover:border-green-500/30" : "hover:border-red-500/30"
                             )}>
-                                <div className="flex items-center gap-1.5 opacity-60 group-hover/match:opacity-100 transition-opacity">
+                                <div className="flex items-center justify-center gap-1.5 w-full opacity-60 group-hover/match:opacity-100 transition-opacity">
                                     <img
                                         src={getCompetitorLogo(isHome ? team.id : opponentId)}
-                                        className="w-4 h-4 object-contain"
+                                        className="w-5 h-5 object-contain"
                                         onError={e => e.currentTarget.style.display = 'none'}
                                     />
-                                    <span className="text-[10px] font-bold text-white/90 min-w-[32px] text-center">{teamScore}-{opponentScore}</span>
+                                    <span className="text-[10px] font-bold text-white/90 min-w-[32px] text-center whitespace-nowrap">{teamScore}-{opponentScore}</span>
                                     <img
                                         src={getCompetitorLogo(isHome ? opponentId : team.id)}
-                                        className="w-4 h-4 object-contain"
+                                        className="w-5 h-5 object-contain"
                                         onError={e => e.currentTarget.style.display = 'none'}
                                     />
                                 </div>
@@ -97,7 +97,7 @@ const TeamAnalysisCard: React.FC<{
                                     {statValue}
                                 </div>
                                 <div className={clsx(
-                                    "w-full h-1 rounded-full transition-all",
+                                    "w-full h-1 rounded-full transition-all duration-300",
                                     isSuccess
                                         ? "bg-green-500/40 group-hover/match:bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]"
                                         : "bg-red-500/40 group-hover/match:bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]"
@@ -356,21 +356,21 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ match, onBack }) => {
                                 const awayId = m.away_team_id || m.awayTeam?.id;
                                 return (
                                     <div key={idx} className="px-8 py-5 flex justify-between items-center hover:bg-white/[0.02] transition-all group/row">
-                                        <div className="flex flex-col gap-0.5">
+                                        <div className="flex flex-col gap-0.5 min-w-[100px]">
                                             <span className="text-[9px] text-slate-500 font-bold opacity-60">{new Date((m.events?.timeStartTimestamp || m.time_start_timestamp) * 1000).toLocaleDateString('pt-BR')}</span>
                                             <span className="text-[8px] text-slate-700 font-bold uppercase tracking-tight group-hover/row:text-primary/60 transition-colors">Rodada de Campeonato</span>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-2.5 text-right">
-                                                <span className="text-[10px] font-semibold text-white/80 group-hover/row:text-white transition-colors">{(m.homeTeam?.shortname || m.home_team_name)}</span>
-                                                <img src={getCompetitorLogo(homeId)} className="w-4 h-4 object-contain opacity-60 group-hover/row:opacity-100 transition-opacity" onError={e => e.currentTarget.style.display = 'none'} />
+                                        <div className="flex items-center gap-6">
+                                            <div className="flex items-center gap-3 w-[150px] justify-end">
+                                                <span className="text-[11px] font-semibold text-white/80 group-hover/row:text-white transition-colors truncate">{(m.homeTeam?.shortname || m.home_team_name)}</span>
+                                                <img src={getCompetitorLogo(homeId)} className="w-6 h-6 object-contain opacity-80 group-hover/row:opacity-100 transition-opacity" onError={e => e.currentTarget.style.display = 'none'} />
                                             </div>
-                                            <div className="px-3 py-1 bg-white/[0.03] rounded-lg border border-white/5 group-hover/row:border-primary/20 transition-all">
-                                                <span className="text-[10px] font-bold text-slate-400 group-hover/row:text-primary transition-colors">{m.home_score ?? m.events?.homeScoreCurrent} : {m.away_score ?? m.events?.awayScoreCurrent}</span>
+                                            <div className="px-4 py-1.5 bg-white/[0.03] rounded-lg border border-white/5 group-hover/row:border-primary/20 transition-all min-w-[70px] flex justify-center shadow-lg">
+                                                <span className="text-[11px] font-bold text-slate-300 group-hover/row:text-primary transition-colors">{m.home_score ?? m.events?.homeScoreCurrent} : {m.away_score ?? m.events?.awayScoreCurrent}</span>
                                             </div>
-                                            <div className="flex items-center gap-2.5">
-                                                <img src={getCompetitorLogo(awayId)} className="w-4 h-4 object-contain opacity-60 group-hover/row:opacity-100 transition-opacity" onError={e => e.currentTarget.style.display = 'none'} />
-                                                <span className="text-[10px] font-semibold text-white/80 group-hover/row:text-white transition-colors">{(m.awayTeam?.shortname || m.away_team_name)}</span>
+                                            <div className="flex items-center gap-3 w-[150px]">
+                                                <img src={getCompetitorLogo(awayId)} className="w-6 h-6 object-contain opacity-80 group-hover/row:opacity-100 transition-opacity" onError={e => e.currentTarget.style.display = 'none'} />
+                                                <span className="text-[11px] font-semibold text-white/80 group-hover/row:text-white transition-colors truncate">{(m.awayTeam?.shortname || m.away_team_name)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -392,21 +392,21 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ match, onBack }) => {
                                 const awayId = m.away_team_id || m.awayTeam?.id;
                                 return (
                                     <div key={idx} className="px-8 py-5 flex justify-between items-center hover:bg-white/[0.02] transition-all group/row">
-                                        <div className="flex flex-col gap-0.5">
+                                        <div className="flex flex-col gap-0.5 min-w-[100px]">
                                             <span className="text-[9px] text-slate-500 font-bold opacity-60">{new Date((m.events?.timeStartTimestamp || m.time_start_timestamp) * 1000).toLocaleDateString('pt-BR')}</span>
                                             <span className="text-[8px] text-slate-700 font-bold uppercase tracking-tight group-hover/row:text-primary/60 transition-colors">Rodada de Campeonato</span>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-2.5 text-right">
-                                                <span className="text-[10px] font-semibold text-white/80 group-hover/row:text-white transition-colors">{(m.homeTeam?.shortname || m.home_team_name)}</span>
-                                                <img src={getCompetitorLogo(homeId)} className="w-4 h-4 object-contain opacity-60 group-hover/row:opacity-100 transition-opacity" onError={e => e.currentTarget.style.display = 'none'} />
+                                        <div className="flex items-center gap-6">
+                                            <div className="flex items-center gap-3 w-[150px] justify-end">
+                                                <span className="text-[11px] font-semibold text-white/80 group-hover/row:text-white transition-colors truncate">{(m.homeTeam?.shortname || m.home_team_name)}</span>
+                                                <img src={getCompetitorLogo(homeId)} className="w-6 h-6 object-contain opacity-80 group-hover/row:opacity-100 transition-opacity" onError={e => e.currentTarget.style.display = 'none'} />
                                             </div>
-                                            <div className="px-3 py-1 bg-white/[0.03] rounded-lg border border-white/5 group-hover/row:border-primary/20 transition-all">
-                                                <span className="text-[10px] font-bold text-slate-400 group-hover/row:text-primary transition-colors">{m.home_score ?? m.events?.homeScoreCurrent} : {m.away_score ?? m.events?.awayScoreCurrent}</span>
+                                            <div className="px-4 py-1.5 bg-white/[0.03] rounded-lg border border-white/5 group-hover/row:border-primary/20 transition-all min-w-[70px] flex justify-center shadow-lg">
+                                                <span className="text-[11px] font-bold text-slate-300 group-hover/row:text-primary transition-colors">{m.home_score ?? m.events?.homeScoreCurrent} : {m.away_score ?? m.events?.awayScoreCurrent}</span>
                                             </div>
-                                            <div className="flex items-center gap-2.5">
-                                                <img src={getCompetitorLogo(awayId)} className="w-4 h-4 object-contain opacity-60 group-hover/row:opacity-100 transition-opacity" onError={e => e.currentTarget.style.display = 'none'} />
-                                                <span className="text-[10px] font-semibold text-white/80 group-hover/row:text-white transition-colors">{(m.awayTeam?.shortname || m.away_team_name)}</span>
+                                            <div className="flex items-center gap-3 w-[150px]">
+                                                <img src={getCompetitorLogo(awayId)} className="w-6 h-6 object-contain opacity-80 group-hover/row:opacity-100 transition-opacity" onError={e => e.currentTarget.style.display = 'none'} />
+                                                <span className="text-[11px] font-semibold text-white/80 group-hover/row:text-white transition-colors truncate">{(m.awayTeam?.shortname || m.away_team_name)}</span>
                                             </div>
                                         </div>
                                     </div>

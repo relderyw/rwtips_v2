@@ -21,22 +21,9 @@ code {
     monospace;
 }
 
-/* Scrollbar personalizada */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1e293b;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #475569;
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+/* Utilitários */
+.no-scrollbar::-webkit-scrollbar {
+  height: 4px;
 }
 
 img {

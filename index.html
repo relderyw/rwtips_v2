@@ -46,122 +46,43 @@
     }
 
     ::-webkit-scrollbar {
-      width: 6px;
+      width: 4px;
+      height: 4px;
     }
 
     ::-webkit-scrollbar-track {
-      background: #050505;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #222;
+      background: rgba(255, 255, 255, 0.02);
       border-radius: 10px;
     }
 
-    @keyframes pulse-emerald {
-
-      0%,
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-
-      50% {
-        opacity: 0.8;
-        transform: scale(0.98);
-      }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .animate-status {
-      animation: pulse-emerald 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
     }
 
-    @keyframes glow-border {
-
-      0%,
-      100% {
-        border-color: rgba(16, 185, 129, 0.4);
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
-      }
-
-      50% {
-        border-color: rgba(16, 185, 129, 0.8);
-        box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
-      }
+    /* Scrollbar horizontal específica para listas de jogos */
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 5px;
     }
 
-    .animate-glow-border {
-      animation: glow-border 2s ease-in-out infinite;
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      margin: 0 10px;
     }
 
-    /* Animação de Notificação */
-    @keyframes slideInAndOut {
-      0% {
-        transform: translateX(120%) scale(0.9);
-        opacity: 0;
-      }
-
-      10% {
-        transform: translateX(0) scale(1);
-        opacity: 1;
-      }
-
-      90% {
-        transform: translateX(0) scale(1);
-        opacity: 1;
-      }
-
-      100% {
-        transform: translateX(120%) scale(0.9);
-        opacity: 0;
-      }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
     }
 
-    .notification-anim {
-      animation: slideInAndOut 5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-    }
-
-    /* Tooltip system */
-    .tooltip-trigger {
-      position: relative;
-      display: inline-block;
-    }
-
-    .tooltip-trigger:hover .tooltip-content {
-      opacity: 1;
-      visibility: visible;
-      transform: translate(-50%, -10px);
-    }
-
-    .tooltip-content {
-      position: absolute;
-      bottom: 110%;
-      left: 50%;
-      transform: translate(-50%, 10px);
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-      z-index: 1000;
-      pointer-events: none;
-    }
-
-    .progress-bar-fill {
-      transition: width 0.8s cubic-bezier(0.65, 0, 0.35, 1), background-color 0.5s ease;
-      border-radius: 9999px;
-    }
-
-    .bg-bet365 {
-      background: linear-gradient(135deg, #127a5b 0%, #064b38 100%);
-    }
-
-    .bg-card-dark {
-      background: linear-gradient(180deg, #111115 0%, #09090b 100%);
-    }
-
-    .blurred-bg {
-      filter: blur(20px);
-      pointer-events: none;
-      user-select: none;
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
     }
 
     @keyframes score-pop {
