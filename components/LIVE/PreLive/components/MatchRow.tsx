@@ -49,7 +49,7 @@ const MatchRow: React.FC<MatchRowProps> = ({ match, onClick }) => {
                         {match.homeCompetitor.name}
                     </span>
                     <img
-                        src={getCompetitorLogo(match.homeCompetitor.id, match.homeCompetitor.imageVersion)}
+                        src={getCompetitorLogo(match.homeCompetitor.id)}
                         className="w-6 h-6 object-contain"
                         alt=""
                     />
@@ -68,7 +68,7 @@ const MatchRow: React.FC<MatchRowProps> = ({ match, onClick }) => {
                 {/* Away Team */}
                 <div className="flex-1 flex items-center justify-start gap-3">
                     <img
-                        src={getCompetitorLogo(match.awayCompetitor.id, match.awayCompetitor.imageVersion)}
+                        src={getCompetitorLogo(match.awayCompetitor.id)}
                         className="w-6 h-6 object-contain"
                         alt=""
                     />

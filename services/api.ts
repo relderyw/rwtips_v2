@@ -154,7 +154,8 @@ export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
                 isLive: true,
                 bet365EventId: undefined
             };
-        });
+        })
+        .filter(match => !match.leagueName.toUpperCase().includes('VIRTUAL ECOMP') && !match.leagueName.toUpperCase().includes('VIRTUAL E-COMP'));
 
     } catch (error) {
         console.error("Live Games Error:", error);

@@ -87,6 +87,21 @@ export default defineConfig(({ mode }) => {
                     });
                 }
             },
+            '/api/statshub': {
+                target: 'https://www.statshub.com',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/statshub/, '/api'),
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Accept', 'application/json, text/plain, */*');
+                        proxyReq.setHeader('Content-Type', 'application/json');
+                        proxyReq.setHeader('Origin', 'https://www.statshub.com');
+                        proxyReq.setHeader('Referer', 'https://www.statshub.com/');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36');
+                    });
+                }
+            },
             '/api/sensor-matches': {
                 target: 'https://sensorfifa.com.br',
                 changeOrigin: true,
