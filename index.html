@@ -135,6 +135,42 @@
     .animate-spin-slow {
       animation: spin-slow 8s linear infinite;
     }
+
+    /* Estratégias Tooltips */
+    .tooltip-trigger {
+      position: relative;
+    }
+
+    .tooltip-content {
+      position: absolute;
+      top: calc(100% + 12px);
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 5000;
+      pointer-events: none;
+      width: 250px;
+    }
+
+    .tooltip-trigger:hover .tooltip-content {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Seta do Tooltip */
+    .tooltip-content::after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px;
+      border-style: solid;
+      border-color: transparent transparent rgba(10, 10, 12, 0.95) transparent;
+    }
   </style>
   <script type="importmap">
 {
