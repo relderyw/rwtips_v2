@@ -395,9 +395,9 @@ const App: React.FC = () => {
     finally { setIsLoadingAnalysis(false); }
   };
 
-  const removeNotification = (id: string) => {
+  const removeNotification = React.useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
-  };
+  }, []);
 
   const isAnySyncing = isSyncingLive || isSyncingHistory;
 
