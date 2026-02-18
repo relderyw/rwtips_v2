@@ -158,6 +158,52 @@ export const handler: Handler = async (event: HandlerEvent) => {
               body: JSON.stringify({ error: 'Failed to fetch CaveiraTips data', details: error.message }),
           };
       }
+  } else if (event.path.includes('statshub')) {
+      // Proxy to StatsHub API
+      console.log(`[Proxy] Forwarding to StatsHub: ${event.path}`);
+      const baseUrl = "https://www.statshub.com";
+      
+      // Clean up path: remove /api/statshub prefixes to get the target path
+      let statshubPath = event.path.replace(/^\/api\/statshub/, '/api').replace(/^\/\.netlify\/functions\/api\/statshub/, '/api');
+      
+      try {
+          const config: any = {
+              method: event.httpMethod,
+              url: `${baseUrl}${statshubPath}`,
+              params: event.queryStringParameters,
+              headers: {
+                  'Accept': 'application/json, text/plain, */*',
+                  'Content-Type': 'application/json',
+                  'Origin': 'https://www.statshub.com',
+                  'Referer': 'https://www.statshub.com/',
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
+              }
+          };
+
+          if (event.body) {
+              try {
+                  config.data = JSON.parse(event.body);
+              } catch (e) {
+                  config.data = event.body;
+              }
+          }
+
+          const response = await axios(config);
+          return {
+              statusCode: 200,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+              },
+              body: JSON.stringify(response.data),
+          };
+      } catch (error: any) {
+          console.error('[Proxy Error] StatsHub:', error.message);
+          return {
+              statusCode: error.response?.status || 500,
+              body: JSON.stringify({ error: 'Failed to fetch StatsHub data', details: error.message }),
+          };
+      }
   }
 
   if (!targetPath) {

@@ -191,6 +191,32 @@ app.get('/api/next-games', async (req, res) => {
 // --- PROXY ENDPOINTS PARA MÓDULO FUTEBOL (STATSHUB) ---
 const STATSHUB_BASE = "https://www.statshub.com/api";
 
+app.all('/api/statshub/*', async (req, res) => {
+    try {
+        const statshubPath = req.url.replace('/api/statshub', '/api');
+        console.log(`[API] Proxy StatsHub: ${req.method} ${statshubPath}`);
+        
+        const response = await axios({
+            method: req.method,
+            url: `https://www.statshub.com${statshubPath}`,
+            data: req.body,
+            params: req.query,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json, text/plain, */*",
+                "Origin": "https://www.statshub.com",
+                "Referer": "https://www.statshub.com/",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+            },
+            timeout: 15000
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('[API] Erro Proxy StatsHub:', error.message);
+        res.status(error.response?.status || 500).json({ error: error.message });
+    }
+});
+
 app.get('/api/f-matches', async (req, res) => {
     try {
         const { startOfDay, endOfDay } = req.query;
