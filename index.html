@@ -184,6 +184,47 @@
 }
 </script>
 
+  <script>
+    (function () {
+      const SECRET_KEY = 'rw_admin_2026';
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasAccess = urlParams.get('devMode') === SECRET_KEY;
+
+      if (hasAccess) {
+        console.warn("🔐 RW TIPS: Modo Desenvolvedor Ativo.");
+        return;
+      }
+
+      // 1. Bloqueios de Teclado e Mouse
+      document.addEventListener('contextmenu', e => e.preventDefault());
+      document.addEventListener('keydown', e => {
+        if (e.keyCode === 123 ||
+          (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) ||
+          (e.ctrlKey && e.keyCode === 85)) {
+          e.preventDefault();
+          return false;
+        }
+      });
+
+      // 2. Loop de Debugger Agressivo
+      const devtoolsCheck = setInterval(() => {
+        const start = Date.now();
+        debugger;
+        if (Date.now() - start > 100) {
+          document.body.innerHTML = `
+            <div style="background:#000;color:#ef4444;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;text-align:center;padding:20px;">
+              <h1 style="font-size:48px;font-weight:900;margin-bottom:20px;">ACESSO BLOQUEADO</h1>
+              <p style="font-size:18px;color:#fff;opacity:0.8;">Detectamos ferramentas de inspeção. O acesso foi interrompido por segurança.</p>
+              <button onclick="location.reload()" style="margin-top:30px;padding:12px 24px;background:#ef4444;color:#000;border:none;border-radius:8px;font-weight:900;cursor:pointer;">TENTAR NOVAMENTE</button>
+            </div>`;
+          clearInterval(devtoolsCheck);
+        }
+      }, 500);
+
+      // 3. Limpeza constante do console
+      setInterval(() => console.clear(), 500);
+    })();
+  </script>
 </head>
 
 <body>
