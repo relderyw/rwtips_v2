@@ -191,7 +191,7 @@
       const hasAccess = urlParams.get('devMode') === SECRET_KEY;
 
       if (hasAccess) {
-        console.warn("🔐 RW TIPS: Modo Desenvolvedor Ativo.");
+        console.warn("🔐 RW TIPS: Mode Desenvolvedor Ativo.");
         return;
       }
 
@@ -206,23 +206,53 @@
         }
       });
 
-      // 2. Loop de Debugger Agressivo
+      // 2. Detecção por Comportamento de Objetos (Console)
+      const element = new Image();
+      Object.defineProperty(element, 'id', {
+        get: function () {
+          lockdown();
+        }
+      });
+
+      function lockdown() {
+        document.body.innerHTML = `
+          <div style="background:#000;color:#ef4444;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;text-align:center;padding:40px;z-index:999999;position:fixed;top:0;left:0;width:100%;">
+            <h1 style="font-size:40px;font-weight:900;margin-bottom:20px;letter-spacing:-1px;">ACESSO BLOQUEADO</h1>
+            <p style="font-size:18px;color:#fff;opacity:0.7;max-width:600px;">Tentativa de inspeção detectada. O sistema foi bloqueado por segurança.</p>
+            <div style="margin-top:40px;padding:20px;border:1px solid #ef444433;border-radius:12px;font-family:monospace;font-size:12px;color:#ef4444;">SECURITY_ERROR: DEVTOOLS_PRESENT</div>
+            <button onclick="location.reload()" style="margin-top:30px;padding:12px 24px;background:#ef4444;color:#000;border:none;border-radius:8px;font-weight:900;cursor:pointer;">TENTAR NOVAMENTE</button>
+          </div>`;
+
+        // Loop infinito que consome recursos se o console estiver aberto
+        setInterval(function () {
+          (function () {
+            return false;
+          }['constructor']('debugger')['call']());
+        }, 50);
+      }
+
+      // Verifica constantemente emitindo o objeto no console
+      setInterval(function () {
+        console.log(element);
+        console.clear();
+
+        // Verifica tamanho (DevTools lateral/inferior)
+        const threshold = 160;
+        if (window.outerWidth - window.innerWidth > threshold ||
+          window.outerHeight - window.innerHeight > threshold) {
+          lockdown();
+        }
+      }, 500);
+
+      // Trava debugger padrão
       const devtoolsCheck = setInterval(() => {
         const start = Date.now();
         debugger;
         if (Date.now() - start > 100) {
-          document.body.innerHTML = `
-            <div style="background:#000;color:#ef4444;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;text-align:center;padding:20px;">
-              <h1 style="font-size:48px;font-weight:900;margin-bottom:20px;">ACESSO BLOQUEADO</h1>
-              <p style="font-size:18px;color:#fff;opacity:0.8;">Detectamos ferramentas de inspeção. O acesso foi interrompido por segurança.</p>
-              <button onclick="location.reload()" style="margin-top:30px;padding:12px 24px;background:#ef4444;color:#000;border:none;border-radius:8px;font-weight:900;cursor:pointer;">TENTAR NOVAMENTE</button>
-            </div>`;
+          lockdown();
           clearInterval(devtoolsCheck);
         }
       }, 500);
-
-      // 3. Limpeza constante do console
-      setInterval(() => console.clear(), 500);
     })();
   </script>
 </head>
