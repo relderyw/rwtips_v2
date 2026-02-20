@@ -17,6 +17,8 @@ export const loginDev3 = async (force: boolean = false): Promise<string | null> 
     return "ok";
 };
 
+const INTERNAL_SECRET = import.meta.env.VITE_API_INTERNAL_SECRET || 'rw_secret_key_v2_2026';
+
 export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryMatch[]> => {
     try {
         console.log(`📡 Buscando histórico via Múltiplas APIs (${numPages} páginas) em paralelo...`);
@@ -25,7 +27,9 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
         const internalPromises = Array.from({ length: numPages }, (_, i) => {
             const page = i + 1;
             const url = `${HISTORY_API_BASE}?page=${page}&page_size=20`;
-            return fetch(url).then(async res => {
+            return fetch(url, {
+                headers: { 'X-API-Key': INTERNAL_SECRET }
+            }).then(async res => {
                 if (!res.ok) return [];
                 const json = await res.json();
                 return json.results || [];
@@ -166,7 +170,9 @@ export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
 export const fetchConfronto = async (player1: string, player2: string, interval: number = 30): Promise<any | null> => {
     try {
         const url = `${API_BASE}/api/app3/confronto?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}&interval=${interval}`;
-        const res = await fetch(url);
+        const res = await fetch(url, {
+            headers: { 'X-API-Key': INTERNAL_SECRET }
+        });
         if (!res.ok) throw new Error("Confronto fetch failed");
         return await res.json();
     } catch (err) {
@@ -176,7 +182,7 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
 };
 
 const GREEN365_API_BASE = "https://api-v2.green365.com.br/api/v2/sport-events";
-const GREEN365_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImY1MzMwMzNhMTMzYWQyM2EyYzlhZGNmYzE4YzRlM2E3MWFmYWY2MjkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZXVncmVlbi0yZTljMCIsImF1ZCI6ImV1Z3JlZW4tMmU5YzAiLCJhdXRoX3RpbWUiOjE3NjM4NzY2NTcsInVzZXJfaWQiOiJwM09CaFI3Wmd3VENwNnFBWFpFZWl0RGt4T0czIiwic3ViIjoicDNPQmhSN1pnd1RDcDZxQVhaRWVpdERreE9HMyIsImlhdCI6MTc3MTI0ODI2NiwiZXhwIjoxNzcxMjUxODI2LCJlbWFpbCI6InJlbGRlcnkxNDIyQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbInJlbGRlcnkxNDIyQGdtYWlsLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.yHo_igBbWbi8PUrKpUFpH9yB7mf4E3gW2eg1tVnHDJ7isFiI66Vyde2oCttLXlYLtYZMoU_Epl1Lu_OBAfoaa3IoBO359Cb5cf1gFd-E9wS8pBiZB-QVh0xMHmf29va0CURg3zvlwnpE-MChlmVj2zNzlAhj818VMnsTB3DKPzqIa-n-WklIUYbAWkwVj6qpjAOCWgPUs22mas_-mSbjV6og5OvA-6yKWELWDzAqtjnm0Vpcg92V-YOZ96ymFVqB4t5DlLQmrS53byAYa_uwNRtKB8NdzVVJlm5hjjpfUWYNDnIbZRchroIcpk081R5fqfS6WJ0vDbrCh_E2XCTGgA";
+const GREEN365_TOKEN = import.meta.env.VITE_GREEN365_TOKEN;
 
 export const fetchGreen365History = async (numPages: number = 5): Promise<HistoryMatch[]> => {
     try {
@@ -189,6 +195,7 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json, text/plain, */*',
+                    'accesstoken': import.meta.env.VITE_API_ACCESS_TOKEN || '1c6bcf35-f69d', 
                     'Authorization': `Bearer ${GREEN365_TOKEN}`,
                     'Origin': 'https://green365.com.br',
                     'Referer': 'https://green365.com.br/'
@@ -227,7 +234,9 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
 export const fetchPlayers = async (query: string): Promise<string[]> => {
     if (query.length < 2) return [];
     try {
-        const res = await fetch(`${API_BASE}/api/app3/players?query=${encodeURIComponent(query)}`);
+        const res = await fetch(`${API_BASE}/api/app3/players?query=${encodeURIComponent(query)}`, {
+            headers: { 'X-API-Key': INTERNAL_SECRET }
+        });
         if (!res.ok) return [];
         const data = await res.json();
         return Array.isArray(data) ? data : (data.players || []);

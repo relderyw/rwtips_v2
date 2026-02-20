@@ -1005,12 +1005,12 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                                                         <div className="text-slate-300 text-sm mt-1">{strategy.description}</div>
                                                     </div>
                                                     <a
-                                                        href={`https://www.bet365.com/#/AX/K%5E${match.localTeamName?.replace(/ /g, "+")}/`}
+                                                        href={`https://www.estrelabet.bet.br/apostas-ao-vivo?page=liveEvent&eventId=${match.fixtureId || match.id}&sportId=66`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-emerald-900/20 flex items-center gap-2"
+                                                        className="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-yellow-900/20 flex items-center gap-2"
                                                     >
-                                                        Abrir na Bet365
+                                                        Abrir na Estrela Bet
                                                         <i className="fa-solid fa-external-link-alt text-xs"></i>
                                                     </a>
                                                 </div>

@@ -6,6 +6,8 @@ import { LiveEvent, HistoryMatch } from './types';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import cors from 'cors';
+import { rateLimit } from 'express-rate-limit';
+import 'dotenv/config';
 
 // Configurações
 let API_BASE = process.env.API_BASE || "https://rwtips-r943.onrender.com";
@@ -21,10 +23,61 @@ const HEADERS: HeadersInit = {
 };
 let isRunning = true;
 
-// Servidor de Health Check (Necessário para Koyeb/Render/Heroku não derrubarem o bot)
+// Servidor de Health Check
 const app = express();
-app.use(cors());
+
+// Configuração de Rate Limit
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    limit: 100, // Limite de 100 requisições por IP
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+});
+
+app.use(limiter);
+
+// Restrição de CORS (ajuste para o seu domínio real em produção)
+const allowedOrigins = [process.env.FRONTEND_URL || 'http://localhost:5173'];
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    }
+}));
+
 app.use(express.json());
+
+// Middleware de Autenticação para a API Interna
+const apiAuth = (req: any, res: any, next: any) => {
+    const apiKey = req.headers['x-api-key'];
+    const internalSecret = process.env.API_INTERNAL_SECRET || 'rw_secret_key_v2_2026';
+    
+    // Ignora auth para a rota de health check (/)
+    if (req.path === '/') return next();
+    
+    if (apiKey === internalSecret) {
+        next();
+    } else {
+        res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
+    }
+};
+
+app.use(apiAuth);
+
+// Filtro de User-Agent (Anti-Bot Simples)
+app.use((req, res, next) => {
+    const ua = req.headers['user-agent'] || '';
+    const blockedBots = ['python-requests', 'curl', 'PostmanRuntime', 'Go-http-client'];
+    if (blockedBots.some(bot => ua.includes(bot))) {
+        console.warn(`[SECURITY] Bot bloqueado: ${ua}`);
+        return res.status(403).json({ error: 'Access denied for this agent' });
+    }
+    next();
+});
 
 // Log de todas as requisições para debug
 app.use((req, res, next) => {
@@ -55,7 +108,7 @@ async function fetchBetsApiUpcomingEvents() {
                 day: today
             },
             headers: {
-                'X-RapidAPI-Key': '05731d6e8emsh4479ae2409717dep1c7713jsn1ca3de816712',
+                'X-RapidAPI-Key': process.env.RAPIDAPI_KEY || '05731d6e8emsh4479ae2409717dep1c7713jsn1ca3de816712',
                 'X-RapidAPI-Host': 'betsapi2.p.rapidapi.com'
             }
         });

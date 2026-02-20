@@ -183,9 +183,9 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
     };
   }, [activePlayerTab, match.homePlayer, match.awayPlayer, historicalGames, isHT, syncLimit]);
 
-  const bet365Url = match.bet365EventId
-    ? `https://www.bet365.bet.br/#/IP/EV${match.bet365EventId}`
-    : "https://www.bet365.bet.br";
+  const estrelaUrl = match.bet365EventId
+    ? `https://www.estrelabet.bet.br/apostas-ao-vivo?page=liveEvent&eventId=${match.bet365EventId}&sportId=66`
+    : "https://www.estrelabet.bet.br/apostas-ao-vivo";
 
   return (
     <div
@@ -361,8 +361,8 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           <button onClick={() => onDetailClick(match)} className="flex-[0.8] bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg group">
             ANÁLISE <i className="fa-solid fa-microchip text-[10px] text-emerald-500/60 group-hover:scale-125 transition-transform"></i>
           </button>
-          <a href={bet365Url} target="_blank" rel="noopener noreferrer" className="flex-1 bg-bet365 hover:brightness-110 border border-white/5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center justify-center group shadow-2xl">
-            <img src="https://www.bet365.bet.br/sports-assets/sports/HeaderReactModule/assets/bet365_Logo_Inline.svg" className="h-3 group-hover:scale-110 transition-transform" alt="" />
+          <a href={estrelaUrl} target="_blank" rel="noopener noreferrer" className="flex-1 bg-yellow-500 hover:brightness-110 border border-white/5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center justify-center group shadow-2xl">
+            <span className="text-[10px] font-black uppercase text-black group-hover:scale-110 transition-transform">ABRIR ESTRELA BET</span>
           </a>
         </div>
       </div>

@@ -2,8 +2,8 @@
 import { LiveEvent } from '../types';
 import { getLeagueInfo, STRATEGY_THEMES } from './analyzer';
 
-const BOT_TOKEN = "6569266928:AAHm7pOJVsd3WKzJEgdVDez4ZYdCAlRoYO8";
-const CHAT_ID = "-1001981134607";
+const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+const CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID;
 
 // Lista de proxies para redundância, similar ao utilizado em services/api.ts
 const PROXIES = [
@@ -50,6 +50,7 @@ export const sendTelegramAlert = async (match: LiveEvent, strategyKey: string, m
   const header = source === 'PLATFORM' ? '💻 <b>VIA WEB</b> 🌐' : '🤖 <b>ROBÔ AUTO</b> ⚙️';
   const motivosStr = reasons.length > 0 ? `\n📝 <b>NOTAS:</b> <i>${reasons.join(', ')}</i>` : '';
 
+  const estrelaLink = `https://www.estrelabet.bet.br/apostas-ao-vivo?page=liveEvent&eventId=${match.bet365EventId || ''}&sportId=66`;
   const message = `
 👑 <b>RW TIPS - FIFA ANALYTICS</b> 🎮
 ${header}
@@ -74,7 +75,8 @@ ${suggestion}
 
 ⚠️ <i>Lembre-se: Analise as odds antes de entrar e faça sua gestão de banca!</i>
 
-🔗 <a href="https://www.bet365.bet.br/#/IP/EV${match.bet365EventId || ''}"><b>ABRIR JOGO NA BET365</b></a>
+━━━━━━━━━━━━━━━━━━━━
+🎲 <a href="${estrelaLink}"><b>CONFRONTO</b></a>
   `.trim();
 
   const targetUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
