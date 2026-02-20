@@ -15,6 +15,7 @@ import { StrategyHistory } from './components/StrategyHistory';
 import { NBADashboard } from './components/NBA/NBADashboard';
 import { ModuleSelector } from './components/ModuleSelector';
 import LiveModule from './components/LIVE/LiveModule';
+import DevToolsLockdown from './components/DevToolsLockdown';
 
 
 interface GoalNotification {
@@ -422,6 +423,7 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-[#030303] text-white selection:bg-emerald-500 selection:text-black`}>
+      <DevToolsLockdown />
 
       {!isLoggedIn && !isAdminView && <LoginScreen onLoginSuccess={handleLoginSuccess} />}
 
