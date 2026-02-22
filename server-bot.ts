@@ -28,8 +28,8 @@ const app = express();
 
 // Configuração de Rate Limit
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    limit: 100, // Limite de 100 requisições por IP
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { error: 'Too many requests, please try again later.' }
@@ -54,11 +54,15 @@ app.use(express.json());
 // Middleware de Autenticação para a API Interna
 const apiAuth = (req: any, res: any, next: any) => {
     const apiKey = req.headers['x-api-key'];
-    const internalSecret = process.env.API_INTERNAL_SECRET || 'rw_secret_key_v2_2026';
-    
-    // Ignora auth para a rota de health check (/)
+    const internalSecret = process.env.API_INTERNAL_SECRET;
+
     if (req.path === '/') return next();
-    
+
+    if (!internalSecret) {
+        console.error('[SECURITY] API_INTERNAL_SECRET não configurado');
+        return res.status(500).json({ error: 'Server misconfiguration' });
+    }
+
     if (apiKey === internalSecret) {
         next();
     } else {
@@ -108,7 +112,7 @@ async function fetchBetsApiUpcomingEvents() {
                 day: today
             },
             headers: {
-                'X-RapidAPI-Key': process.env.RAPIDAPI_KEY || '05731d6e8emsh4479ae2409717dep1c7713jsn1ca3de816712',
+                'X-RapidAPI-Key': process.env.RAPIDAPI_KEY || '',
                 'X-RapidAPI-Host': 'betsapi2.p.rapidapi.com'
             }
         });

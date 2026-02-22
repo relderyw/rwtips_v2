@@ -1,8 +1,50 @@
+ "use client"
+
+import { useEffect } from "react"
 import { PreLiveMatches } from "@/components/pre-live-matches"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export default function PreLivePage() {
+    useEffect(() => {
+        if (typeof window === "undefined") return
+
+        const params = new URLSearchParams(window.location.search)
+        const devParam = params.get("devMode")
+        const devEnabled = devParam === "rw_admin_2026"
+
+        if (devEnabled) return
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (
+                e.key === "F12" ||
+                (e.ctrlKey &&
+                    e.shiftKey &&
+                    (e.key === "I" ||
+                        e.key === "i" ||
+                        e.key === "J" ||
+                        e.key === "j" ||
+                        e.key === "C" ||
+                        e.key === "c")) ||
+                (e.ctrlKey && (e.key === "U" || e.key === "u"))
+            ) {
+                e.preventDefault()
+                e.stopPropagation()
+            }
+        }
+
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault()
+        }
+
+        window.addEventListener("keydown", handleKeyDown, true)
+        window.addEventListener("contextmenu", handleContextMenu, true)
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown, true)
+            window.removeEventListener("contextmenu", handleContextMenu, true)
+        }
+    }, [])
     return (
         <main className="min-h-screen bg-background">
             <div className="container mx-auto px-4 py-8">

@@ -18,7 +18,23 @@ const api = axios.create({
   },
 });
 
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL || '*';
+const PUBLIC_APP_KEY = process.env.PUBLIC_APP_KEY;
+
 export const handler: Handler = async (event: HandlerEvent) => {
+  if (PUBLIC_APP_KEY) {
+    const headerKey = event.headers['x-app-key'] || event.headers['X-App-Key'];
+    if (!headerKey || headerKey !== PUBLIC_APP_KEY) {
+      return {
+        statusCode: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': FRONTEND_ORIGIN,
+        },
+        body: JSON.stringify({ error: 'Unauthorized' }),
+      };
+    }
+  }
   // Extract path relative to /api
   // event.path will be something like "/.netlify/functions/api" or "/api/livescores" depending on rewrite
   // We need to determine the target endpoint at m2.sokkerpro.com
@@ -63,9 +79,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': FRONTEND_ORIGIN,
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-App-Key',
       },
       body: '',
     };
@@ -209,6 +225,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
   if (!targetPath) {
     return {
       statusCode: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': FRONTEND_ORIGIN,
+      },
       body: JSON.stringify({ error: 'Could not determine target endpoint', path: event.path }),
     };
   }
@@ -221,7 +241,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*', // CORS for public access
+        'Access-Control-Allow-Origin': FRONTEND_ORIGIN,
       },
       body: JSON.stringify(response.data),
     };
@@ -229,6 +249,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
     console.error(`[Proxy Error] ${targetPath}:`, error.message);
     return {
       statusCode: error.response?.status || 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': FRONTEND_ORIGIN,
+      },
       body: JSON.stringify({ error: 'Failed to fetch data', details: error.message }),
     };
   }

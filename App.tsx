@@ -8,7 +8,6 @@ import { fetchHistoryGames, fetchLiveGames, loginDev3 } from './services/api';
 import { LoginScreen } from './components/LoginScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { checkSession, logout as firebaseLogout, auth, db, firebaseInstance } from './services/firebase';
-import { sendTelegramAlert } from './services/telegram';
 import { BankrollManager } from './components/Bankroll/BankrollManager';
 import { H2HSearch } from './components/H2HSearch';
 import { StrategyHistory } from './components/StrategyHistory';
@@ -96,6 +95,7 @@ const GoalToast: React.FC<{ notification: GoalNotification; onClose: (id: string
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => checkSession());
+  const [isDevMode, setIsDevMode] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'bankroll' | 'h2h' | 'relatorios' | 'nba'>('radar');
   const [selectedModule, setSelectedModule] = useState<'fifa' | 'futebol' | 'basquete' | null>(null);
@@ -127,6 +127,40 @@ const App: React.FC = () => {
   const initRef = useRef(false);
 
   const formatTimeStr = (date: Date) => date.toLocaleTimeString('pt-BR', { hour12: false });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const devParam = params.get('devMode');
+    const devEnabled = devParam === 'rw_admin_2026';
+    setIsDevMode(devEnabled);
+
+    if (devEnabled) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+        (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('contextmenu', handleContextMenu, true);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('contextmenu', handleContextMenu, true);
+    };
+  }, []);
 
   // --- LÓGICA DE DETECÇÃO DE LOGIN SIMULTÂNEO E HEARTBEAT ---
   useEffect(() => {
@@ -300,9 +334,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (analyzedLive.length > 0) {
-      analyzedLive.forEach(({ event, potential, confidence, reasons }) => {
+      analyzedLive.forEach(({ event, potential, confidence }) => {
         if (potential !== 'none') {
-          // Gera uma chave única robusta (JogadorA-JogadorB-Liga)
           const matchSignature = `${event.homePlayer}-${event.awayPlayer}-${event.leagueName}`
             .toLowerCase()
             .replace(/\s+/g, '');
@@ -310,27 +343,13 @@ const App: React.FC = () => {
           const tipKey = `${matchSignature}-${potential}`;
 
           if (!sentTelegramTips.current.has(tipKey)) {
-            const p1Stats = calculatePlayerStats(event.homePlayer, history, 5);
-            const p2Stats = calculatePlayerStats(event.awayPlayer, history, 5);
-
-            const metrics = {
-              ht05: (p1Stats.htOver05Rate + p2Stats.htOver05Rate) / 2,
-              ft25: (p1Stats.ftOver25Rate + p2Stats.ftOver25Rate) / 2,
-              ftBtts: (p1Stats.ftBttsRate + p2Stats.ftBttsRate) / 2
-            };
-
-            // Só envia se a confiança for >= 80 (ajustável)
-            if (confidence >= 80) {
-              sendTelegramAlert(event, potential, metrics, confidence, 'PLATFORM', reasons);
-              sentTelegramTips.current.add(tipKey);
-              // Limpa o cache após 4 horas
-              setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 240);
-            }
+            sentTelegramTips.current.add(tipKey);
+            setTimeout(() => sentTelegramTips.current.delete(tipKey), 1000 * 60 * 240);
           }
         }
       });
     }
-  }, [analyzedLive, leagueStats]);
+  }, [analyzedLive]);
 
   const filterButtons = [
     { id: 'all', label: 'GERAL', icon: 'fa-globe' },

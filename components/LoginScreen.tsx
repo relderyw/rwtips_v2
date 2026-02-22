@@ -7,31 +7,16 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-    const [mode, setMode] = useState<'user' | 'admin'>('user');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [adminUsername, setAdminUsername] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-
-    const ADMIN_USERNAME = "assuncao";
-    const ADMIN_PASSWORD = "131609@sH";
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
-
-        if (mode === 'admin') {
-            if (adminUsername === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-                onLoginSuccess(true);
-            } else {
-                setError('Credenciais administrativas inválidas.');
-                setLoading(false);
-            }
-            return;
-        }
 
         try {
             const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -58,7 +43,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             }
 
             // --- LÓGICA DE SESSÃO ÚNICA ---
-            const newSessionId = Date.now().toString(); // ID único para esta sessão
+            const newSessionId = Date.now().toString();
             await db.collection('users').doc(user.uid).update({
                 activeSessionId: newSessionId
             });
@@ -72,7 +57,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             localStorage.setItem('tokenExpiry', expirationDate.getTime().toString());
             sessionStorage.setItem('loggedIn', 'true');
             
-            onLoginSuccess(false);
+            const isAdmin = userData.role === 'admin';
+            onLoginSuccess(isAdmin);
         } catch (err: any) {
             console.error("Auth Error:", err.code, err.message);
             
@@ -100,37 +86,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 <h2 className="text-3xl font-black italic tracking-tighter text-white mb-2">👑RW <span className="text-emerald-500">TIPS🎮</span></h2>
                 <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-10 text-center">Acesso exclusivo para membros pro</p>
 
-                <div className="w-full flex bg-white/[0.02] p-1 rounded-xl border border-white/5 mb-8">
-                    <button onClick={() => { setMode('user'); setError(''); }} className={`flex-1 py-2 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all ${mode === 'user' ? 'bg-emerald-500 text-black shadow-lg' : 'text-white/20'}`}>Membro</button>
-                    <button onClick={() => { setMode('admin'); setError(''); }} className={`flex-1 py-2 text-[8px] font-black uppercase tracking-widest rounded-lg transition-all ${mode === 'admin' ? 'bg-emerald-500 text-black shadow-lg' : 'text-white/20'}`}>Admin</button>
-                </div>
-
                 <form onSubmit={handleLogin} className="w-full space-y-5">
-                    {mode === 'user' ? (
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">E-mail de Usuário</label>
-                            <input 
-                                type="email" 
-                                required
-                                placeholder="seu@email.com"
-                                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm outline-none focus:border-emerald-500/50 transition-all placeholder:text-white/10"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            <label className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Username Admin</label>
-                            <input 
-                                type="text" 
-                                required
-                                placeholder="Admin ID"
-                                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm outline-none focus:border-emerald-500/50 transition-all placeholder:text-white/10"
-                                value={adminUsername}
-                                onChange={(e) => setAdminUsername(e.target.value)}
-                            />
-                        </div>
-                    )}
+                    <div className="space-y-2">
+                        <label className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">E-mail de Usuário</label>
+                        <input 
+                            type="email" 
+                            required
+                            placeholder="seu@email.com"
+                            className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm outline-none focus:border-emerald-500/50 transition-all placeholder:text-white/10"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+                    </div>
 
                     <div className="space-y-2">
                         <label className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Senha de Acesso</label>
@@ -163,7 +130,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                         disabled={loading}
                         className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black uppercase tracking-[0.2em] py-5 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 text-xs"
                     >
-                        {loading ? 'AUTENTICANDO...' : mode === 'user' ? 'ENTRAR NO RADAR' : 'ACESSAR PAINEL'}
+                        {loading ? 'AUTENTICANDO...' : 'ENTRAR'}
                     </button>
                 </form>
 

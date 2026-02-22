@@ -2,8 +2,8 @@
 import { LiveEvent } from '../types';
 import { getLeagueInfo, STRATEGY_THEMES } from './analyzer';
 
-const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-const CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 
 // Lista de proxies para redundância, similar ao utilizado em services/api.ts
 const PROXIES = [
@@ -27,6 +27,10 @@ const getDetailedSuggestion = (strategyKey: string, match: LiveEvent): string =>
 };
 
 export const sendTelegramAlert = async (match: LiveEvent, strategyKey: string, metrics: any, confidence: number = 70, source: 'BOT' | 'PLATFORM' = 'BOT', reasons: string[] = []) => {
+  if (!BOT_TOKEN || !CHAT_ID) {
+    console.error('[RW TELEGRAM] Bot token ou chat id não configurados');
+    return;
+  }
   const league = getLeagueInfo(match.leagueName);
   const theme = STRATEGY_THEMES[strategyKey] || { label: strategyKey.toUpperCase(), icon: 'fa-star' };
   

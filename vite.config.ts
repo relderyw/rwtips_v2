@@ -56,12 +56,12 @@ export default defineConfig(({ mode }) => {
                 configure: (proxy, _options) => {
                     proxy.on('proxyReq', (proxyReq, req, _res) => {
                         proxyReq.setHeader('Accept', 'application/json, text/plain, */*');
-                        proxyReq.setHeader('accesstoken', env.VITE_API_ACCESS_TOKEN || '1c6bcf35-f69d');
+                        if (env.VITE_API_ACCESS_TOKEN) {
+                            proxyReq.setHeader('accesstoken', env.VITE_API_ACCESS_TOKEN);
+                        }
                         proxyReq.setHeader('Origin', 'https://makeyourstats.com');
                         proxyReq.setHeader('Referer', 'https://makeyourstats.com/');
                         proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 OPR/126.0.0.0');
-                        
-                        // Sec headers matching user request
                         proxyReq.setHeader('sec-ch-ua', '"Chromium";v="142", "Opera Air";v="126", "Not_A Brand";v="99"');
                         proxyReq.setHeader('sec-ch-ua-mobile', '?0');
                         proxyReq.setHeader('sec-ch-ua-platform', '"Windows"');

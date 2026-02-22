@@ -81,8 +81,7 @@ export const liveApi = {
             const response = await axios.get(url, {
                 headers: {
                     'Content-Type': 'application/json',
-                    // Se o proxy não estiver enviando, passe aqui (recomendo colocar em .env depois)
-                    'accesstoken': '1c6bcf35-f69d', // ← ajuste ou use import.meta.env
+                    'accesstoken': process.env.REACT_APP_API_ACCESS_TOKEN || '',
                 },
             });
 

@@ -17,7 +17,39 @@ function App() {
   const [selectedLeague, setSelectedLeague] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
 
-  // Buscar lista de jogos
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const devParam = params.get('devMode');
+    const devEnabled = devParam === 'rw_admin_2026';
+
+    if (devEnabled) return;
+
+    const handleKeyDown = (e) => {
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+        (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('contextmenu', handleContextMenu, true);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('contextmenu', handleContextMenu, true);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchMatches = async () => {
       try {
