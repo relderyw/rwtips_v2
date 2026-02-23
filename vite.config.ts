@@ -106,17 +106,6 @@ export default defineConfig(({ mode }) => {
                         proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36');
                     });
                 }
-            },
-            '/api/sensor-matches': {
-                target: 'https://sensorfifa.com.br',
-                changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api\/sensor-matches/, '/api/matches/'),
-                secure: false,
-                configure: (proxy, options) => {
-                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
-                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-                    });
-                }
             }
         }
       },

@@ -222,7 +222,8 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
 
         const promises = Array.from({ length: numPages }, (_, i) => {
             const page = i + 1;
-            const url = `${GREEN365_API_BASE}?sport=18&status=ended&competition=12887&page=${page}&limit=24`;
+            const url = `${GREEN365_API_BASE}?sport=18&status=ended&competition=12887&page=${page}&limit=24&cb=${Date.now()}`;
+            console.log(`[DEBUG] Calling Green365: ${url}`);
             return fetch(url, {
                 method: 'GET',
                 headers: {
