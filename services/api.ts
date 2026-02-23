@@ -17,8 +17,31 @@ const getAuthToken = () => {
 
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
-    const parenMatch = str.match(/\((.*?)\)/);
-    if (parenMatch && parenMatch[1]) return parenMatch[1].trim();
+    // If format is Team (Player) or Player (Team)
+    const parenMatch = str.match(/(.*?)\((.*?)\)/);
+    if (parenMatch) {
+        const part1 = parenMatch[1].trim();
+        const part2 = parenMatch[2].trim();
+        
+        // H2H GG players are usually short uppercase nicknames (DANTE, BOUNTY, etc.)
+        // We can prioritize the one that is all uppercase if possible, 
+        // or just return the one that isn't a long team name.
+        // For now, let's try a heuristic: if one is all caps and the other isn't, take the caps one.
+        const isPart1Caps = /^[A-Z0-9\s]+$/.test(part1) && part1.length > 1;
+        const isPart2Caps = /^[A-Z0-9\s]+$/.test(part2) && part2.length > 1;
+        
+        if (isPart2Caps && !isPart1Caps) return part2;
+        if (isPart1Caps && !isPart2Caps) return part1;
+        
+        // Fallback: stay with the original logic of preferring the parentheses for "Team (Player)"
+        // but if it's "Player (Team)", we might need the outside.
+        // Let's check for common team names.
+        const commonTeams = ['Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium'];
+        if (commonTeams.includes(part2)) return part1;
+        if (commonTeams.includes(part1)) return part2;
+        
+        return part2; // Default to inside
+    }
     return str.trim();
 };
 

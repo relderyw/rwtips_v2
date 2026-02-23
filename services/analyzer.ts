@@ -179,11 +179,11 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             game.away?.name || game.awayTeam || game.away_player || game.player_away_name || game.player_name_2 || ''
         );
         
-        const rawLeague = game.competition?.name || game.league || game.league_name || '';
+        const rawLeague = game.competition?.name || game.competitionName || game.league || game.league_name || '';
         const mappedLeague = LEAGUE_NAME_MAPPING[rawLeague] || rawLeague;
 
         // Construct Date
-        let dateStr = game.startTime || game.matchTime || game.time || game.data_realizacao;
+        let dateStr = game.eventDate || game.startTime || game.matchTime || game.time || game.data_realizacao;
         if (!dateStr && game.match_date && game.match_time) {
             dateStr = `${game.match_date}T${game.match_time}`;
         }
@@ -193,8 +193,8 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             home_player: home_player,
             away_player: away_player,
             league_name: mappedLeague,
-            score_home: Number(game.score?.home ?? game.homeFT ?? game.home_score_ft ?? game.total_goals_home ?? game.score_home ?? 0),
-            score_away: Number(game.score?.away ?? game.awayFT ?? game.away_score_ft ?? game.total_goals_away ?? game.score_away ?? 0),
+            score_home: Number(game.home?.score ?? game.score?.home ?? game.homeFT ?? game.home_score_ft ?? game.total_goals_home ?? game.score_home ?? 0),
+            score_away: Number(game.away?.score ?? game.score?.away ?? game.awayFT ?? game.away_score_ft ?? game.total_goals_away ?? game.score_away ?? 0),
             halftime_score_home: Number(game.scoreHT?.home ?? game.homeHT ?? game.home_score_ht ?? game.ht_goals_home ?? game.halftime_score_home ?? 0),
             halftime_score_away: Number(game.scoreHT?.away ?? game.awayHT ?? game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
             data_realizacao: dateStr,
