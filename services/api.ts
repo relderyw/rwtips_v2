@@ -53,10 +53,17 @@ const INTERNAL_SECRET = import.meta.env.VITE_API_INTERNAL_SECRET;
 
 export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryMatch[]> => {
     try {
-        console.log(`📡 Buscando histórico via Múltiplas APIs (${numPages} páginas) em paralelo...`);
+        const hasSecret = !!INTERNAL_SECRET;
+        const hasToken = !!GREEN365_TOKEN;
+        console.log(`[DEBUG] API Config na Produção:`, { 
+            hasInternalSecret: hasSecret, 
+            hasGreen365Token: hasToken,
+            internalSecretPrefix: INTERNAL_SECRET ? INTERNAL_SECRET.substring(0, 4) : 'null'
+        });
 
         if (!INTERNAL_SECRET) {
-            console.error("VITE_API_INTERNAL_SECRET não configurado");
+            console.error("❌ VITE_API_INTERNAL_SECRET não configurado no ambiente de produção!");
+            // return []; // Proceed anyway to see if Green365 works? No, let's keep the guard but log it.
             return [];
         }
 
@@ -239,9 +246,10 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
         console.log(`📡 Buscando histórico H2H GG via Green365 (${numPages} páginas) em paralelo...`);
 
         if (!GREEN365_TOKEN) {
-            console.error("VITE_GREEN365_TOKEN não configurado");
+            console.error("❌ VITE_GREEN365_TOKEN não configurado no ambiente de produção!");
             return [];
         }
+        console.log(`[DEBUG] Calling Green365 with token prefix: ${GREEN365_TOKEN.substring(0, 5)}...`);
 
         const promises = Array.from({ length: numPages }, (_, i) => {
             const page = i + 1;
