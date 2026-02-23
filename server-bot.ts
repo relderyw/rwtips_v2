@@ -51,9 +51,9 @@ app.use(cors({
 
 app.use(express.json());
 
-// Middleware de Autenticação para a API Interna
 const apiAuth = (req: any, res: any, next: any) => {
     const apiKey = req.headers['x-api-key'];
+    const authHeader = req.headers['authorization'] as string | undefined;
     const internalSecret = process.env.API_INTERNAL_SECRET;
 
     if (req.path === '/') return next();
@@ -63,11 +63,15 @@ const apiAuth = (req: any, res: any, next: any) => {
         return res.status(500).json({ error: 'Server misconfiguration' });
     }
 
-    if (apiKey === internalSecret) {
-        next();
-    } else {
-        res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
+    if (!apiKey || apiKey !== internalSecret) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
     }
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing token' });
+    }
+
+    next();
 };
 
 app.use(apiAuth);

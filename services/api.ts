@@ -6,6 +6,15 @@ const HISTORY_API_BASE = "https://rwtips-r943.onrender.com/api/app3/history";
 const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=-180&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=66&catIds=2085,1571,1728,1594,2086,1729,2130";
 const API_BASE = "https://rwtips-r943.onrender.com";
 
+const getAuthToken = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+        return localStorage.getItem('authToken');
+    } catch {
+        return null;
+    }
+};
+
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
     const parenMatch = str.match(/\((.*?)\)/);
@@ -29,11 +38,16 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
         }
 
         // Busca da API Interna
+        const token = getAuthToken();
+
         const internalPromises = Array.from({ length: numPages }, (_, i) => {
             const page = i + 1;
             const url = `${HISTORY_API_BASE}?page=${page}&page_size=20`;
             return fetch(url, {
-                headers: { 'X-API-Key': INTERNAL_SECRET }
+                headers: {
+                    'X-API-Key': INTERNAL_SECRET,
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
             }).then(async res => {
                 if (!res.ok) return [];
                 const json = await res.json();
@@ -178,9 +192,13 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
             console.error("VITE_API_INTERNAL_SECRET não configurado");
             return null;
         }
+        const token = getAuthToken();
         const url = `${API_BASE}/api/app3/confronto?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}&interval=${interval}`;
         const res = await fetch(url, {
-            headers: { 'X-API-Key': INTERNAL_SECRET }
+            headers: {
+                'X-API-Key': INTERNAL_SECRET,
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
         });
         if (!res.ok) throw new Error("Confronto fetch failed");
         return await res.json();
@@ -246,14 +264,18 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
 };
 
 export const fetchPlayers = async (query: string): Promise<string[]> => {
-    if (query.length < 2) return [];
+        if (query.length < 2) return [];
     try {
         if (!INTERNAL_SECRET) {
             console.error("VITE_API_INTERNAL_SECRET não configurado");
             return [];
         }
+        const token = getAuthToken();
         const res = await fetch(`${API_BASE}/api/app3/players?query=${encodeURIComponent(query)}`, {
-            headers: { 'X-API-Key': INTERNAL_SECRET }
+            headers: {
+                'X-API-Key': INTERNAL_SECRET,
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
         });
         if (!res.ok) return [];
         const data = await res.json();

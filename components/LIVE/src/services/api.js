@@ -1,5 +1,6 @@
 // Use proxy serverless sem CORS em produção (Vercel: /api/*)
 const API_BASE_URL = '';
+const APP_KEY = import.meta.env.VITE_LIVE_APP_KEY;
 
 // Helper para fetch com timeout e mensagens melhores
 async function fetchJson(url, options = {}, timeoutMs = 10000) {
@@ -11,6 +12,7 @@ async function fetchJson(url, options = {}, timeoutMs = 10000) {
       signal: controller.signal,
       headers: {
         'Accept': 'application/json',
+        ...(APP_KEY ? { 'X-App-Key': APP_KEY } : {}),
         ...(options.headers || {})
       },
       cache: 'no-store'

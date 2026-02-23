@@ -1,11 +1,21 @@
 module.exports = async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const APP_KEY = process.env.LIVE_APP_KEY;
+  const origin = req.headers.origin || '';
+  const allowedOrigin = process.env.FRONTEND_URL || origin || '*';
+
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-App-Key');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  if (APP_KEY) {
+    const headerKey = req.headers['x-app-key'] || req.headers['X-App-Key'];
+    if (!headerKey || headerKey !== APP_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 
   const { id } = req.query;
