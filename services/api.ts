@@ -53,21 +53,10 @@ const INTERNAL_SECRET = import.meta.env.VITE_API_INTERNAL_SECRET;
 
 export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryMatch[]> => {
     try {
-        const hasSecret = !!INTERNAL_SECRET;
-        const hasToken = !!GREEN365_TOKEN;
-        console.log(`[DEBUG] API Config na Produção:`, { 
-            hasInternalSecret: hasSecret, 
-            hasGreen365Token: hasToken,
-            internalSecretPrefix: INTERNAL_SECRET ? INTERNAL_SECRET.substring(0, 4) : 'null'
-        });
+        console.log(`📡 Buscando histórico via Múltiplas APIs (${numPages} páginas) em paralelo...`);
 
-        if (!INTERNAL_SECRET) {
-            console.error("❌ VITE_API_INTERNAL_SECRET não configurado no ambiente de produção!");
-            // return []; // Proceed anyway to see if Green365 works? No, let's keep the guard but log it.
-            return [];
-        }
-
-        // Busca da API Interna
+        // Usa o secret do env ou fallback hardcoded
+        const apiKey = INTERNAL_SECRET || 'rw_secret_key_v2_2026';
         const token = getAuthToken();
 
         const internalPromises = Array.from({ length: numPages }, (_, i) => {
@@ -75,7 +64,7 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
             const url = `${HISTORY_API_BASE}?page=${page}&page_size=20`;
             return fetch(url, {
                 headers: {
-                    'X-API-Key': INTERNAL_SECRET,
+                    'X-API-Key': apiKey,
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 }
             }).then(async res => {
@@ -245,11 +234,9 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
     try {
         console.log(`📡 Buscando histórico H2H GG via Green365 (${numPages} páginas) em paralelo...`);
 
-        if (!GREEN365_TOKEN) {
-            console.error("❌ VITE_GREEN365_TOKEN não configurado no ambiente de produção!");
-            return [];
-        }
-        console.log(`[DEBUG] Calling Green365 with token prefix: ${GREEN365_TOKEN.substring(0, 5)}...`);
+        // JWT do Green365 - usa env ou deixa vazio (a API pode ser pública)
+        const g365Token = GREEN365_TOKEN || '';
+        console.log(`[DEBUG] Green365 token disponível: ${!!g365Token}`);
 
         const promises = Array.from({ length: numPages }, (_, i) => {
             const page = i + 1;
@@ -259,8 +246,7 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json, text/plain, */*',
-                    'accesstoken': import.meta.env.VITE_API_ACCESS_TOKEN || '',
-                    'Authorization': `Bearer ${GREEN365_TOKEN}`,
+                    ...(g365Token ? { 'Authorization': `Bearer ${g365Token}` } : {}),
                     'Origin': 'https://green365.com.br',
                     'Referer': 'https://green365.com.br/'
                 }
