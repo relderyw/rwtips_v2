@@ -1,5 +1,5 @@
 import React from 'react';
-import { getStatusColor, getStatusText } from '../utils/helpers';
+import { getStatusText } from '../utils/helpers';
 import { LiveScore } from '../services/liveApi';
 
 interface MatchCardProps {
@@ -75,9 +75,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onClick }) => {
                             {(match.scoresLocalTeam ?? 0)} - {(match.scoresVisitorTeam ?? 0)}
                         </div>
                     </div>
-                    {(match.status === 'HT' || (match.calculatedHTLocal !== null && match.calculatedHTVisitor !== null)) && (
+                    {(match.status === 'HT' || (match.calculatedHTLocal != null && match.calculatedHTVisitor != null)) && (
                         <div className="mt-1.5 text-[10px] font-mono text-zinc-500">
-                            (HT: {match.calculatedHTLocal !== null
+                            (HT: {match.calculatedHTLocal != null
                                 ? `${match.calculatedHTLocal}-${match.calculatedHTVisitor}`
                                 : `${(match.scoresLocalTeam ?? 0)}-${(match.scoresVisitorTeam ?? 0)}`})
                         </div>

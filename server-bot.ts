@@ -425,36 +425,47 @@ const sentTips = new Set<string>();
 
 async function fetchHistory(numPages: number = 10): Promise<HistoryMatch[]> {
     let all: HistoryMatch[] = [];
-    console.log(`[BOT] Coletando histórico via Green365 (${numPages} páginas) em paralelo...`);
+    console.log(`[BOT] Coletando histórico via Green365 Especializada (${numPages} páginas) em paralelo...`);
+
+    const token = process.env.VITE_GREEN365_TOKEN || "";
 
     const promises = Array.from({ length: numPages }, (_, i) => {
         const page = i + 1;
-        const url = `https://api-v2.green365.com.br/api/v2/sport-events?page=${page}&limit=24&sport=esoccer&status=ended`;
+        const url = `https://api-v2.green365.com.br/api/v2/stats-v2/events?sport=18&status=ended&competition=12887&page=${page}&limit=24`;
         return fetch(url, {
             method: 'GET',
-            headers: { "Content-Type": "application/json" }
+            headers: { 
+                "Content-Type": "application/json",
+                ...(token ? { "Authorization": `Bearer ${token}` } : {})
+            }
         }).then(async res => {
             if (!res.ok) {
                 console.error(`[BOT] Erro ao buscar Green365 página ${page}: ${res.status}`);
                 return [];
             }
             const json: any = await res.json();
-            const items = json.items || [];
+            const items = json.data || json.items || [];
             
-            return items.map((item: any) => ({
-                home_player: extractPlayerName(item.home?.name || ""),
-                away_player: extractPlayerName(item.away?.name || ""),
-                league_name: item.competition?.name || "Esoccer",
-                score_home: Number(item.score?.home ?? 0),
-                score_away: Number(item.score?.away ?? 0),
-                halftime_score_home: Number(item.scoreHT?.home ?? 0),
-                halftime_score_away: Number(item.scoreHT?.away ?? 0),
-                data_realizacao: item.startTime || new Date().toISOString(),
-                home_team: item.home?.teamName || "",
-                away_team: item.away?.teamName || "",
-                home_team_logo: item.home?.imageUrl || "",
-                away_team_logo: item.away?.imageUrl || ""
-            }));
+            return items.map((item: any) => {
+                // Adapt mapping for new endpoint structure
+                const homeScore = item.home?.score ?? item.score?.home ?? 0;
+                const awayScore = item.away?.score ?? item.score?.away ?? 0;
+
+                return {
+                    home_player: extractPlayerName(item.home?.name || ""),
+                    away_player: extractPlayerName(item.away?.name || ""),
+                    league_name: item.competitionName || item.competition?.name || "Esoccer",
+                    score_home: Number(homeScore),
+                    score_away: Number(awayScore),
+                    halftime_score_home: Number(item.scoreHT?.home ?? 0),
+                    halftime_score_away: Number(item.scoreHT?.away ?? 0),
+                    data_realizacao: item.eventDate || item.startTime || new Date().toISOString(),
+                    home_team: item.home?.teamName || "",
+                    away_team: item.away?.teamName || "",
+                    home_team_logo: item.home?.imageUrl || "",
+                    away_team_logo: item.away?.imageUrl || ""
+                };
+            });
         }).catch(err => {
             console.error(`[BOT] Erro na requisição da página ${page}:`, err);
             return [];

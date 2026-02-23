@@ -27,6 +27,7 @@ export interface LiveScore {
     localShotsOnGoal?: number;
     visitorShotsOnGoal?: number;
     visitorBallPossession?: number;
+    localBallPossession?: number;
     localAttacksDangerousAttacks?: number;
     visitorAttacksDangerousAttacks?: number;
     localShotsOffGoal?: number;

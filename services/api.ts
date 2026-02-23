@@ -208,7 +208,7 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
     }
 };
 
-const GREEN365_API_BASE = "https://api-v2.green365.com.br/api/v2/sport-events";
+const GREEN365_API_BASE = "https://api-v2.green365.com.br/api/v2/stats-v2/events";
 const GREEN365_TOKEN = import.meta.env.VITE_GREEN365_TOKEN;
 
 export const fetchGreen365History = async (numPages: number = 5): Promise<HistoryMatch[]> => {
@@ -222,7 +222,7 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
 
         const promises = Array.from({ length: numPages }, (_, i) => {
             const page = i + 1;
-            const url = `${GREEN365_API_BASE}?page=${page}&limit=24&sport=esoccer&status=ended`;
+            const url = `${GREEN365_API_BASE}?sport=18&status=ended&competition=12887&page=${page}&limit=24`;
             return fetch(url, {
                 method: 'GET',
                 headers: {
