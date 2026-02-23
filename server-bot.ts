@@ -13,7 +13,7 @@ import 'dotenv/config';
 let API_BASE = process.env.API_BASE || "https://rwtips-r943.onrender.com";
 // Remove barras finais para evitar duplicidade //api//v1
 if (API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
-const API_BACKUP = "https://api-v2.green365.com.br/api/v2/sport-events?page=1&limit=50&sport=esoccer&status=inplay";
+const API_BACKUP = "https://api-v2.green365.com.br/api/v2/stats-v2/events?sport=18&status=ended&competition=12887&page=1&limit=24";
 
 const PORT = process.env.PORT || 8080;
 const POLL_INTERVAL = 15000;
