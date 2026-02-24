@@ -94,9 +94,15 @@ const GoalToast: React.FC<{ notification: GoalNotification; onClose: (id: string
 };
 
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => checkSession());
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    if (!checkSession()) return false;
+    return sessionStorage.getItem('userRole') !== 'admin';
+  });
   const [isDevMode, setIsDevMode] = useState(false);
-  const [isAdminView, setIsAdminView] = useState(false);
+  const [isAdminView, setIsAdminView] = useState(() => {
+    if (!checkSession()) return false;
+    return sessionStorage.getItem('userRole') === 'admin';
+  });
   const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'bankroll' | 'h2h' | 'relatorios' | 'nba'>('radar');
   const [selectedModule, setSelectedModule] = useState<'fifa' | 'futebol' | 'basquete' | null>(null);
   const [history, setHistory] = useState<HistoryMatch[]>([]);
@@ -435,6 +441,7 @@ const App: React.FC = () => {
     setH2hStats(null);
     prevScores.current = {};
     localStorage.removeItem('activeSessionId');
+    sessionStorage.removeItem('userRole');
     setSelectedModule(null);
     await firebaseLogout();
   };
