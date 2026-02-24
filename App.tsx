@@ -94,15 +94,13 @@ const GoalToast: React.FC<{ notification: GoalNotification; onClose: (id: string
 };
 
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (!checkSession()) return false;
-    return sessionStorage.getItem('userRole') !== 'admin';
-  });
-  const [isDevMode, setIsDevMode] = useState(false);
-  const [isAdminView, setIsAdminView] = useState(() => {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => checkSession());
+  const [isAdmin, setIsAdmin] = useState(() => {
     if (!checkSession()) return false;
     return sessionStorage.getItem('userRole') === 'admin';
   });
+  const [isDevMode, setIsDevMode] = useState(false);
+  const [isAdminView, setIsAdminView] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'bankroll' | 'h2h' | 'relatorios' | 'nba'>('radar');
   const [selectedModule, setSelectedModule] = useState<'fifa' | 'futebol' | 'basquete' | null>(null);
   const [history, setHistory] = useState<HistoryMatch[]>([]);
@@ -426,13 +424,16 @@ const App: React.FC = () => {
 
   const isAnySyncing = isSyncingLive || isSyncingHistory;
 
-  const handleLoginSuccess = (isAdmin: boolean = false) => {
-    if (isAdmin) setIsAdminView(true);
-    else setIsLoggedIn(true);
+  const handleLoginSuccess = (adminRole: boolean = false) => {
+    setIsLoggedIn(true);
+    setIsAdmin(adminRole);
+    if (adminRole) sessionStorage.setItem('userRole', 'admin');
+    else sessionStorage.setItem('userRole', 'user');
   };
 
   const handleLogout = async () => {
     setIsLoggedIn(false);
+    setIsAdmin(false);
     setIsAdminView(false);
     setHistory([]);
     setLiveEvents([]);
@@ -499,6 +500,15 @@ const App: React.FC = () => {
                   </>
                 )}
               </nav>
+              {isLoggedIn && isAdmin && (
+                <button
+                  onClick={() => setIsAdminView(true)}
+                  className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-500/20 transition-all flex items-center gap-2 group text-amber-400"
+                >
+                  <i className="fa-solid fa-shield-halved group-hover:scale-110 transition-transform"></i>
+                  Admin
+                </button>
+              )}
               {(isLoggedIn || isAdminView) && (
                 <button onClick={handleLogout} className="w-10 h-10 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-center hover:bg-rose-500/20 transition-all active:scale-95 group">
                   <i className="fa-solid fa-power-off text-rose-500 text-xs group-hover:scale-110 transition-transform"></i>
