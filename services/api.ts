@@ -207,15 +207,12 @@ export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
 
 export const fetchConfronto = async (player1: string, player2: string, interval: number = 30): Promise<any | null> => {
     try {
-        if (!INTERNAL_SECRET) {
-            console.error("VITE_API_INTERNAL_SECRET não configurado");
-            return null;
-        }
+        const apiKey = INTERNAL_SECRET || 'rw_secret_key_v2_2026';
         const token = getAuthToken();
         const url = `${API_BASE}/api/app3/confronto?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}&interval=${interval}`;
         const res = await fetch(url, {
             headers: {
-                'X-API-Key': INTERNAL_SECRET,
+                'X-API-Key': apiKey,
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             }
         });
@@ -282,16 +279,13 @@ export const fetchGreen365History = async (numPages: number = 5): Promise<Histor
 };
 
 export const fetchPlayers = async (query: string): Promise<string[]> => {
-        if (query.length < 2) return [];
+    if (query.length < 2) return [];
     try {
-        if (!INTERNAL_SECRET) {
-            console.error("VITE_API_INTERNAL_SECRET não configurado");
-            return [];
-        }
+        const apiKey = INTERNAL_SECRET || 'rw_secret_key_v2_2026';
         const token = getAuthToken();
         const res = await fetch(`${API_BASE}/api/app3/players?query=${encodeURIComponent(query)}`, {
             headers: {
-                'X-API-Key': INTERNAL_SECRET,
+                'X-API-Key': apiKey,
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             }
         });
