@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { auth, db } from '../services/firebase';
 
 interface LoginScreenProps {
-    onLoginSuccess: (isAdmin?: boolean) => void;
+    onLoginSuccess: (isAdmin?: boolean, goToAdmin?: boolean) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
@@ -12,8 +12,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [adminMode, setAdminMode] = useState(false);
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
@@ -32,6 +33,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             }
 
             const userData = userDoc.data();
+            const isAdmin = userData.role === 'admin';
+
+            // Se tentou entrar como admin mas não é admin
+            if (adminMode && !isAdmin) {
+                await auth.signOut();
+                setError('Acesso negado. Esta conta não possui privilégios de administrador.');
+                setLoading(false);
+                return;
+            }
+
             const currentDate = new Date();
             const expirationDate = userData.expirationDate.toDate();
 
@@ -57,9 +68,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             localStorage.setItem('tokenExpiry', expirationDate.getTime().toString());
             sessionStorage.setItem('loggedIn', 'true');
 
-            const isAdmin = userData.role === 'admin';
             sessionStorage.setItem('userRole', isAdmin ? 'admin' : 'user');
-            onLoginSuccess(isAdmin);
+
+            // goToAdmin = true apenas se loginMode é admin E o usuário é admin
+            onLoginSuccess(isAdmin, adminMode && isAdmin);
         } catch (err: any) {
             console.error("Auth Error:", err.code, err.message);
 
@@ -85,9 +97,27 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 </div>
 
                 <h2 className="text-3xl font-black italic tracking-tighter text-white mb-2">👑RW <span className="text-emerald-500">TIPS🎮</span></h2>
-                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-10 text-center">Acesso exclusivo para membros pro</p>
+                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-6 text-center">Acesso exclusivo para membros pro</p>
 
-                <form onSubmit={handleLogin} className="w-full space-y-5">
+                {/* Toggle Membro / Admin */}
+                <div className="flex w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl p-1 mb-6">
+                    <button
+                        type="button"
+                        onClick={() => { setAdminMode(false); setError(''); }}
+                        className={`flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${!adminMode ? 'bg-emerald-500 text-black shadow-lg' : 'text-white/30 hover:text-white/60'}`}
+                    >
+                        <i className="fa-solid fa-user"></i> Membro
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => { setAdminMode(true); setError(''); }}
+                        className={`flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${adminMode ? 'bg-amber-500 text-black shadow-lg' : 'text-white/30 hover:text-white/60'}`}
+                    >
+                        <i className="fa-solid fa-shield-halved"></i> Admin
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="w-full space-y-5">
                     <div className="space-y-2">
                         <label className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">E-mail de Usuário</label>
                         <input
@@ -122,16 +152,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                     </div>
 
                     {error && (
-                        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-center animate-pulse">
+                        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-center">
                             <p className="text-[10px] font-black text-rose-500 uppercase tracking-tight">{error}</p>
                         </div>
                     )}
 
                     <button
                         disabled={loading}
-                        className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black uppercase tracking-[0.2em] py-5 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 text-xs"
+                        className={`w-full disabled:opacity-50 text-black font-black uppercase tracking-[0.2em] py-5 rounded-2xl shadow-lg transition-all active:scale-95 text-xs ${adminMode ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20' : 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20'}`}
                     >
-                        {loading ? 'AUTENTICANDO...' : 'ENTRAR'}
+                        {loading ? 'AUTENTICANDO...' : adminMode ? '🛡️ ENTRAR COMO ADMIN' : 'ENTRAR'}
                     </button>
                 </form>
 

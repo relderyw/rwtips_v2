@@ -424,11 +424,16 @@ const App: React.FC = () => {
 
   const isAnySyncing = isSyncingLive || isSyncingHistory;
 
-  const handleLoginSuccess = (adminRole: boolean = false) => {
-    setIsLoggedIn(true);
+  const handleLoginSuccess = (adminRole: boolean = false, goToAdmin: boolean = false) => {
     setIsAdmin(adminRole);
-    if (adminRole) sessionStorage.setItem('userRole', 'admin');
-    else sessionStorage.setItem('userRole', 'user');
+    if (goToAdmin && adminRole) {
+      setIsAdminView(true);
+      // Não seta isLoggedIn, pois o AdminPanel é independente
+    } else {
+      setIsLoggedIn(true);
+      if (adminRole) sessionStorage.setItem('userRole', 'admin');
+      else sessionStorage.setItem('userRole', 'user');
+    }
   };
 
   const handleLogout = async () => {
