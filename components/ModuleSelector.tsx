@@ -46,9 +46,11 @@ interface ModuleSelectorProps {
     onSelect: (moduleId: 'fifa' | 'futebol' | 'basquete') => void;
     userName?: string;
     allowedModules?: string[];
+    onAdminClick?: () => void;
+    onLogout?: () => void;
 }
 
-export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userName, allowedModules = ['fifa', 'futebol', 'basquete'] }) => {
+export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userName, allowedModules = ['fifa', 'futebol', 'basquete'], onAdminClick, onLogout }) => {
     return (
         <div className="min-h-screen bg-[#030303] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
             {/* Background Glows */}
@@ -129,8 +131,32 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userNa
                     ))}
                 </div>
 
-                <footer className="mt-20 text-center text-zinc-600 text-[10px] font-black uppercase tracking-[0.5em] animate-in fade-in duration-1000 delay-700">
-                    RW TIPS &copy; 2026 • Advanced Analytics Platform
+                <footer className="mt-20 text-center animate-in fade-in duration-1000 delay-700 flex flex-col items-center gap-4">
+                    {(onAdminClick || onLogout) && (
+                        <div className="flex items-center gap-3">
+                            {onAdminClick && (
+                                <button
+                                    onClick={onAdminClick}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-400 hover:bg-amber-500/20 transition-all"
+                                >
+                                    <i className="fa-solid fa-shield-halved"></i>
+                                    Painel Admin
+                                </button>
+                            )}
+                            {onLogout && (
+                                <button
+                                    onClick={onLogout}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-400 hover:bg-rose-500/20 transition-all"
+                                >
+                                    <i className="fa-solid fa-power-off"></i>
+                                    Sair
+                                </button>
+                            )}
+                        </div>
+                    )}
+                    <p className="text-zinc-600 text-[10px] font-black uppercase tracking-[0.5em]">
+                        RW TIPS &copy; 2026 • Advanced Analytics Platform
+                    </p>
                 </footer>
             </div>
         </div>

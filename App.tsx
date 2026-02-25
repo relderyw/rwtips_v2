@@ -452,7 +452,7 @@ const App: React.FC = () => {
 
       {!isLoggedIn && !isAdminView && <LoginScreen onLoginSuccess={handleLoginSuccess} />}
 
-      {isLoggedIn && !selectedModule && !isAdminView && <ModuleSelector onSelect={setSelectedModule} allowedModules={allowedModules} />}
+      {isLoggedIn && !selectedModule && !isAdminView && <ModuleSelector onSelect={setSelectedModule} allowedModules={allowedModules} onAdminClick={isAdmin ? () => setIsAdminView(true) : undefined} onLogout={handleLogout} />}
       {isAdminView && <AdminPanel onClose={() => setIsAdminView(false)} />}
 
 
