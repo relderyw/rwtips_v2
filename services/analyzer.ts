@@ -157,8 +157,19 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
     // Helper function to extract player name from "Team (PlayerName)" format
     const extractPlayerName = (str: string): string => {
         if (!str) return "";
-        const parenMatch = str.match(/\((.*?)\)/);
-        if (parenMatch && parenMatch[1]) return parenMatch[1].trim();
+        const parenMatch = str.match(/(.*?)\((.*?)\)/);
+        if (parenMatch) {
+            const part1 = parenMatch[1].trim();
+            const part2 = parenMatch[2].trim();
+            const isPart1Caps = /^[A-Z0-9\s]+$/.test(part1) && part1.length > 1;
+            const isPart2Caps = /^[A-Z0-9\s]+$/.test(part2) && part2.length > 1;
+            if (isPart2Caps && !isPart1Caps) return part2;
+            if (isPart1Caps && !isPart2Caps) return part1;
+            const commonTeams = ['Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium', 'Real Madrid', 'Barcelona', 'PSG', 'Man City', 'Liverpool'];
+            if (commonTeams.some(t => part1.includes(t))) return part2;
+            if (commonTeams.some(t => part2.includes(t))) return part1;
+            return part2;
+        }
         return str.trim();
     };
     

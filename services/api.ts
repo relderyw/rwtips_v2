@@ -17,31 +17,35 @@ const getAuthToken = () => {
 
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
-    // If format is Team (Player) or Player (Team)
+    
+    // Check for "Team (Player)" or "Player (Team)" format
     const parenMatch = str.match(/(.*?)\((.*?)\)/);
     if (parenMatch) {
         const part1 = parenMatch[1].trim();
         const part2 = parenMatch[2].trim();
         
-        // H2H GG players are usually short uppercase nicknames (DANTE, BOUNTY, etc.)
-        // We can prioritize the one that is all uppercase if possible, 
-        // or just return the one that isn't a long team name.
-        // For now, let's try a heuristic: if one is all caps and the other isn't, take the caps one.
+        // Detailed heuristic for nicknames vs team names
         const isPart1Caps = /^[A-Z0-9\s]+$/.test(part1) && part1.length > 1;
         const isPart2Caps = /^[A-Z0-9\s]+$/.test(part2) && part2.length > 1;
         
+        // If one is caps and other isn't, prefer caps (usually the nick)
         if (isPart2Caps && !isPart1Caps) return part2;
         if (isPart1Caps && !isPart2Caps) return part1;
         
-        // Fallback: stay with the original logic of preferring the parentheses for "Team (Player)"
-        // but if it's "Player (Team)", we might need the outside.
-        // Let's check for common team names.
-        const commonTeams = ['Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium'];
-        if (commonTeams.includes(part2)) return part1;
-        if (commonTeams.includes(part1)) return part2;
+        // Common team names check
+        const commonTeams = [
+            'Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium',
+            'Real Madrid', 'Barcelona', 'FC Bayern', 'Man City', 'Man Utd', 'Liverpool', 'PSG', 'Juventus'
+        ];
         
-        return part2; // Default to inside
+        if (commonTeams.some(team => part1.includes(team))) return part2;
+        if (commonTeams.some(team => part2.includes(team))) return part1;
+        
+        // Default to inside parentheses for standard "Team (Nick)" format
+        return part2;
     }
+    
+    // If no parentheses, just clean up
     return str.trim();
 };
 
@@ -221,16 +225,26 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
         const data2 = res2.ok ? await res2.json() : { results: [] };
 
         const allMatchesRaw = [...(data1.results || []), ...(data2.results || [])];
+        const p1Norm = player1.toLowerCase().trim();
+        const p2Norm = player2.toLowerCase().trim();
 
-        const matches = allMatchesRaw.map((m: any) => ({
-            match_date: m.finished_at || new Date().toISOString(),
-            home_player: extractPlayerName(m.home_nick || ""),
-            away_player: extractPlayerName(m.away_nick || ""),
-            home_score_ft: m.home_score_ft,
-            away_score_ft: m.away_score_ft,
-            home_score_ht: m.home_score_ht,
-            away_score_ht: m.away_score_ht,
-        })).sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime());
+        const matches = allMatchesRaw
+            .map((m: any) => ({
+                match_date: m.finished_at || new Date().toISOString(),
+                home_player: extractPlayerName(m.home_nick || m.home_raw || ""),
+                away_player: extractPlayerName(m.away_nick || m.away_raw || ""),
+                home_score_ft: m.home_score_ft,
+                away_score_ft: m.away_score_ft,
+                home_score_ht: m.home_score_ht,
+                away_score_ht: m.away_score_ht,
+            }))
+            .filter(m => {
+                const hNorm = m.home_player.toLowerCase().trim();
+                const aNorm = m.away_player.toLowerCase().trim();
+                // Match must be between P1 and P2 in any order
+                return (hNorm === p1Norm && aNorm === p2Norm) || (hNorm === p2Norm && aNorm === p1Norm);
+            })
+            .sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime());
 
         // Fetch individual history to populate the P1 and P2 individual dots
         const p1UrlHome = `${HISTORY_API_BASE}?home_nick=${encodeURIComponent(player1)}&limit=15`;
