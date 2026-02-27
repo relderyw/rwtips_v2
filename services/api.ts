@@ -262,8 +262,10 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
         const mapDot = (m: any) => {
             const h = extractPlayerName(m.home_nick || m.home_raw || "");
             const a = extractPlayerName(m.away_nick || m.away_raw || "");
+            const date = m.finished_at || m.created_at || new Date().toISOString();
             return {
-                date_time: m.finished_at || '',
+                id: m.id || `${date}-${h}-${a}`, // Use server ID or composite key
+                date_time: date,
                 home_score: m.home_score_ft,
                 away_score: m.away_score_ft,
                 tooltip: `${h} ${m.home_score_ft}x${m.away_score_ft} ${a}`,
@@ -273,14 +275,22 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
             };
         };
 
-        const player1_recent_dots = [...(p1H.results || []), ...(p1A.results || [])]
-            .map(mapDot)
+        const deduplicate = (dots: any[]) => {
+            const seen = new Set();
+            return dots.filter(d => {
+                const key = `${d.date_time}-${d.home_player}-${d.away_player}-${d.home_score}-${d.away_score}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        };
+
+        const player1_recent_dots = deduplicate([...(p1H.results || []), ...(p1A.results || [])].map(mapDot))
             .filter(d => d.home_player.toLowerCase() === p1Norm || d.away_player.toLowerCase() === p1Norm)
             .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
             .slice(0, 15);
 
-        const player2_recent_dots = [...(p2H.results || []), ...(p2A.results || [])]
-            .map(mapDot)
+        const player2_recent_dots = deduplicate([...(p2H.results || []), ...(p2A.results || [])].map(mapDot))
             .filter(d => d.home_player.toLowerCase() === p2Norm || d.away_player.toLowerCase() === p2Norm)
             .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
             .slice(0, 15);

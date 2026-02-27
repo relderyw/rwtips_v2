@@ -615,19 +615,19 @@ export const H2HSearch: React.FC = () => {
                         </div>
                         <div className="space-y-2">
                             {data.player1_recent_dots.slice(0, 5).map((dot, i) => {
-                                const parsed = parseDotsToMatches([dot], player1)[0];
-                                if (!parsed) return null;
+                                const h = dot.home_player || "";
+                                const a = dot.away_player || "";
+                                const p1Norm = player1.toLowerCase().trim();
+                                const isHome = h.toLowerCase().includes(p1Norm) || p1Norm.includes(h.toLowerCase());
 
-                                const { ftHome, ftAway, htHome, htAway } = parsed;
-                                // Determine opponent name from tooltip for display
-                                const parts = (dot.tooltip || "").split(/\s*-\s*|\s*[xX]\s*/);
-                                const sideA = parts[0] || "???";
-                                const sideB = parts[parts.length - 1] || "???";
-                                const pNameNorm = player1.toLowerCase().trim();
-                                const isPlayerA = sideA.toLowerCase().includes(pNameNorm) || pNameNorm.includes(sideA.toLowerCase());
-                                // Opponent name logic: crude extraction
-                                const rawOpp = isPlayerA ? sideB : sideA;
-                                const oppName = rawOpp.replace(/\d+/g, '').trim() || "Oponente";
+                                const ftHome = isHome ? dot.home_score : dot.away_score;
+                                const ftAway = isHome ? dot.away_score : dot.home_score;
+                                const oppName = isHome ? a : h;
+
+                                // Parse HT from half_time string (HT X-Y)
+                                const htNums = (dot.half_time?.match(/\d+/g) || [0, 0]).map(Number);
+                                const htHome = isHome ? htNums[0] : htNums[1];
+                                const htAway = isHome ? htNums[1] : htNums[0];
 
                                 return (
                                     <div key={i} className="bg-black border border-zinc-900 rounded-xl p-2 hover:border-cyan-500 transition-all">
@@ -690,17 +690,19 @@ export const H2HSearch: React.FC = () => {
                         </div>
                         <div className="space-y-2">
                             {data.player2_recent_dots.slice(0, 5).map((dot, i) => {
-                                const parsed = parseDotsToMatches([dot], player2)[0];
-                                if (!parsed) return null;
+                                const h = dot.home_player || "";
+                                const a = dot.away_player || "";
+                                const p2Norm = player2.toLowerCase().trim();
+                                const isHome = h.toLowerCase().includes(p2Norm) || p2Norm.includes(h.toLowerCase());
 
-                                const { ftHome, ftAway, htHome, htAway } = parsed;
-                                const parts = (dot.tooltip || "").split(/\s*-\s*|\s*[xX]\s*/);
-                                const sideA = parts[0] || "???";
-                                const sideB = parts[parts.length - 1] || "???";
-                                const pNameNorm = player2.toLowerCase().trim();
-                                const isPlayerA = sideA.toLowerCase().includes(pNameNorm) || pNameNorm.includes(sideA.toLowerCase());
-                                const rawOpp = isPlayerA ? sideB : sideA;
-                                const oppName = rawOpp.replace(/\d+/g, '').trim() || "Oponente";
+                                const ftHome = isHome ? dot.home_score : dot.away_score;
+                                const ftAway = isHome ? dot.away_score : dot.home_score;
+                                const oppName = isHome ? a : h;
+
+                                // Parse HT from half_time string (HT X-Y)
+                                const htNums = (dot.half_time?.match(/\d+/g) || [0, 0]).map(Number);
+                                const htHome = isHome ? htNums[0] : htNums[1];
+                                const htAway = isHome ? htNums[1] : htNums[0];
 
                                 return (
                                     <div key={i} className="bg-black border border-zinc-900 rounded-xl p-2 hover:border-emerald-500 transition-all">
