@@ -106,6 +106,26 @@ export default defineConfig(({ mode }) => {
                         proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36');
                     });
                 }
+            },
+            '/api/history': {
+                target: 'https://rwtips-k8j2.onrender.com',
+                changeOrigin: true,
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Accept', 'application/json');
+                    });
+                }
+            },
+            '/api/players': {
+                target: 'https://rwtips-k8j2.onrender.com',
+                changeOrigin: true,
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Accept', 'application/json');
+                    });
+                }
             }
         }
       },

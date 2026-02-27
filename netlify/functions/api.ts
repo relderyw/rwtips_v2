@@ -134,46 +134,6 @@ export const handler: Handler = async (event: HandlerEvent) => {
               }),
           };
       }
-  } else if (event.path.includes('app3')) {
-      // Proxy to CaveiraTips API
-      console.log(`[Proxy] Forwarding to CaveiraTips: ${event.path}`);
-      const baseUrl = "https://app3.caveiratips.com.br";
-      
-      // Clean up path: remove /api/app3 prefixes to get the target path
-      let caveiraPath = event.path.replace(/^\/api\/app3/, '/api').replace(/^\/\.netlify\/functions\/api\/app3/, '/api');
-      
-      try {
-          const config: any = {
-              method: event.httpMethod,
-              url: `${baseUrl}${caveiraPath}`,
-              params: event.queryStringParameters,
-              headers: {
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-              }
-          };
-
-          if (event.body) {
-              config.data = JSON.parse(event.body);
-          }
-
-          const response = await axios(config);
-          return {
-              statusCode: 200,
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Access-Control-Allow-Origin': '*',
-              },
-              body: JSON.stringify(response.data),
-          };
-      } catch (error: any) {
-          console.error('[Proxy Error] CaveiraTips:', error.message);
-          return {
-              statusCode: error.response?.status || 500,
-              body: JSON.stringify({ error: 'Failed to fetch CaveiraTips data', details: error.message }),
-          };
-      }
   } else if (event.path.includes('statshub')) {
       // Proxy to StatsHub API
       console.log(`[Proxy] Forwarding to StatsHub: ${event.path}`);
@@ -218,6 +178,56 @@ export const handler: Handler = async (event: HandlerEvent) => {
           return {
               statusCode: error.response?.status || 500,
               body: JSON.stringify({ error: 'Failed to fetch StatsHub data', details: error.message }),
+          };
+      }
+  } else if (event.path.includes('history') || event.path.includes('players')) {
+      // Proxy to History / Players API
+      console.log(`[Proxy] Forwarding to New API: ${event.path}`);
+      const baseUrl = "https://rwtips-k8j2.onrender.com";
+      
+      // Ensure target path is /api/history/...
+      let historyPath = event.path.replace(/^\/\.netlify\/functions\/api/, '/api');
+      if (!historyPath.startsWith('/api')) {
+          historyPath = '/api' + (historyPath.startsWith('/') ? historyPath : '/' + historyPath);
+      }
+      
+      try {
+          const config: any = {
+              method: event.httpMethod,
+              url: `${baseUrl}${historyPath}`,
+              params: event.queryStringParameters,
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+              }
+          };
+
+          // Forward headers if present
+          if (event.headers['x-api-key']) config.headers['X-API-Key'] = event.headers['x-api-key'];
+          if (event.headers['authorization']) config.headers['Authorization'] = event.headers['authorization'];
+
+          if (event.body) {
+              try {
+                  config.data = JSON.parse(event.body);
+              } catch (e) {
+                  config.data = event.body;
+              }
+          }
+
+          const response = await axios(config);
+          return {
+              statusCode: 200,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+              },
+              body: JSON.stringify(response.data),
+          };
+      } catch (error: any) {
+          console.error('[Proxy Error] History API:', error.message);
+          return {
+              statusCode: error.response?.status || 500,
+              body: JSON.stringify({ error: 'Failed to fetch History API data', details: error.message }),
           };
       }
   }

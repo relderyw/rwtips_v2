@@ -101,7 +101,7 @@ export const getLeagueInfo = (fullName: string) => {
     
     // Specific pattern matching to avoid duplicates
     // H2H must be checked first to avoid matching other patterns
-    if (normalized.includes('h2h gg')) {
+    if (normalized.includes('h2h gg') || normalized.includes('h2h 8 min')) {
         return LEAGUE_MAP["E-Soccer - H2H GG League - 8 minutos de jogo"];
     }
     if (normalized.includes('valhalla')) {
@@ -112,6 +112,9 @@ export const getLeagueInfo = (fullName: string) => {
     }
     if (normalized.includes('cla') || normalized.includes('cyber live arena')) {
         return LEAGUE_MAP["CLA"];
+    }
+    if (normalized.includes('champions league')) {
+        return { name: "CHAMPIONS", color: "#3b82f6", image: "" };
     }
     
     // Try exact match first
@@ -139,7 +142,11 @@ const LEAGUE_NAME_MAPPING: Record<string, string> = {
     "Battle 8m": "E-Soccer - Battle - 8 minutos de jogo",
     "Battle 6m": "E-Soccer - Battle Volta - 6 minutos de jogo",
     "GT League": "E-Soccer - GT Leagues - 12 minutos de jogo",
-    "H2H 8m": "E-Soccer - H2H GG League - 8 minutos de jogo"
+    "H2H 8m": "E-Soccer - H2H GG League - 8 minutos de jogo",
+    "H2H 8 MIN": "E-Soccer - H2H GG League - 8 minutos de jogo",
+    "Champions League": "Champions League",
+    "Valhalla Cup": "Valhalla",
+    "Valkyrie Cup": "Valkyrie"
 };
 
 // === DATA NORMALIZATION ===
@@ -170,20 +177,19 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
     }
     
     // Convert each game to HistoryMatch format
-    return games.map((game: any) => {
-        // Green365 specific mapping
-        const home_player = extractPlayerName(
-            game.home?.name || game.homeTeam || game.home_player || game.player_home_name || game.player_name_1 || ''
-        );
-        const away_player = extractPlayerName(
-            game.away?.name || game.awayTeam || game.away_player || game.player_away_name || game.player_name_2 || ''
-        );
+    return games.map((game: any): HistoryMatch => {
+        // Support for new API (nick/raw) and legacy formats
+        const home_player_source = game.home_nick || game.home_raw || game.home?.name || game.homeTeam || game.home_player || game.player_home_name || game.player_name_1 || '';
+        const away_player_source = game.away_nick || game.away_raw || game.away?.name || game.awayTeam || game.away_player || game.player_away_name || game.player_name_2 || '';
         
-        const rawLeague = game.competition?.name || game.competitionName || game.league || game.league_name || '';
+        const home_player = extractPlayerName(home_player_source);
+        const away_player = extractPlayerName(away_player_source);
+        
+        const rawLeague = game.league_mapped || game.competition?.name || game.competitionName || game.league || game.league_name || '';
         const mappedLeague = LEAGUE_NAME_MAPPING[rawLeague] || rawLeague;
 
-        // Construct Date
-        let dateStr = game.eventDate || game.startTime || game.matchTime || game.time || game.data_realizacao;
+        // Construct Date (including finished_at from new API)
+        let dateStr = game.finished_at || game.eventDate || game.startTime || game.matchTime || game.time || game.data_realizacao;
         if (!dateStr && game.match_date && game.match_time) {
             dateStr = `${game.match_date}T${game.match_time}`;
         }
@@ -193,13 +199,13 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             home_player: home_player,
             away_player: away_player,
             league_name: mappedLeague,
-            score_home: Number(game.home?.score ?? game.score?.home ?? game.homeFT ?? game.home_score_ft ?? game.total_goals_home ?? game.score_home ?? 0),
-            score_away: Number(game.away?.score ?? game.score?.away ?? game.awayFT ?? game.away_score_ft ?? game.total_goals_away ?? game.score_away ?? 0),
-            halftime_score_home: Number(game.scoreHT?.home ?? game.homeHT ?? game.home_score_ht ?? game.ht_goals_home ?? game.halftime_score_home ?? 0),
-            halftime_score_away: Number(game.scoreHT?.away ?? game.awayHT ?? game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
+            score_home: Number(game.home_score_ft ?? game.home?.score ?? game.score?.home ?? game.homeFT ?? game.total_goals_home ?? game.score_home ?? 0),
+            score_away: Number(game.away_score_ft ?? game.away?.score ?? game.score?.away ?? game.awayFT ?? game.total_goals_away ?? game.score_away ?? 0),
+            halftime_score_home: Number(game.home_score_ht ?? game.scoreHT?.home ?? game.homeHT ?? game.home_score_ht ?? game.ht_goals_home ?? game.halftime_score_home ?? 0),
+            halftime_score_away: Number(game.away_score_ht ?? game.scoreHT?.away ?? game.awayHT ?? game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
             data_realizacao: dateStr,
-            home_team: game.home?.teamName || game.homeClub || game.home_team || game.player_home_team_name || '',
-            away_team: game.away?.teamName || game.awayClub || game.away_team || game.player_away_team_name || '',
+            home_team: game.home_raw?.replace(/\(.*?\)/, '').trim() || game.home?.teamName || game.homeClub || game.home_team || game.player_home_team_name || '',
+            away_team: game.away_raw?.replace(/\(.*?\)/, '').trim() || game.away?.teamName || game.awayClub || game.away_team || game.player_away_team_name || '',
             home_team_logo: game.home?.imageUrl || game.home_team_logo || game.homeTeamLogo || '',
             away_team_logo: game.away?.imageUrl || game.away_team_logo || game.awayTeamLogo || ''
         };
@@ -543,7 +549,14 @@ export const analyzeMatchPotential = (p1Name: string, p2Name: string, gamesData:
 
   // --- Salvaguarda por Liga ---
   if (leagueName) {
-    const leagueGames = games.filter(g => (g.league_name || '') === leagueName);
+    const targetLeagueInfo = getLeagueInfo(leagueName);
+    const normalizedTargetName = targetLeagueInfo.name;
+    
+    const leagueGames = games.filter(g => {
+        const gInfo = getLeagueInfo(g.league_name);
+        return gInfo.name === normalizedTargetName;
+    });
+
     if (leagueGames.length >= 10) {
       const sample = leagueGames.slice(0, 15);
       const uHT = (sample.filter(g => Number(g.halftime_score_home || 0) === 0 && Number(g.halftime_score_away || 0) === 0).length / sample.length) * 100;

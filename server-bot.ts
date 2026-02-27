@@ -13,7 +13,7 @@ import 'dotenv/config';
 let API_BASE = process.env.API_BASE || "https://rwtips-r943.onrender.com";
 // Remove barras finais para evitar duplicidade //api//v1
 if (API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
-const API_BACKUP = "https://api-v2.green365.com.br/api/v2/stats-v2/events?sport=18&status=ended&competition=12887&page=1&limit=24";
+const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=-180&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=66&catIds=2085,1571,1728,1594,2086,1729,2130";
 
 const PORT = process.env.PORT || 8080;
 const POLL_INTERVAL = 15000;
@@ -382,30 +382,7 @@ app.get('/api/fixture/:id', async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar detalhes da partida' });
     }
 });
-// Proxy para CaveiraTips (App3) - Usado pelo bot internamente e legado
-app.all('/api/app3/*', async (req, res) => {
-    try {
-        const caveiraPath = req.url.replace('/api/app3', '/api');
-        console.log(`[API] Proxy App3: ${req.method} ${caveiraPath}`);
-        
-        const response = await axios({
-            method: req.method,
-            url: `https://app3.caveiratips.com.br${caveiraPath}`,
-            data: req.body,
-            params: req.query,
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            },
-            timeout: 15000
-        });
-        res.json(response.data);
-    } catch (error: any) {
-        console.error('[API] Erro Proxy App3:', error.message);
-        res.status(error.response?.status || 500).json({ error: error.message });
-    }
-});
+
 
 // ------------------------------------------------------
 
@@ -425,45 +402,38 @@ const sentTips = new Set<string>();
 
 async function fetchHistory(numPages: number = 10): Promise<HistoryMatch[]> {
     let all: HistoryMatch[] = [];
-    console.log(`[BOT] Coletando histórico via Green365 Especializada (${numPages} páginas) em paralelo...`);
-
-    const token = process.env.VITE_GREEN365_TOKEN || "";
+    console.log(`[BOT] Coletando histórico (${numPages} páginas) em paralelo...`);
 
     const promises = Array.from({ length: numPages }, (_, i) => {
         const page = i + 1;
-        const url = `https://api-v2.green365.com.br/api/v2/stats-v2/events?sport=18&status=ended&competition=12887&page=${page}&limit=24`;
+        const url = `https://rwtips-k8j2.onrender.com/api/history?page=${page}&limit=50`;
         return fetch(url, {
             method: 'GET',
             headers: { 
-                "Content-Type": "application/json",
-                ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                "Content-Type": "application/json"
             }
         }).then(async res => {
             if (!res.ok) {
-                console.error(`[BOT] Erro ao buscar Green365 página ${page}: ${res.status}`);
+                console.error(`[BOT] Erro ao buscar histórico página ${page}: ${res.status}`);
                 return [];
             }
             const json: any = await res.json();
-            const items = json.data || json.items || [];
+            const items = json.results || [];
             
             return items.map((item: any) => {
-                // Adapt mapping for new endpoint structure
-                const homeScore = item.home?.score ?? item.score?.home ?? 0;
-                const awayScore = item.away?.score ?? item.score?.away ?? 0;
-
                 return {
-                    home_player: extractPlayerName(item.home?.name || ""),
-                    away_player: extractPlayerName(item.away?.name || ""),
-                    league_name: item.competitionName || item.competition?.name || "Esoccer",
-                    score_home: Number(homeScore),
-                    score_away: Number(awayScore),
-                    halftime_score_home: Number(item.scoreHT?.home ?? 0),
-                    halftime_score_away: Number(item.scoreHT?.away ?? 0),
-                    data_realizacao: item.eventDate || item.startTime || new Date().toISOString(),
-                    home_team: item.home?.teamName || "",
-                    away_team: item.away?.teamName || "",
-                    home_team_logo: item.home?.imageUrl || "",
-                    away_team_logo: item.away?.imageUrl || ""
+                    home_player: extractPlayerName(item.home_nick || ""),
+                    away_player: extractPlayerName(item.away_nick || ""),
+                    league_name: item.league_mapped || "Esoccer",
+                    score_home: Number(item.home_score_ft ?? 0),
+                    score_away: Number(item.away_score_ft ?? 0),
+                    halftime_score_home: Number(item.home_score_ht ?? 0),
+                    halftime_score_away: Number(item.away_score_ht ?? 0),
+                    data_realizacao: item.finished_at || new Date().toISOString(),
+                    home_team: item.home_raw || "",
+                    away_team: item.away_raw || "",
+                    home_team_logo: "",
+                    away_team_logo: ""
                 };
             });
         }).catch(err => {
@@ -479,66 +449,83 @@ async function fetchHistory(numPages: number = 10): Promise<HistoryMatch[]> {
     return all;
 }
 
-
-
-const adaptFallbackLiveEvents = (data: any[]): LiveEvent[] => {
-    return data.map((item: any) => ({
-        id: String(item.eventId || item.id),
-        leagueName: item.competition?.name || item.league?.name || "Esoccer",
-        eventName: `${item.home?.name || "Player 1"} vs ${item.away?.name || "Player 2"}`,
-        stage: "Live",
-        timer: {
-            minute: Number(item.timer?.tm || 0),
-            second: Number(item.timer?.ts || 0),
-            formatted: "00:00"
-        },
-        score: {
-            home: Number(item.score?.home ?? item.ss?.split('-')[0] ?? 0),
-            away: Number(item.score?.away ?? item.ss?.split('-')[1] ?? 0)
-        },
-        homePlayer: extractPlayerName(item.home?.name || ""),
-        awayPlayer: extractPlayerName(item.away?.name || ""),
-        homeTeamName: item.home?.teamName || "",
-        awayTeamName: item.away?.teamName || "",
-        isLive: true,
-        bet365EventId: undefined
-    }));
-};
-
-async function fetchLive() {
+async function fetchLive(): Promise<LiveEvent[]> {
     try {
-        const url = `${API_BASE}/api/app3/live-events`;
-        const response = await fetch(url, { headers: HEADERS });
-        
-        if (!response.ok) throw new Error(`Status ${response.status}`);
+        const response = await fetch(LIVE_API_URL, {
+            method: 'GET',
+            headers: {
+                'Accept': '*/*',
+                'Origin': 'https://www.estrelabet.bet.br',
+                'Referer': 'https://www.estrelabet.bet.br/'
+            }
+        });
 
-        const json: any = await response.json();
-        const events = json.events || [];
-        if (events.length === 0) console.warn("[BOT] ⚠️ API de live-events retornou 0 eventos.");
+        if (!response.ok) throw new Error(`Live API Error: ${response.status}`);
         
-        return events.map((m: any) => ({
-            ...m,
-            homePlayer: extractPlayerName(m.homePlayer || ""),
-            awayPlayer: extractPlayerName(m.awayPlayer || "")
-        }));
-
-    } catch (primaryError) {
-        console.warn(`[BOT] ⚠️ Erro na API principal, tentando backup... (${primaryError})`);
+        const data: any = await response.json();
         
-        try {
-            const backupResponse = await fetch(API_BACKUP, { headers: HEADERS });
-            if (!backupResponse.ok) throw new Error(`Backup Status ${backupResponse.status}`);
-            
-            const backupJson: any = await backupResponse.json();
-            const backupData = backupJson.items || backupJson.data || [];
-            
-            console.log(`[BOT] ✅ API Backup sucesso: ${backupData.length} eventos recuperados.`);
-            return adaptFallbackLiveEvents(backupData);
-            
-        } catch (backupError) {
-            console.error(`[BOT] ❌ Erro fatal: Ambas APIs falharam. (${backupError})`);
-            return [];
+        const competitorsMap = new Map<number, any>();
+        if (data.competitors) {
+            data.competitors.forEach((c: any) => competitorsMap.set(c.id, c));
         }
+
+        const champsMap = new Map<number, any>();
+        if (data.champs) {
+            data.champs.forEach((c: any) => champsMap.set(c.id, c));
+        }
+
+        const events = data.events || [];
+
+        return events
+            .filter((evt: any) => evt.sportId === 66)
+            .map((evt: any) => {
+            const homeId = evt.competitorIds[0];
+            const awayId = evt.competitorIds[1];
+            
+            const homeComp = competitorsMap.get(homeId);
+            const awayComp = competitorsMap.get(awayId);
+            const champ = champsMap.get(evt.champId);
+
+            const homeNameFull = homeComp?.name || "Player 1";
+            const awayNameFull = awayComp?.name || "Player 2";
+
+            const homePlayer = extractPlayerName(homeNameFull);
+            const awayPlayer = extractPlayerName(awayNameFull);
+            
+            const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
+            const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
+
+            const scoreHome = evt.score[0] || 0;
+            const scoreAway = evt.score[1] || 0;
+            const timerFormatted = evt.liveTime || evt.ls || "Ao Vivo";
+
+            return {
+                id: String(evt.id),
+                leagueName: champ?.name || "Esoccer",
+                eventName: `${homeNameFull} vs ${awayNameFull}`,
+                stage: evt.ls || "Live", 
+                timer: {
+                    minute: 0,
+                    second: 0,
+                    formatted: timerFormatted
+                },
+                score: {
+                    home: scoreHome,
+                    away: scoreAway
+                },
+                homePlayer: homePlayer,
+                awayPlayer: awayPlayer,
+                homeTeamName: homeTeam,
+                awayTeamName: awayTeam,
+                isLive: true,
+                bet365EventId: undefined
+            };
+        })
+        .filter((match: any) => !match.leagueName.toUpperCase().includes('VIRTUAL ECOMP') && !match.leagueName.toUpperCase().includes('VIRTUAL E-COMP'));
+
+    } catch (error) {
+        console.error("[BOT] Live Games Error:", error);
+        return [];
     }
 }
 

@@ -69,16 +69,20 @@ const DEFAULT_CATEGORIES = [
 
 // Mapeamento de ligas da API para o sistema
 const mapLeagueName = (apiName: string) => {
-  if (apiName.includes("H2H GG")) return "H2H GG";
-  if (apiName.includes("8 mins") && apiName.includes("H2H")) return "Battle 8 min (H2H)";
-  if (apiName.includes("6 mins")) return "Battle 6 min";
-  if (apiName.includes("8 mins")) return "Battle 8 min";
-  if (apiName.includes("10 mins")) return "Adriact 10 min";
-  if (apiName.includes("12 mins")) return "GT 12 min";
-  return "Outro";
+  const norm = apiName.toUpperCase();
+  if (norm.includes("GG")) return "H2H GG";
+  if (norm.includes("8 MIN") || norm.includes("8 MINS")) return "Battle 8 min";
+  if (norm.includes("6 MIN") || norm.includes("6 MINS")) return "Battle 6 min";
+  if (norm.includes("10 MIN") || norm.includes("10 MINS")) return "Adriact 10 min";
+  if (norm.includes("12 MIN") || norm.includes("12 MINS")) return "GT 12 min";
+  if (norm.includes("VALHALLA")) return "Valhalla Cup";
+  if (norm.includes("CHAMPIONS")) return "Champions League";
+  return apiName;
 };
 
 const extractPlayerName = (text: string) => {
+  if (!text) return "";
+  // New API focus: just return the nick if it's already a nick
   const match = text.match(/\(([^)]+)\)/);
   return match ? match[1].trim() : text.trim();
 };
@@ -170,8 +174,9 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
   const initialBankroll = activeBankroll?.initialCapital || 1000;
   const unitValue = activeBankroll?.unitValue || 100;
 
-  // Players Cache
+  // Players Cache & Dynamic Leagues
   const [playersCache, setPlayersCache] = useState<Record<string, Set<string>>>({});
+  const [availableLeagues, setAvailableLeagues] = useState<string[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
 
   // Form State
@@ -322,27 +327,37 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
   }, [userEmail]);
 
   // --- API Integration ---
-  const fetchPlayersFromAPI = async () => {
+  const fetchReferenceData = async () => {
     setLoadingPlayers(true);
     try {
-      const response = await fetch('https://api.green365.com.br/api/events/ended?sport_id=4&competition_id=&page=1');
+      // Use the new history API to get recent leagues and players
+      const response = await fetch('/api/history?page=1&limit=100');
       const data = await response.json();
 
-      if (data && data.data) {
+      if (data && data.results) {
         const newCache: Record<string, Set<string>> = {};
+        const leaguesSet = new Set<string>();
 
-        data.data.forEach((match: any) => {
-          const league = mapLeagueName(match.leagueName);
-          if (league !== "Outro") {
-            if (!newCache[league]) newCache[league] = new Set();
-            if (match.home) newCache[league].add(extractPlayerName(match.home));
-            if (match.away) newCache[league].add(extractPlayerName(match.away));
-          }
+        data.results.forEach((match: any) => {
+          const rawLeague = match.league_mapped || match.league || "";
+          const league = mapLeagueName(rawLeague);
+
+          leaguesSet.add(league);
+
+          if (!newCache[league]) newCache[league] = new Set();
+
+          const p1 = extractPlayerName(match.home_nick || match.home_raw || "");
+          const p2 = extractPlayerName(match.away_nick || match.away_raw || "");
+
+          if (p1) newCache[league].add(p1);
+          if (p2) newCache[league].add(p2);
         });
+
         setPlayersCache(newCache);
+        setAvailableLeagues(Array.from(leaguesSet).sort());
       }
     } catch (error) {
-      console.error("Erro ao buscar jogadores:", error);
+      console.error("Erro ao buscar dados de referência:", error);
     } finally {
       setLoadingPlayers(false);
     }
@@ -350,7 +365,7 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
 
   // Trigger API fetch on load
   useEffect(() => {
-    fetchPlayersFromAPI();
+    fetchReferenceData();
   }, []);
 
   // --- Handlers ---
@@ -1241,12 +1256,19 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
                     onChange={(e) => setFormData({ ...formData, liga: e.target.value })}
                     className="w-full bg-black border border-white/10 rounded-2xl px-5 py-4 text-xs font-bold text-white outline-none focus:border-emerald-500 transition-colors appearance-none cursor-pointer"
                   >
-                    <option value="">SELECIONE...</option>
-                    <option value="Battle 8 min">Battle 8 min</option>
-                    <option value="Battle 6 min">Battle 6 min</option>
-                    <option value="Adriact 10 min">Adriact 10 min</option>
-                    <option value="GT 12 min">GT 12 min</option>
-                    <option value="H2H GG">H2H GG</option>
+                    <option value="">{loadingPlayers ? 'CARREGANDO LIGAS...' : 'SELECIONE...'}</option>
+                    {availableLeagues.map(l => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                    {!loadingPlayers && availableLeagues.length === 0 && (
+                      <optgroup label="Fixas">
+                        <option value="Battle 8 min">Battle 8 min</option>
+                        <option value="Battle 6 min">Battle 6 min</option>
+                        <option value="Adriact 10 min">Adriact 10 min</option>
+                        <option value="GT 12 min">GT 12 min</option>
+                        <option value="H2H GG">H2H GG</option>
+                      </optgroup>
+                    )}
                     <option value="Outro">Outro</option>
                   </select>
                 </div>

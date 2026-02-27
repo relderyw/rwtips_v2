@@ -635,7 +635,7 @@ export const H2HSearch: React.FC = () => {
                                             {/* LEFT - Player */}
                                             <div className="text-left flex-1">
                                                 <div className="text-xs font-black text-cyan-400 leading-tight">{player1.slice(0, 12)}</div>
-                                                <div className="text-[9px] text-zinc-600 font-bold">{dot.date_time?.split(' ')[0]}</div>
+                                                <div className="text-[9px] text-zinc-600 font-bold">{dot.date_time ? new Date(dot.date_time).toLocaleDateString() : ''}</div>
                                             </div>
 
                                             {/* CENTER - Score */}
@@ -707,7 +707,7 @@ export const H2HSearch: React.FC = () => {
                                         <div className="flex items-center justify-between gap-3">
                                             <div className="text-left flex-1">
                                                 <div className="text-xs font-black text-emerald-400 leading-tight">{player2.slice(0, 12)}</div>
-                                                <div className="text-[9px] text-zinc-600 font-bold">{dot.date_time?.split(' ')[0]}</div>
+                                                <div className="text-[9px] text-zinc-600 font-bold">{dot.date_time ? new Date(dot.date_time).toLocaleDateString() : ''}</div>
                                             </div>
 
                                             <div className="text-center px-2">

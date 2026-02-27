@@ -2,7 +2,7 @@
 import { HistoryMatch, LiveEvent } from '../types';
 import { normalizeHistoryData } from './analyzer';
 
-const HISTORY_API_BASE = "https://rwtips-r943.onrender.com/api/app3/history";
+const HISTORY_API_BASE = "/api/history";
 const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=-180&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=66&catIds=2085,1571,1728,1594,2086,1729,2130";
 const API_BASE = "https://rwtips-r943.onrender.com";
 
@@ -61,9 +61,10 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
 
         const internalPromises = Array.from({ length: numPages }, (_, i) => {
             const page = i + 1;
-            const url = `${HISTORY_API_BASE}?page=${page}&page_size=20`;
+            const url = `${HISTORY_API_BASE}?page=${page}&limit=50`;
             return fetch(url, {
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-API-Key': apiKey,
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 }
@@ -74,21 +75,12 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
             }).catch(() => []);
         });
 
-        // Busca da API Green365 (5 páginas é suficiente conforme pedido)
-        const green365Promise = fetchGreen365History(5);
-
         // Aguarda todas as requisições
-        const [internalResults, green365Results] = await Promise.all([
-            Promise.all(internalPromises),
-            green365Promise
-        ]);
+        const internalResults = await Promise.all(internalPromises);
         
         // Flatten e normalização
         const allInternalRaw = internalResults.flat();
-        const normalizedInternal = normalizeHistoryData(allInternalRaw);
-        
-        // Unificar resultados (os green365Results já vêm normalizados da fetchGreen365History)
-        const allMatches = [...normalizedInternal, ...green365Results];
+        const allMatches = normalizeHistoryData(allInternalRaw);
         
         if (allMatches.length === 0) {
             console.log('Sem resultados disponíveis no Histórico');
@@ -107,7 +99,7 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
         // Ordenar por data (recente primeiro)
         uniqueMatches.sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime());
         
-        console.log(`📊 Histórico Unificado: ${uniqueMatches.length} jogos carregados (${normalizedInternal.length} internos, ${green365Results.length} Green365).`);
+        console.log(`📊 Histórico: ${uniqueMatches.length} jogos carregados.`);
         
         return uniqueMatches;
         
@@ -207,91 +199,126 @@ export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
 
 export const fetchConfronto = async (player1: string, player2: string, interval: number = 30): Promise<any | null> => {
     try {
+        const url1 = `${HISTORY_API_BASE}?home_nick=${encodeURIComponent(player1)}&away_nick=${encodeURIComponent(player2)}&limit=50`;
+        const url2 = `${HISTORY_API_BASE}?home_nick=${encodeURIComponent(player2)}&away_nick=${encodeURIComponent(player1)}&limit=50`;
+
         const apiKey = INTERNAL_SECRET || 'rw_secret_key_v2_2026';
         const token = getAuthToken();
-        const url = `${API_BASE}/api/app3/confronto?player1=${encodeURIComponent(player1)}&player2=${encodeURIComponent(player2)}&interval=${interval}`;
-        const res = await fetch(url, {
-            headers: {
-                'X-API-Key': apiKey,
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            }
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const [res1, res2] = await Promise.all([
+            fetch(url1, { headers }),
+            fetch(url2, { headers })
+        ]);
+
+        const data1 = res1.ok ? await res1.json() : { results: [] };
+        const data2 = res2.ok ? await res2.json() : { results: [] };
+
+        const allMatchesRaw = [...(data1.results || []), ...(data2.results || [])];
+
+        const matches = allMatchesRaw.map((m: any) => ({
+            match_date: m.finished_at || new Date().toISOString(),
+            home_player: extractPlayerName(m.home_nick || ""),
+            away_player: extractPlayerName(m.away_nick || ""),
+            home_score_ft: m.home_score_ft,
+            away_score_ft: m.away_score_ft,
+            home_score_ht: m.home_score_ht,
+            away_score_ht: m.away_score_ht,
+        })).sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime());
+
+        // Fetch individual history to populate the P1 and P2 individual dots
+        const p1UrlHome = `${HISTORY_API_BASE}?home_nick=${encodeURIComponent(player1)}&limit=15`;
+        const p1UrlAway = `${HISTORY_API_BASE}?away_nick=${encodeURIComponent(player1)}&limit=15`;
+        const p2UrlHome = `${HISTORY_API_BASE}?home_nick=${encodeURIComponent(player2)}&limit=15`;
+        const p2UrlAway = `${HISTORY_API_BASE}?away_nick=${encodeURIComponent(player2)}&limit=15`;
+
+        const [p1H, p1A, p2H, p2A] = await Promise.all([
+            fetch(p1UrlHome, { headers }).then(r => r.json()).catch(() => ({ results: [] })),
+            fetch(p1UrlAway, { headers }).then(r => r.json()).catch(() => ({ results: [] })),
+            fetch(p2UrlHome, { headers }).then(r => r.json()).catch(() => ({ results: [] })),
+            fetch(p2UrlAway, { headers }).then(r => r.json()).catch(() => ({ results: [] }))
+        ]);
+
+        const mapDot = (m: any) => ({
+            date_time: m.finished_at || '',
+            home_score: m.home_score_ft,
+            away_score: m.away_score_ft,
+            tooltip: `${m.home_nick} ${m.home_score_ft}x${m.away_score_ft} ${m.away_nick}`,
+            half_time: `HT ${m.home_score_ht}-${m.away_score_ht}`
         });
-        if (!res.ok) throw new Error("Confronto fetch failed");
-        return await res.json();
+
+        const player1_recent_dots = [...(p1H.results || []), ...(p1A.results || [])]
+            .sort((a, b) => new Date(b.finished_at).getTime() - new Date(a.finished_at).getTime())
+            .map(mapDot).slice(0, 15);
+
+        const player2_recent_dots = [...(p2H.results || []), ...(p2A.results || [])]
+            .sort((a, b) => new Date(b.finished_at).getTime() - new Date(a.finished_at).getTime())
+            .map(mapDot).slice(0, 15);
+
+        return {
+            player1,
+            player2,
+            matches,
+            player1_recent_dots,
+            player2_recent_dots
+        };
+
     } catch (err) {
         console.error("H2H Error:", err);
         return null;
     }
 };
 
-const GREEN365_API_BASE = "https://api-v2.green365.com.br/api/v2/stats-v2/events";
-const GREEN365_TOKEN = import.meta.env.VITE_GREEN365_TOKEN;
 
-export const fetchGreen365History = async (numPages: number = 5): Promise<HistoryMatch[]> => {
-    try {
-        console.log(`📡 Buscando histórico H2H GG via Green365 (${numPages} páginas) em paralelo...`);
-
-        // JWT do Green365 - usa env ou deixa vazio (a API pode ser pública)
-        const g365Token = GREEN365_TOKEN || '';
-        console.log(`[DEBUG] Green365 token disponível: ${!!g365Token}`);
-
-        const promises = Array.from({ length: numPages }, (_, i) => {
-            const page = i + 1;
-            const url = `${GREEN365_API_BASE}?sport=18&status=ended&competition=12887&page=${page}&limit=24&cb=${Date.now()}`;
-            console.log(`[DEBUG] Calling Green365: ${url}`);
-            return fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json, text/plain, */*',
-                    ...(g365Token ? { 'Authorization': `Bearer ${g365Token}` } : {}),
-                    'Origin': 'https://green365.com.br',
-                    'Referer': 'https://green365.com.br/'
-                }
-            }).then(async res => {
-                if (!res.ok) {
-                    console.error(`Erro ao buscar Green365 página ${page}: ${res.status}`);
-                    return [];
-                }
-                const json = await res.json();
-                // A API da Green365 parece retornar os jogos em data.results ou similar
-                return json.items || json.data || json.results || [];
-            }).catch(err => {
-                console.error(`Erro Green365 página ${page}:`, err);
-                return [];
-            });
-        });
-
-        const results = await Promise.all(promises);
-        const allItems = results.flat();
-        
-        if (allItems.length === 0) return [];
-
-        // Normalização específica para Green365 no analyzer.ts
-        const normalizedResults = normalizeHistoryData(allItems);
-        
-        console.log(`📊 Green365: ${normalizedResults.length} jogos H2H GG carregados.`);
-        return normalizedResults;
-        
-    } catch (e) { 
-        console.error("Green365 fetch error:", e); 
-        return [];
-    }
-};
 
 export const fetchPlayers = async (query: string): Promise<string[]> => {
     if (query.length < 2) return [];
     try {
         const apiKey = INTERNAL_SECRET || 'rw_secret_key_v2_2026';
         const token = getAuthToken();
-        const res = await fetch(`${API_BASE}/api/app3/players?query=${encodeURIComponent(query)}`, {
-            headers: {
-                'X-API-Key': apiKey,
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            }
-        });
-        if (!res.ok) return [];
-        const data = await res.json();
-        return Array.isArray(data) ? data : (data.players || []);
+        const headers: HeadersInit = {
+            'X-API-Key': apiKey,
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+
+        // 1. Tentar endpoint direto de players (se existir no novo server)
+        const playersUrl = `/api/players?query=${encodeURIComponent(query)}`;
+        const res = await fetch(playersUrl, { headers });
+        
+        if (res.ok) {
+            const data = await res.json();
+            const list = Array.isArray(data) ? data : (data.players || []);
+            if (list.length > 0) return list;
+        }
+
+        // 2. Fallback: Buscar no histórico recente e extrair nicks únicos
+        // Usamos o endpoint de history que já sabemos que funciona
+        const searchUrl = `${HISTORY_API_BASE}?limit=100`;
+        const hRes = await fetch(searchUrl, { headers });
+        
+        if (hRes.ok) {
+            const hData = await hRes.json();
+            const games = hData.results || [];
+            const players = new Set<string>();
+            
+            const q = query.toLowerCase();
+            games.forEach((g: any) => {
+                const hNick = g.home_nick || "";
+                const aNick = g.away_nick || "";
+                if (hNick.toLowerCase().includes(q)) players.add(hNick);
+                if (aNick.toLowerCase().includes(q)) players.add(aNick);
+            });
+            
+            return Array.from(players).sort();
+        }
+
+        return [];
     } catch (err) {
         console.error("Erro ao buscar jogadores:", err);
         return [];
