@@ -247,10 +247,10 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
             .sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime());
 
         // Fetch individual history to populate the P1 and P2 individual dots
-        const p1UrlHome = `${HISTORY_API_BASE}?home_nick=${encodeURIComponent(player1)}&limit=15`;
-        const p1UrlAway = `${HISTORY_API_BASE}?away_nick=${encodeURIComponent(player1)}&limit=15`;
-        const p2UrlHome = `${HISTORY_API_BASE}?home_nick=${encodeURIComponent(player2)}&limit=15`;
-        const p2UrlAway = `${HISTORY_API_BASE}?away_nick=${encodeURIComponent(player2)}&limit=15`;
+        const p1UrlHome = `${HISTORY_API_BASE}?home_nick=${encodeURIComponent(player1)}&limit=50`;
+        const p1UrlAway = `${HISTORY_API_BASE}?away_nick=${encodeURIComponent(player1)}&limit=50`;
+        const p2UrlHome = `${HISTORY_API_BASE}?home_nick=${encodeURIComponent(player2)}&limit=50`;
+        const p2UrlAway = `${HISTORY_API_BASE}?away_nick=${encodeURIComponent(player2)}&limit=50`;
 
         const [p1H, p1A, p2H, p2A] = await Promise.all([
             fetch(p1UrlHome, { headers }).then(r => r.json()).catch(() => ({ results: [] })),
@@ -259,21 +259,31 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
             fetch(p2UrlAway, { headers }).then(r => r.json()).catch(() => ({ results: [] }))
         ]);
 
-        const mapDot = (m: any) => ({
-            date_time: m.finished_at || '',
-            home_score: m.home_score_ft,
-            away_score: m.away_score_ft,
-            tooltip: `${m.home_nick} ${m.home_score_ft}x${m.away_score_ft} ${m.away_nick}`,
-            half_time: `HT ${m.home_score_ht}-${m.away_score_ht}`
-        });
+        const mapDot = (m: any) => {
+            const h = extractPlayerName(m.home_nick || m.home_raw || "");
+            const a = extractPlayerName(m.away_nick || m.away_raw || "");
+            return {
+                date_time: m.finished_at || '',
+                home_score: m.home_score_ft,
+                away_score: m.away_score_ft,
+                tooltip: `${h} ${m.home_score_ft}x${m.away_score_ft} ${a}`,
+                half_time: `HT ${m.home_score_ht}-${m.away_score_ht}`,
+                home_player: h,
+                away_player: a
+            };
+        };
 
         const player1_recent_dots = [...(p1H.results || []), ...(p1A.results || [])]
-            .sort((a, b) => new Date(b.finished_at).getTime() - new Date(a.finished_at).getTime())
-            .map(mapDot).slice(0, 15);
+            .map(mapDot)
+            .filter(d => d.home_player.toLowerCase() === p1Norm || d.away_player.toLowerCase() === p1Norm)
+            .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
+            .slice(0, 15);
 
         const player2_recent_dots = [...(p2H.results || []), ...(p2A.results || [])]
-            .sort((a, b) => new Date(b.finished_at).getTime() - new Date(a.finished_at).getTime())
-            .map(mapDot).slice(0, 15);
+            .map(mapDot)
+            .filter(d => d.home_player.toLowerCase() === p2Norm || d.away_player.toLowerCase() === p2Norm)
+            .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
+            .slice(0, 15);
 
         return {
             player1,
