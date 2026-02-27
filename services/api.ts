@@ -228,7 +228,22 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
         const p1Norm = player1.toLowerCase().trim();
         const p2Norm = player2.toLowerCase().trim();
 
-        const matches = allMatchesRaw
+        const deduplicate = (list: any[]) => {
+            const seen = new Set();
+            return list.filter(d => {
+                // Key for deduplication: date + players + scores
+                // We use home/away explicitly if available, otherwise fallback to the dot keys
+                const h = (d.home_player || d.home_nick || "").toLowerCase().trim();
+                const a = (d.away_player || d.away_nick || "").toLowerCase().trim();
+                const date = d.match_date || d.finished_at || d.date_time || "";
+                const key = `${date}-${h}-${a}-${d.home_score_ft ?? d.home_score}-${d.away_score_ft ?? d.away_score}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        };
+
+        const matches = deduplicate(allMatchesRaw
             .map((m: any) => ({
                 match_date: m.finished_at || new Date().toISOString(),
                 home_player: extractPlayerName(m.home_nick || m.home_raw || ""),
@@ -237,11 +252,10 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
                 away_score_ft: m.away_score_ft,
                 home_score_ht: m.home_score_ht,
                 away_score_ht: m.away_score_ht,
-            }))
-            .filter(m => {
+            })))
+            .filter((m: any) => {
                 const hNorm = m.home_player.toLowerCase().trim();
                 const aNorm = m.away_player.toLowerCase().trim();
-                // Match must be between P1 and P2 in any order
                 return (hNorm === p1Norm && aNorm === p2Norm) || (hNorm === p2Norm && aNorm === p1Norm);
             })
             .sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime());
@@ -273,16 +287,6 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
                 home_player: h,
                 away_player: a
             };
-        };
-
-        const deduplicate = (dots: any[]) => {
-            const seen = new Set();
-            return dots.filter(d => {
-                const key = `${d.date_time}-${d.home_player}-${d.away_player}-${d.home_score}-${d.away_score}`;
-                if (seen.has(key)) return false;
-                seen.add(key);
-                return true;
-            });
         };
 
         const player1_recent_dots = deduplicate([...(p1H.results || []), ...(p1A.results || [])].map(mapDot))
