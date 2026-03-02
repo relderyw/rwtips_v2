@@ -114,6 +114,22 @@ export function getCountryLogo(id: number) {
   return `https://pcvvirceciavsxxfinvv.supabase.co/storage/v1/object/public/images/unique-tournament/${id}.png`;
 }
 
+export async function fetchPerformanceHistory(
+    teamId: number,
+    numberOfMatches: number = 10,
+    timePeriod: string = 'fullTime'
+) {
+    const half = eventHalfMap[timePeriod as keyof typeof eventHalfMap] || "ALL";
+    const url = new URL(`${window.location.origin}${STATS_HUB_API}/team/${teamId}/performance`);
+    url.searchParams.set("limit", String(numberOfMatches));
+    url.searchParams.set("location", "all");
+    url.searchParams.set("eventHalf", half);
+
+    const response = await fetch(url.toString());
+    if (!response.ok) throw new Error(`Performance API Error: ${response.status}`);
+    return response.json();
+}
+
 export async function fetchBettingLines(gameId: number) {
     // Mock or implement if StatsHub has betting lines
     return { data: [] };
