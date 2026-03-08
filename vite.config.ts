@@ -92,6 +92,46 @@ export default defineConfig(({ mode }) => {
                     });
                 }
             },
+            '/api/superbet-live': {
+                target: 'https://production-superbet-offer-br.freetls.fastly.net',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/superbet-live/, '/v2/pt-BR/events/by-date'),
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Accept', 'application/json, text/plain, */*');
+                        proxyReq.setHeader('Origin', 'https://superbet.bet.br');
+                        proxyReq.setHeader('Referer', 'https://superbet.bet.br/');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 OPR/127.0.0.0');
+                        proxyReq.setHeader('sec-ch-ua', '"Opera Air";v="127", "Chromium";v="143", "Not A(Brand";v="24"');
+                        proxyReq.setHeader('sec-ch-ua-mobile', '?0');
+                        proxyReq.setHeader('sec-ch-ua-platform', '"Windows"');
+                        proxyReq.setHeader('sec-fetch-dest', 'empty');
+                        proxyReq.setHeader('sec-fetch-mode', 'cors');
+                        proxyReq.setHeader('sec-fetch-site', 'cross-site');
+                    });
+                }
+            },
+            '/api/superbet-struct': {
+                target: 'https://production-superbet-offer-br.freetls.fastly.net',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/superbet-struct/, '/v2/pt-BR/struct'),
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Accept', 'application/json, text/plain, */*');
+                        proxyReq.setHeader('Origin', 'https://superbet.bet.br');
+                        proxyReq.setHeader('Referer', 'https://superbet.bet.br/');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 OPR/127.0.0.0');
+                        proxyReq.setHeader('sec-ch-ua', '"Opera Air";v="127", "Chromium";v="143", "Not A(Brand";v="24"');
+                        proxyReq.setHeader('sec-ch-ua-mobile', '?0');
+                        proxyReq.setHeader('sec-ch-ua-platform', '"Windows"');
+                        proxyReq.setHeader('sec-fetch-dest', 'empty');
+                        proxyReq.setHeader('sec-fetch-mode', 'cors');
+                        proxyReq.setHeader('sec-fetch-site', 'cross-site');
+                    });
+                }
+            },
             '/api/statshub': {
                 target: 'https://www.statshub.com',
                 changeOrigin: true,

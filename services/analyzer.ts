@@ -45,7 +45,7 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     },
     "Esoccer Adriatic League": { 
       name: "ADRIATIC", 
-      color: "#ef4444", 
+      color: "#5b59acff", // Azul Marinho
       image: "https://images.leaguerepublic.com/data/images/311929616/107.png" 
     },
     
@@ -57,12 +57,12 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     },
     "E-Soccer - Battle Volta - 6 minutos de jogo": { 
       name: "VOLTA - 6 MIN", 
-      color: "#FACC15", 
+      color: "#fa9715ff", 
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
     "E-Soccer - GT Leagues - 12 minutos de jogo": { 
       name: "GT LEAGUES", 
-      color: "#22C55E", 
+      color: "#29f500ff", 
       image: "https://img1.wsimg.com/isteam/ip/8a6541ea-9c44-481b-bcea-c4fbc17257e9/gt2.png/:/cr=t:25%25,l:0%25,w:100%25,h:50%25/rs=w:400,h:200,cg:true" 
     },
     "E-Soccer - H2H GG League - 8 minutos de jogo": { 
@@ -73,7 +73,7 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     // New mappings for Altenar/History API
     "Valhalla": { 
       name: "VALHALLA CUP", 
-      color: "#06b6d4", // Cyan
+      color: "#cee028ff", // Cyan
       image: "https://drafted.gg/images/valhalla_cup/valhalla_cup_logo.svg" 
     },
     "Valkyrie": { 
@@ -83,12 +83,12 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     },
     "CLA": { 
       name: "CLA LEAGUE", 
-      color: "#fbbf24", // Amber
+      color: "#24e2fbff", // Amber
       image: "https://static.wixstatic.com/media/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png" 
     },
     "Cyber Live Arena": { 
       name: "CLA LEAGUE", 
-      color: "#fbbf24", // Amber 
+      color: "#24fbf0ff", // Amber 
       image: "https://static.wixstatic.com/media/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png" 
     }
 };
@@ -112,6 +112,12 @@ export const getLeagueInfo = (fullName: string) => {
     }
     if (normalized.includes('cla') || normalized.includes('cyber live arena')) {
         return LEAGUE_MAP["CLA"];
+    }
+    if (normalized.includes('eal')) {
+        return LEAGUE_MAP["Esoccer Adriatic League"];
+    }
+    if (normalized.startsWith('gt ') || normalized.includes('gt leagues')) {
+        return LEAGUE_MAP["Esoccer GT Leagues"];
     }
     if (normalized.includes('champions league')) {
         return { name: "CHAMPIONS", color: "#3b82f6", image: "" };

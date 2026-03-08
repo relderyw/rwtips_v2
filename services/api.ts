@@ -4,6 +4,8 @@ import { normalizeHistoryData } from './analyzer';
 
 const HISTORY_API_BASE = "/api/history";
 const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=-180&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=66&catIds=2085,1571,1728,1594,2086,1729,2130";
+const SUPERBET_LIVE_URL = "/api/superbet-live";
+const SUPERBET_STRUCT_URL = "/api/superbet-struct";
 const API_BASE = "https://rwtips-r943.onrender.com";
 
 const getAuthToken = () => {
@@ -18,25 +20,30 @@ const getAuthToken = () => {
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
     
-    // Check for "Team (Player)" or "Player (Team)" format
+    // 1. Check for "Team (Player)" or "Player (Team)" format
     const parenMatch = str.match(/(.*?)\((.*?)\)/);
+    
+    // Common team names check to help differentiate
+    const commonTeams = [
+        'Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium',
+        'Real Madrid', 'Barcelona', 'FC Bayern', 'Man City', 'Man Utd', 'Liverpool', 'PSG', 'Juventus', 'Arsenal', 'Chelsea',
+        'Borussia Dortmund', 'Bayer Leverkusen', 'Napoli', 'AC Milan', 'Inter', 'Inter de Milão', 'Atletico Madrid', 'Sevilla',
+        'Piemonte Calcio', 'Latium', 'Genoa', 'Roma', 'RB Leipzig', 'Real Sociedad', 'Athletic Club', 'Aston Villa', 'Spurs'
+    ];
+    
+    const knownClubAcronyms = ['PSG', 'RMA', 'FCB', 'MCI', 'MUN', 'LIV', 'CHE', 'ARS', 'TOT', 'JUV', 'MIL', 'INT', 'NAP', 'BVB', 'ATM', 'FC', 'CF', 'SC'];
+
     if (parenMatch) {
         const part1 = parenMatch[1].trim();
         const part2 = parenMatch[2].trim();
         
         // Detailed heuristic for nicknames vs team names
-        const isPart1Caps = /^[A-Z0-9\s]+$/.test(part1) && part1.length > 1;
-        const isPart2Caps = /^[A-Z0-9\s]+$/.test(part2) && part2.length > 1;
+        const isPart1Caps = /^[A-Z0-9\s_]+$/.test(part1) && part1.length > 1;
+        const isPart2Caps = /^[A-Z0-9\s_]+$/.test(part2) && part2.length > 1;
         
         // If one is caps and other isn't, prefer caps (usually the nick)
         if (isPart2Caps && !isPart1Caps) return part2;
         if (isPart1Caps && !isPart2Caps) return part1;
-        
-        // Common team names check
-        const commonTeams = [
-            'Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium',
-            'Real Madrid', 'Barcelona', 'FC Bayern', 'Man City', 'Man Utd', 'Liverpool', 'PSG', 'Juventus'
-        ];
         
         if (commonTeams.some(team => part1.includes(team))) return part2;
         if (commonTeams.some(team => part2.includes(team))) return part1;
@@ -45,7 +52,39 @@ const extractPlayerName = (str: string): string => {
         return part2;
     }
     
-    // If no parentheses, just clean up
+    // 2. Fallback for strings without parentheses (e.g., "PSG DANGERDIM77" or "Bayern Munich BECKHAM")
+    let cleanStr = str.trim();
+    
+    // Split if there's an explicit separator like " vs " or " - " or "·"
+    // Usually, the raw string here represents ONE side of the match (e.g., "PSG BECKHAM") 
+    // because it was already split by "·" before calling this function in Superbet fetching.
+    
+    // First, let's remove any known team name or acronym from the string
+    const teamWordsToRemove = [...commonTeams, ...knownClubAcronyms].sort((a, b) => b.length - a.length); // Longest first
+    
+    for (const team of teamWordsToRemove) {
+        const regex = new RegExp(`\\b${team}\\b`, 'i');
+        if (regex.test(cleanStr)) {
+            cleanStr = cleanStr.replace(regex, '').trim();
+            // If replacing it left us with a valid string, we keep going (there might be multiple team words, though unlikely)
+        }
+    }
+    
+    // Clean up any stray hyphens or extra spaces left behind
+    cleanStr = cleanStr.replace(/^[-·]+|[-·]+$/g, '').replace(/\s+/g, ' ').trim();
+    
+    // If we've successfully isolated a string, return it
+    if (cleanStr && cleanStr.length > 0) {
+        return cleanStr;
+    }
+    
+    // 3. Absolute Last Resort if the above wiped everything out (e.g., the string was literally just "PSG")
+    const originalParts = str.trim().split(/\s+/);
+    if (originalParts.length > 1) {
+        // Assume the last word is the player
+        return originalParts[originalParts.length - 1];
+    }
+    
     return str.trim();
 };
 
@@ -55,11 +94,84 @@ export const loginDev3 = async (force: boolean = false): Promise<string | null> 
 
 const INTERNAL_SECRET = import.meta.env.VITE_API_INTERNAL_SECRET;
 
-export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryMatch[]> => {
+// === FETCH HISTÓRICO DA SUPERBET ===
+const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
     try {
-        console.log(`📡 Buscando histórico via Múltiplas APIs (${numPages} páginas) em paralelo...`);
+        const now = new Date();
+        const past = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
+        
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const formatSuperbetDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}+${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        
+        const startDate = formatSuperbetDate(past);
+        const endDate = formatSuperbetDate(now);
+        
+        const url = `${SUPERBET_LIVE_URL}?compression=true&sportId=75&currentStatus=finished&startDate=${startDate}&endDate=${endDate}`;
+        
+        const [tournamentsMap, response] = await Promise.all([
+            getSuperbetTournaments(),
+            fetch(url, { headers: { 'Accept': 'application/json' } })
+        ]);
 
-        // Usa o secret do env ou fallback hardcoded
+        if (!response.ok) {
+            console.warn(`Superbet History API Error: ${response.status}`);
+            return [];
+        }
+
+        const json = await response.json();
+        const events = json.data || [];
+
+        return events.map((evt: any): HistoryMatch => {
+            const parts = (evt.matchName || '').split('·');
+            const homeNameFull = (parts[0] || 'Player 1').trim();
+            const awayNameFull = (parts[1] || 'Player 2').trim();
+
+            const homePlayer = extractPlayerName(homeNameFull);
+            const awayPlayer = extractPlayerName(awayNameFull);
+
+            const meta = evt.metadata || {};
+            
+            // Gols FT (Full Time) - The total match score is directly in metadata
+            const scoreHome = parseInt(meta.homeTeamScore) || 0;
+            const scoreAway = parseInt(meta.awayTeamScore) || 0;
+            
+            // Gols HT (Half Time) - Found in periods array where num === 1
+            let htHome = 0;
+            let htAway = 0;
+            
+            if (Array.isArray(meta.periods)) {
+                const firstHalf = meta.periods.find((p: any) => p.num === 1);
+                if (firstHalf) {
+                    htHome = parseInt(firstHalf.homeTeamScore) || 0;
+                    htAway = parseInt(firstHalf.awayTeamScore) || 0;
+                }
+            }
+
+            const tournamentId = evt.tournamentId;
+            const tData = tournamentsMap[tournamentId];
+            const leagueName = tData ? tData.name : `Liga ${tournamentId}`;
+
+            return {
+                home_player: homePlayer,
+                away_player: awayPlayer,
+                league_name: leagueName,
+                score_home: scoreHome,
+                score_away: scoreAway,
+                halftime_score_home: htHome,
+                halftime_score_away: htAway,
+                data_realizacao: evt.utcDate || evt.matchDate || new Date().toISOString()
+            };
+        });
+
+    } catch (error) {
+        console.error("Superbet History Error:", error);
+        return [];
+    }
+}
+
+// === FETCH HISTÓRICO DA ALTENAR (Apenas Valhalla/Valkyrie) ===
+const fetchAltenarHistoryGames = async (numPages: number = 10): Promise<HistoryMatch[]> => {
+    try {
         const apiKey = INTERNAL_SECRET || 'rw_secret_key_v2_2026';
         const token = getAuthToken();
 
@@ -79,19 +191,43 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
             }).catch(() => []);
         });
 
-        // Aguarda todas as requisições
         const internalResults = await Promise.all(internalPromises);
-        
-        // Flatten e normalização
         const allInternalRaw = internalResults.flat();
-        const allMatches = normalizeHistoryData(allInternalRaw);
         
+        // Filtra APENAS para Valhalla e Valkyrie ANTES de normalizar para economizar processamento
+        const filteredRaw = allInternalRaw.filter((m: any) => {
+            const leagueLower = (m.league_mapped || m.competition?.name || m.competitionName || m.league || m.league_name || '').toLowerCase();
+            return leagueLower.includes('valhalla') || leagueLower.includes('valkyrie');
+        });
+        
+        return normalizeHistoryData(filteredRaw);
+    } catch (e) { 
+        console.error("Altenar History fetch error:", e); 
+        return [];
+    }
+}
+
+// === FUNC PRINCIPAL: COMBINA OS HISTÓRICOS ===
+export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryMatch[]> => {
+    try {
+        console.log(`📡 Buscando histórico consolidado (Superbet + Altenar)...`);
+
+        const [superbetHistory, altenarHistory] = await Promise.allSettled([
+            fetchSuperbetHistoryGames(),
+            fetchAltenarHistoryGames(numPages)
+        ]);
+
+        const sbMatches = superbetHistory.status === 'fulfilled' ? superbetHistory.value : [];
+        const altMatches = altenarHistory.status === 'fulfilled' ? altenarHistory.value : [];
+
+        const allMatches = [...sbMatches, ...altMatches];
+
         if (allMatches.length === 0) {
-            console.log('Sem resultados disponíveis no Histórico');
+            console.log('Sem resultados disponíveis no Histórico consolidado');
             return [];
         }
 
-        // Remover duplicatas por data e jogadores (opcional, mas recomendado)
+        // Remover duplicatas por data e jogadores
         const uniqueMatches = allMatches.filter((match, index, self) =>
             index === self.findIndex((m) => (
                 m.data_realizacao === match.data_realizacao &&
@@ -103,19 +239,137 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
         // Ordenar por data (recente primeiro)
         uniqueMatches.sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime());
         
-        console.log(`📊 Histórico: ${uniqueMatches.length} jogos carregados.`);
+        console.log(`📊 Histórico Unificado: ${uniqueMatches.length} jogos carregados (${sbMatches.length} SB, ${altMatches.length} ALT)`);
         
         return uniqueMatches;
         
     } catch (e) { 
-        console.error("History fetch error:", e); 
+        console.error("fetchHistoryGames final error:", e); 
         return [];
     }
 };
 
 import { AltenarResponse, AltenarCompetitor, AltenarChampionship } from '../types';
 
-export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
+// === SUPERBET TOURNAMENT METADATA CACHE ===
+let superbetTournamentsCache: Record<number, { name: string, duration: string }> | null = null;
+let superbetTournamentsCacheTime = 0;
+
+const getSuperbetTournaments = async () => {
+    const now = Date.now();
+    // Cache for 1 hour (3600000 ms)
+    if (superbetTournamentsCache && (now - superbetTournamentsCacheTime < 3600000)) {
+        return superbetTournamentsCache;
+    }
+
+    try {
+        const response = await fetch(SUPERBET_STRUCT_URL, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok) return {};
+
+        const json = await response.json();
+        const tournaments = json.data?.tournaments || [];
+        
+        const map: Record<number, { name: string, duration: string }> = {};
+        for (const t of tournaments) {
+            let duration = '';
+            if (t.footer) {
+                // Extrai "2x5" de frases como "As partidas serão disputadas em formato eletrônico: 2x5 minutos."
+                const match = t.footer.match(/(\d+x\d+)/i);
+                if (match) {
+                    duration = `${match[1]} min`;
+                }
+            }
+
+            map[t.id] = {
+                name: t.localNames?.['pt-BR'] || t.name || `Liga ${t.id}`,
+                duration: duration
+            };
+        }
+        
+        superbetTournamentsCache = map;
+        superbetTournamentsCacheTime = now;
+        return map;
+    } catch (e) {
+        console.error("Failed to fetch Superbet struct:", e);
+        return superbetTournamentsCache || {};
+    }
+};
+
+// === SUPERBET LIVE API ===
+const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
+    try {
+        const [tournamentsMap, response] = await Promise.all([
+            getSuperbetTournaments(),
+            fetch(`${SUPERBET_LIVE_URL}?currentStatus=active&offerState=live&startDate=${`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01+${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}:00`}&sportId=75`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+            })
+        ]);
+
+        if (!response.ok) {
+            console.warn(`Superbet API Error: ${response.status}`);
+            return [];
+        }
+
+        const json = await response.json();
+        const events = json.data || [];
+
+        return events.map((evt: any): LiveEvent => {
+            // matchName format: "Team (Player)·Team (Player2)"
+            const parts = (evt.matchName || '').split('·');
+            const homeNameFull = (parts[0] || 'Player 1').trim();
+            const awayNameFull = (parts[1] || 'Player 2').trim();
+
+            const homePlayer = extractPlayerName(homeNameFull);
+            const awayPlayer = extractPlayerName(awayNameFull);
+            const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
+            const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
+
+            const meta = evt.metadata || {};
+            const scoreHome = parseInt(meta.homeTeamScore) || 0;
+            const scoreAway = parseInt(meta.awayTeamScore) || 0;
+            const minute = parseInt(meta.minutes) || 0;
+            const periodStatus = meta.periodStatus || meta.matchStatusLabel || 'Live';
+
+            const tournamentId = evt.tournamentId;
+            const tData = tournamentsMap[tournamentId];
+            const leagueName = tData ? tData.name : `Liga ${tournamentId}`;
+            const durationInfo = tData && tData.duration ? ` (${tData.duration})` : '';
+
+            return {
+                id: `sb-${evt.eventId}`,
+                leagueName: leagueName,
+                eventName: `${homeNameFull} vs ${awayNameFull}`,
+                stage: periodStatus,
+                timer: {
+                    minute,
+                    second: 0,
+                    formatted: `${periodStatus} ${minute}'${durationInfo}`
+                },
+                score: {
+                    home: scoreHome,
+                    away: scoreAway
+                },
+                homePlayer,
+                awayPlayer,
+                homeTeamName: homeTeam,
+                awayTeamName: awayTeam,
+                isLive: true,
+                bet365EventId: undefined
+            };
+        });
+    } catch (error) {
+        console.error("Superbet Live Error:", error);
+        return [];
+    }
+};
+
+// === ALTENAR (ESTRELABET) LIVE API — filtrada para Valhalla/Valkyrie ===
+const fetchAltenarLiveGames = async (): Promise<LiveEvent[]> => {
     try {
         const response = await fetch(LIVE_API_URL, {
             method: 'GET',
@@ -166,9 +420,6 @@ export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
             const scoreHome = evt.score[0] || 0;
             const scoreAway = evt.score[1] || 0;
 
-            // Timer parsing logick? Altenar sends "lst" (last server time) and "ls" (live status)
-            // Example lst: "2026-02-16T02:08:36Z"
-            // We might need to correct the time based on parsing, but for now we format nicely
             const timerFormatted = evt.liveTime || evt.ls || "Ao Vivo";
 
             return {
@@ -177,7 +428,7 @@ export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
                 eventName: `${homeNameFull} vs ${awayNameFull}`,
                 stage: evt.ls || "Live", 
                 timer: {
-                    minute: 0, // Altenar doesn't reliably send exact minute in this summary endpoint
+                    minute: 0,
                     second: 0,
                     formatted: timerFormatted
                 },
@@ -193,8 +444,31 @@ export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
                 bet365EventId: undefined
             };
         })
-        .filter(match => !match.leagueName.toUpperCase().includes('VIRTUAL ECOMP') && !match.leagueName.toUpperCase().includes('VIRTUAL E-COMP'));
+        // Filtrar: somente Valhalla e Valkyrie
+        .filter(match => {
+            const name = match.leagueName.toUpperCase();
+            return name.includes('VALHALLA') || name.includes('VALKYRIE');
+        });
 
+    } catch (error) {
+        console.error("Altenar Live Games Error:", error);
+        return [];
+    }
+};
+
+// === FUNC PRINCIPAL: combina Superbet (todos) + Altenar (Valhalla/Valkyrie) ===
+export const fetchLiveGames = async (): Promise<LiveEvent[]> => {
+    try {
+        const [superbetGames, altenarGames] = await Promise.allSettled([
+            fetchSuperbetLiveGames(),
+            fetchAltenarLiveGames()
+        ]);
+
+        const sb = superbetGames.status === 'fulfilled' ? superbetGames.value : [];
+        const alt = altenarGames.status === 'fulfilled' ? altenarGames.value : [];
+
+        console.log(`📡 Live: ${sb.length} jogos Superbet + ${alt.length} jogos Altenar (Valhalla/Valkyrie)`);
+        return [...sb, ...alt];
     } catch (error) {
         console.error("Live Games Error:", error);
         return [];
