@@ -247,9 +247,12 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
   const playerGames = games
     .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
     .sort((a, b) => {
-      const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
-      const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
-      return timeB - timeA;
+      const parseTime = (dateStr: string | number) => {
+        if (!dateStr) return 0;
+        const s = String(dateStr);
+        return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || (s.includes('-') && s.split('-').length > 3) ? s : s + 'Z').getTime() || 0;
+      };
+      return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
     })
     .slice(0, limit);
 
@@ -319,9 +322,12 @@ export const calculateMetricProbability = (playerName: string, gamesData: any, m
   const playerGames = games
     .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
     .sort((a, b) => {
-      const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
-      const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
-      return timeB - timeA;
+      const parseTime = (dateStr: string | number) => {
+        if (!dateStr) return 0;
+        const s = String(dateStr);
+        return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || (s.includes('-') && s.split('-').length > 3) ? s : s + 'Z').getTime() || 0;
+      };
+      return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
     })
     .slice(0, limit);
     
@@ -375,9 +381,12 @@ export const calculateLeagueStats = (historyData: any, sampleSize: number = 15):
   const stats: LeagueStats[] = [];
   leaguesMap.forEach((games, leagueName) => {
     const sortedGames = [...games].sort((a, b) => {
-      const timeA = typeof a.data_realizacao === 'number' ? a.data_realizacao : new Date(a.data_realizacao + (a.data_realizacao.includes('Z') ? '' : 'Z')).getTime();
-      const timeB = typeof b.data_realizacao === 'number' ? b.data_realizacao : new Date(b.data_realizacao + (b.data_realizacao.includes('Z') ? '' : 'Z')).getTime();
-      return timeB - timeA;
+      const parseTime = (dateStr: string | number) => {
+        if (!dateStr) return 0;
+        const s = String(dateStr);
+        return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || (s.includes('-') && s.split('-').length > 3) ? s : s + 'Z').getTime() || 0;
+      };
+      return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
     });
     const sample = sortedGames.slice(0, sampleSize);
     if (sample.length === 0) return;
@@ -436,9 +445,12 @@ export const calculatePlayerStats = (playerName: string, gamesData: any, limit: 
   const playerGames = games
     .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
     .sort((a, b) => {
-      const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
-      const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime();
-      return timeB - timeA;
+      const parseTime = (dateStr: string | number) => {
+        if (!dateStr) return 0;
+        const s = String(dateStr);
+        return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || (s.includes('-') && s.split('-').length > 3) ? s : s + 'Z').getTime() || 0;
+      };
+      return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
     });
   
   if (playerGames.length === 0) {

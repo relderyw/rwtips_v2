@@ -303,9 +303,12 @@ const App: React.FC = () => {
         return matchesSearch && matchesLeague && isAllowed;
       })
       .sort((a, b) => {
-        const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime() || 0;
-        const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime() || 0;
-        return timeB - timeA;
+        const parseTime = (dateStr: string) => {
+          if (!dateStr) return 0;
+          const s = String(dateStr);
+          return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || s.includes('-') && s.split('-').length > 3 ? s : s + 'Z').getTime() || 0;
+        };
+        return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
       })
       .slice(0, 500);
   }, [history, resultsSearch, resultsLeague]);
