@@ -46,7 +46,7 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     "Esoccer Adriatic League": { 
       name: "ADRIATIC", 
       color: "#5b59acff", // Azul Marinho
-      image: "https://images.leaguerepublic.com/data/images/311929616/107.png" 
+      image: "https://static.wixstatic.com/media/3f54ed_5828ae87071e4d079f972b9472626e64~mv2.png" 
     },
     
     // New Portuguese format from API (exact match with proper capitalization)
