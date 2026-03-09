@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
-import { generateStrategyReport, STRATEGY_THEMES } from '../services/analyzer';
+import { generateStrategyReport, STRATEGY_THEMES, getLeagueInfo } from '../services/analyzer';
 import { HistoryMatch } from '../types';
 
 interface StrategyStats {
@@ -138,9 +138,18 @@ export const StrategyHistory: React.FC<StrategyHistoryProps> = ({ history }) => 
                                 return (
                                     <tr key={idx} className="hover:bg-white/[0.01] transition-colors group">
                                         <td className="px-8 py-6">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-black text-white/90 group-hover:text-emerald-400 transition-colors uppercase">{item.date}</span>
-                                                <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest mt-1">{item.league}</span>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                                                    {getLeagueInfo(item.league).image ? (
+                                                        <img src={getLeagueInfo(item.league).image} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <i className="fa-solid fa-trophy text-[10px] text-white/20"></i>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-black text-white/90 group-hover:text-emerald-400 transition-colors uppercase">{item.date}</span>
+                                                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest mt-1">{item.league}</span>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">

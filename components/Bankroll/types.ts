@@ -26,6 +26,7 @@ export interface Bet {
   userEmail: string;
   timestamp: Timestamp | Date | any; // Handling Firebase timestamp nuances
   bankrollId?: string; // ID do gerenciamento
+  leagueLogo?: string;
 }
 
 export interface Bankroll {

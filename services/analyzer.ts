@@ -104,6 +104,9 @@ export const getLeagueInfo = (fullName: string) => {
     if (normalized.includes('h2h gg') || normalized.includes('h2h 8 min')) {
         return LEAGUE_MAP["E-Soccer - H2H GG League - 8 minutos de jogo"];
     }
+    if (normalized.includes('adriatic') || normalized.includes('eal')) {
+        return LEAGUE_MAP["Esoccer Adriatic League"];
+    }
     if (normalized.includes('valhalla')) {
         return LEAGUE_MAP["Valhalla"];
     }
@@ -121,9 +124,6 @@ export const getLeagueInfo = (fullName: string) => {
     }
     if (normalized.includes('battle')) {
         return LEAGUE_MAP["E-Soccer - Battle - 8 minutos de jogo"];
-    }
-    if (normalized.includes('eal')) {
-        return LEAGUE_MAP["Esoccer Adriatic League"];
     }
     if (normalized.startsWith('gt ') || normalized.includes('gt leagues')) {
         return LEAGUE_MAP["Esoccer GT Leagues"];

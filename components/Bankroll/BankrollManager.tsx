@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { getLeagueInfo } from '../../services/analyzer';
 import {
   collection,
   query,
@@ -73,7 +74,7 @@ const mapLeagueName = (apiName: string) => {
   if (norm.includes("GG")) return "H2H GG";
   if (norm.includes("8 MIN") || norm.includes("8 MINS")) return "Battle 8 min";
   if (norm.includes("6 MIN") || norm.includes("6 MINS")) return "Battle 6 min";
-  if (norm.includes("10 MIN") || norm.includes("10 MINS")) return "Adriact 10 min";
+  if (norm.includes("10 MIN") || norm.includes("10 MINS")) return "Adriatic 10 min";
   if (norm.includes("12 MIN") || norm.includes("12 MINS")) return "GT 12 min";
   if (norm.includes("VALHALLA")) return "Valhalla Cup";
   if (norm.includes("CHAMPIONS")) return "Champions League";
@@ -514,12 +515,14 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
         betData.jogador1 = formData.jogador1;
         betData.jogador2 = formData.jogador2 || '';
         betData.mercado = formData.mercado;
+        betData.leagueLogo = getLeagueInfo(formData.liga).image;
       } else {
         betData.selections = formData.selections;
         betData.liga = "Múltipla";
         betData.jogador1 = `${formData.selections.length} Seleções`;
         betData.jogador2 = '';
         betData.mercado = "Combinada";
+        betData.leagueLogo = ""; // Or a generic icon
       }
 
       if (editingId) {
@@ -714,30 +717,28 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
       return dateA.getTime() - dateB.getTime();
     });
 
-    let runningBalance = initialBankroll; // Start from initial capital for the chart
+    // Chart Data Generation: Sequence based (Excel style)
+    let accumulatedBalance = initialBankroll;
     const chartData: ChartDataPoint[] = [];
-    const dailyBalances: Record<string, number> = {};
 
     // Initial point
-    const today = new Date();
-    // chartData.push({ date: 'Início', balance: initialBankroll });
+    chartData.push({ date: 'Início', balance: initialBankroll });
 
     // New Stats: Best League & Market
     const leagueProfits: Record<string, number> = {};
     const marketProfits: Record<string, number> = {};
 
-    sortedBets.forEach(bet => {
+    sortedBets.forEach((bet, index) => {
       const profit = calculateProfit(bet.stake, bet.odds, bet.resultado);
-      const dateObj = bet.timestamp?.seconds ? new Date(bet.timestamp.seconds * 1000) : new Date();
-      const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-      // We want running balance over time.
-      // If multiple bets in same day, we aggregate their profits to that day's END balance
-      // But simplifying: just add every bet to a detailed line might be better or aggregate by day.
-      // Let's aggregate by day for smoother chart.
-
-      if (!dailyBalances[dateStr]) dailyBalances[dateStr] = 0;
-      dailyBalances[dateStr] += profit;
+      // Update running balance for chart if not pending
+      if (bet.resultado !== 'aguardando') {
+        accumulatedBalance += profit;
+        chartData.push({
+          date: (chartData.length).toString(),
+          balance: accumulatedBalance
+        });
+      }
 
       // Aggregate for Best League/Market
       if (bet.liga) {
@@ -746,23 +747,6 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
       if (bet.mercado) {
         marketProfits[bet.mercado] = (marketProfits[bet.mercado] || 0) + profit;
       }
-    });
-
-    // Construct chart data strictly chronological
-    // Note: The previous logic in dailyBalances was summing profits per day.
-    // We need to accumulate them over previous days.
-
-    let accumulatedBalance = initialBankroll;
-    // Sort dates
-    const sortedDates = Object.keys(dailyBalances).sort((a, b) => {
-      const [d1, m1] = a.split('/').map(Number);
-      const [d2, m2] = b.split('/').map(Number);
-      return (m1 * 31 + d1) - (m2 * 31 + d2); // Approximate sort for DD/MM
-    });
-
-    sortedDates.forEach(date => {
-      accumulatedBalance += dailyBalances[date];
-      chartData.push({ date, balance: accumulatedBalance });
     });
 
     // Find Best League
@@ -1082,11 +1066,20 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
                     }`}></div>
 
                   <div className="flex-1 w-full min-w-0 grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
-                    <div>
-                      <p className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-1">
-                        {bet.timestamp?.seconds ? new Date(bet.timestamp.seconds * 1000).toLocaleDateString() : 'Hoje'}
-                      </p>
-                      <p className="text-xs font-bold text-white truncate">{bet.liga || 'Liga'}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                        {bet.leagueLogo || getLeagueInfo(bet.liga || '').image ? (
+                          <img src={bet.leagueLogo || getLeagueInfo(bet.liga || '').image} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Trophy size={10} className="text-white/20" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-0.5">
+                          {bet.timestamp?.seconds ? new Date(bet.timestamp.seconds * 1000).toLocaleDateString() : 'Hoje'}
+                        </p>
+                        <p className="text-xs font-bold text-white truncate">{bet.liga || 'Liga'}</p>
+                      </div>
                     </div>
 
                     <div className="md:col-span-2">
