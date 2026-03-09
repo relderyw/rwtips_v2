@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { HistoryMatch, LiveEvent, Prediction, LeagueStats, PlayerStats } from './types';
-import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize, LEAGUE_MAP } from './services/analyzer';
+import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize, LEAGUE_MAP, ALLOWED_LEAGUES } from './services/analyzer';
 import { LiveMatchCard } from './components/LiveMatchCard';
 import { LeagueThermometer } from './components/LeagueThermometer';
 import { fetchHistoryGames, fetchLiveGames, loginDev3 } from './services/api';
@@ -297,12 +297,14 @@ const App: React.FC = () => {
       .filter(game => {
         const matchesSearch = game.home_player.toLowerCase().includes(resultsSearch.toLowerCase()) ||
           game.away_player.toLowerCase().includes(resultsSearch.toLowerCase());
-        const matchesLeague = resultsLeague === 'all' || game.league_name === resultsLeague;
-        return matchesSearch && matchesLeague;
+        const leagueNormalized = getLeagueInfo(game.league_name || 'Unknown League').name;
+        const isAllowed = ALLOWED_LEAGUES.includes(leagueNormalized);
+        const matchesLeague = resultsLeague === 'all' || leagueNormalized === resultsLeague;
+        return matchesSearch && matchesLeague && isAllowed;
       })
       .sort((a, b) => {
-        const timeA = new Date(a.data_realizacao).getTime() || 0;
-        const timeB = new Date(b.data_realizacao).getTime() || 0;
+        const timeA = new Date(a.data_realizacao + (String(a.data_realizacao).includes('Z') || String(a.data_realizacao).includes('GMT') ? '' : 'Z')).getTime() || 0;
+        const timeB = new Date(b.data_realizacao + (String(b.data_realizacao).includes('Z') || String(b.data_realizacao).includes('GMT') ? '' : 'Z')).getTime() || 0;
         return timeB - timeA;
       })
       .slice(0, 500);
@@ -310,7 +312,7 @@ const App: React.FC = () => {
 
   const groupedResults = useMemo(() => {
     return sortedFullHistory.reduce((acc: Record<string, HistoryMatch[]>, game) => {
-      const l = game.league_name;
+      const l = getLeagueInfo(game.league_name || 'Unknown League').name;
       if (!acc[l]) acc[l] = [];
       acc[l].push(game);
       return acc;
@@ -320,10 +322,12 @@ const App: React.FC = () => {
   const availableLeagues = useMemo(() => {
     const leagues = new Set<string>();
     liveEvents.forEach(e => {
-      if (LEAGUE_MAP[e.leagueName]) leagues.add(e.leagueName);
+      const info = getLeagueInfo(e.leagueName);
+      if (ALLOWED_LEAGUES.includes(info.name)) leagues.add(info.name);
     });
     history.forEach(h => {
-      if (LEAGUE_MAP[h.league_name]) leagues.add(h.league_name);
+      const info = getLeagueInfo(h.league_name);
+      if (ALLOWED_LEAGUES.includes(info.name)) leagues.add(info.name);
     });
     return Array.from(leagues).sort();
   }, [liveEvents, history]);
@@ -387,8 +391,10 @@ const App: React.FC = () => {
       const matchesSearch = event.homePlayer.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.awayPlayer.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFilter = filter === 'all' || potential === filter;
-      const matchesLeague = selectedLeague === 'all' || event.leagueName === selectedLeague;
-      return matchesSearch && matchesFilter && matchesLeague;
+      const leagueNormalized = getLeagueInfo(event.leagueName).name;
+      const isAllowed = ALLOWED_LEAGUES.includes(leagueNormalized);
+      const matchesLeague = selectedLeague === 'all' || leagueNormalized === selectedLeague;
+      return matchesSearch && matchesFilter && matchesLeague && isAllowed;
     });
   }, [analyzedLive, searchQuery, filter, selectedLeague]);
 

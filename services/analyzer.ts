@@ -137,6 +137,11 @@ export const getLeagueInfo = (fullName: string) => {
     return { name: fullName.replace("Esoccer ", "").replace("E-Soccer - ", "").toUpperCase(), color: "#10B981", image: "https://football.esportsbattle.com/favicon.ico" };
 };
 
+export const ALLOWED_LEAGUES = [
+    "GT LEAGUES", "BATTLE - 8 MIN", "VOLTA - 6 MIN", "H2H GG LEAGUE",
+    "ADRIATIC", "VALHALLA CUP", "VALKYRIE CUP", "CLA LEAGUE", "CHAMPIONS"
+];
+
 // Mapeamento de nomes da API de Histórico (Inglês) para a API Live (Português)
 const LEAGUE_NAME_MAPPING: Record<string, string> = {
     "Esoccer Battle - 8 mins play": "E-Soccer - Battle - 8 minutos de jogo",
@@ -357,12 +362,14 @@ export const calculateLeagueStats = (historyData: any, sampleSize: number = 15):
 
   const leaguesMap = new Map<string, HistoryMatch[]>();
   allGames.forEach(g => {
-    const leagueName = g.league_name || 'Unknown League';
-    // Only process leagues that are explicitly mapped and supported
-    if (!LEAGUE_MAP[leagueName]) return;
+    const info = getLeagueInfo(g.league_name || 'Unknown League');
+    const normalizedName = info.name;
     
-    if (!leaguesMap.has(leagueName)) leaguesMap.set(leagueName, []);
-    leaguesMap.get(leagueName)!.push(g);
+    // Only process allowed leagues
+    if (!ALLOWED_LEAGUES.includes(normalizedName)) return;
+    
+    if (!leaguesMap.has(normalizedName)) leaguesMap.set(normalizedName, []);
+    leaguesMap.get(normalizedName)!.push(g);
   });
   
   const stats: LeagueStats[] = [];
