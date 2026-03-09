@@ -323,14 +323,21 @@ const App: React.FC = () => {
 
   const availableLeagues = useMemo(() => {
     const leagues = new Set<string>();
-    liveEvents.forEach(e => {
-      const info = getLeagueInfo(e.leagueName);
-      if (ALLOWED_LEAGUES.includes(info.name)) leagues.add(info.name);
+    // No Radar (fifa)
+    analyzedLive.forEach(item => {
+      const normalized = getLeagueInfo(item.event.leagueName).name;
+      if (ALLOWED_LEAGUES.includes(normalized)) {
+        leagues.add(normalized);
+      }
     });
-    history.forEach(h => {
-      const info = getLeagueInfo(h.league_name);
-      if (ALLOWED_LEAGUES.includes(info.name)) leagues.add(info.name);
+    // No Histórico (para o filtro de busca no histórico)
+    history.forEach(game => {
+      const normalized = getLeagueInfo(game.league_name).name;
+      if (ALLOWED_LEAGUES.includes(normalized)) {
+        leagues.add(normalized);
+      }
     });
+
     return Array.from(leagues).sort();
   }, [liveEvents, history]);
 

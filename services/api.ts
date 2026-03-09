@@ -461,10 +461,11 @@ const fetchAltenarLiveGames = async (): Promise<LiveEvent[]> => {
                 bet365EventId: undefined
             };
         })
-        // Filtrar: somente Valhalla e Valkyrie
+        // Filtrar: Valhalla, Valkyrie e outras ligas de esoccer permitidas
         .filter(match => {
             const name = match.leagueName.toUpperCase();
-            return name.includes('VALHALLA') || name.includes('VALKYRIE');
+            const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA'];
+            return allowedKeywords.some(keyword => name.includes(keyword));
         });
 
     } catch (error) {

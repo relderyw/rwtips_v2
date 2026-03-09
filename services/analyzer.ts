@@ -113,6 +113,15 @@ export const getLeagueInfo = (fullName: string) => {
     if (normalized.includes('cla') || normalized.includes('cyber live arena')) {
         return LEAGUE_MAP["CLA"];
     }
+    if (normalized.includes('battle') && normalized.includes('12 min')) {
+        return { name: "BATTLE - 12 MIN", color: "#ef4444", image: "https://football.esportsbattle.com/favicon.ico" };
+    }
+    if (normalized.includes('battle')) {
+        return LEAGUE_MAP["E-Soccer - Battle - 8 minutos de jogo"];
+    }
+    if (normalized.includes('volta')) {
+        return LEAGUE_MAP["E-Soccer - Battle Volta - 6 minutos de jogo"];
+    }
     if (normalized.includes('eal')) {
         return LEAGUE_MAP["Esoccer Adriatic League"];
     }
@@ -138,7 +147,7 @@ export const getLeagueInfo = (fullName: string) => {
 };
 
 export const ALLOWED_LEAGUES = [
-    "GT LEAGUES", "BATTLE - 8 MIN", "VOLTA - 6 MIN", "H2H GG LEAGUE",
+    "GT LEAGUES", "BATTLE - 8 MIN", "BATTLE - 12 MIN", "VOLTA - 6 MIN", "H2H GG LEAGUE",
     "ADRIATIC", "VALHALLA CUP", "VALKYRIE CUP", "CLA LEAGUE", "CHAMPIONS",
     "E-SOCCER", "SOCCER", "FIFA"
 ];
