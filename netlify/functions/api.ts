@@ -134,6 +134,48 @@ export const handler: Handler = async (event: HandlerEvent) => {
               }),
           };
       }
+  } else if (event.path.includes('superbet-live') || event.path.includes('superbet-struct')) {
+      // Proxy to Superbet API
+      console.log(`[Proxy] Forwarding to Superbet: ${event.path}`);
+      const baseUrl = "https://production-superbet-offer-br.freetls.fastly.net";
+      
+      let superbetPath = '';
+      if (event.path.includes('superbet-live')) {
+          // Remove compression flag as it causes decoding issues on the backend, might be safer here too
+          superbetPath = '/v2/pt-BR/events/by-date';
+      } else {
+          superbetPath = '/v2/pt-BR/struct';
+      }
+      
+      try {
+          const config: any = {
+              method: event.httpMethod,
+              url: `${baseUrl}${superbetPath}`,
+              params: event.queryStringParameters,
+              headers: {
+                  'Accept': 'application/json, text/plain, */*',
+                  'Origin': 'https://superbet.bet.br',
+                  'Referer': 'https://superbet.bet.br/',
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 OPR/127.0.0.0'
+              }
+          };
+
+          const response = await axios(config);
+          return {
+              statusCode: 200,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+              },
+              body: JSON.stringify(response.data),
+          };
+      } catch (error: any) {
+          console.error('[Proxy Error] Superbet:', error.message);
+          return {
+              statusCode: error.response?.status || 500,
+              body: JSON.stringify({ error: 'Failed to fetch Superbet data', details: error.message }),
+          };
+      }
   } else if (event.path.includes('statshub')) {
       // Proxy to StatsHub API
       console.log(`[Proxy] Forwarding to StatsHub: ${event.path}`);
