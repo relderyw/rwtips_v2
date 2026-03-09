@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { HistoryMatch, LiveEvent, Prediction, LeagueStats, PlayerStats } from './types';
-import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize } from './services/analyzer';
+import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize, LEAGUE_MAP } from './services/analyzer';
 import { LiveMatchCard } from './components/LiveMatchCard';
 import { LeagueThermometer } from './components/LeagueThermometer';
 import { fetchHistoryGames, fetchLiveGames, loginDev3 } from './services/api';
@@ -319,8 +319,12 @@ const App: React.FC = () => {
 
   const availableLeagues = useMemo(() => {
     const leagues = new Set<string>();
-    liveEvents.forEach(e => leagues.add(e.leagueName));
-    history.forEach(h => leagues.add(h.league_name));
+    liveEvents.forEach(e => {
+      if (LEAGUE_MAP[e.leagueName]) leagues.add(e.leagueName);
+    });
+    history.forEach(h => {
+      if (LEAGUE_MAP[h.league_name]) leagues.add(h.league_name);
+    });
     return Array.from(leagues).sort();
   }, [liveEvents, history]);
 

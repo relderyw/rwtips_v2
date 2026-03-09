@@ -358,6 +358,9 @@ export const calculateLeagueStats = (historyData: any, sampleSize: number = 15):
   const leaguesMap = new Map<string, HistoryMatch[]>();
   allGames.forEach(g => {
     const leagueName = g.league_name || 'Unknown League';
+    // Only process leagues that are explicitly mapped and supported
+    if (!LEAGUE_MAP[leagueName]) return;
+    
     if (!leaguesMap.has(leagueName)) leaguesMap.set(leagueName, []);
     leaguesMap.get(leagueName)!.push(g);
   });
