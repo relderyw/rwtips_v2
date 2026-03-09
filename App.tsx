@@ -321,6 +321,18 @@ const App: React.FC = () => {
     }, {});
   }, [sortedFullHistory]);
 
+  const analyzedLive = useMemo(() => {
+    return liveEvents.map(event => {
+      const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history, event.leagueName);
+      return {
+        event,
+        potential: analysis.key,
+        confidence: analysis.confidence,
+        reasons: analysis.reasons
+      };
+    });
+  }, [liveEvents, history]);
+
   const availableLeagues = useMemo(() => {
     const leagues = new Set<string>();
     // No Radar (fifa)
@@ -339,19 +351,7 @@ const App: React.FC = () => {
     });
 
     return Array.from(leagues).sort();
-  }, [liveEvents, history]);
-
-  const analyzedLive = useMemo(() => {
-    return liveEvents.map(event => {
-      const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history, event.leagueName);
-      return {
-        event,
-        potential: analysis.key,
-        confidence: analysis.confidence,
-        reasons: analysis.reasons
-      };
-    });
-  }, [liveEvents, history]);
+  }, [analyzedLive, history]);
 
   useEffect(() => {
     if (analyzedLive.length > 0) {
