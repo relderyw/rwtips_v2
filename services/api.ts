@@ -28,27 +28,28 @@ const extractPlayerName = (str: string): string => {
         'Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium',
         'Real Madrid', 'Barcelona', 'FC Bayern', 'Man City', 'Man Utd', 'Liverpool', 'PSG', 'Juventus', 'Arsenal', 'Chelsea',
         'Borussia Dortmund', 'Bayer Leverkusen', 'Napoli', 'AC Milan', 'Inter', 'Inter de Milão', 'Atletico Madrid', 'Sevilla',
-        'Piemonte Calcio', 'Latium', 'Genoa', 'Roma', 'RB Leipzig', 'Real Sociedad', 'Athletic Club', 'Aston Villa', 'Spurs'
+        'Piemonte Calcio', 'Latium', 'Genoa', 'Roma', 'RB Leipzig', 'Real Sociedad', 'Athletic Club', 'Aston Villa', 'Spurs',
+        'PAOK', 'Benfica', 'Sporting', 'Porto', 'Ajax'
     ];
     
-    const knownClubAcronyms = ['PSG', 'RMA', 'FCB', 'MCI', 'MUN', 'LIV', 'CHE', 'ARS', 'TOT', 'JUV', 'MIL', 'INT', 'NAP', 'BVB', 'ATM', 'FC', 'CF', 'SC'];
+    const knownClubAcronyms = ['PSG', 'RMA', 'FCB', 'MCI', 'MUN', 'LIV', 'CHE', 'ARS', 'TOT', 'JUV', 'MIL', 'INT', 'NAP', 'BVB', 'ATM', 'FC', 'CF', 'SC', 'PAOK'];
 
     if (parenMatch) {
         const part1 = parenMatch[1].trim();
         const part2 = parenMatch[2].trim();
         
-        // Detailed heuristic for nicknames vs team names
-        const isPart1Caps = /^[A-Z0-9\s_]+$/.test(part1) && part1.length > 1;
-        const isPart2Caps = /^[A-Z0-9\s_]+$/.test(part2) && part2.length > 1;
+        const part2Upper = part2.toUpperCase();
+        const part1Upper = part1.toUpperCase();
+
+        // If explicitly part2 is a recognized team name, return part1 as the player
+        if (commonTeams.some(team => part2Upper.includes(team.toUpperCase()))) return part1;
+        if (knownClubAcronyms.includes(part2Upper)) return part1;
         
-        // If one is caps and other isn't, prefer caps (usually the nick)
-        if (isPart2Caps && !isPart1Caps) return part2;
-        if (isPart1Caps && !isPart2Caps) return part1;
-        
-        if (commonTeams.some(team => part1.includes(team))) return part2;
-        if (commonTeams.some(team => part2.includes(team))) return part1;
+        if (commonTeams.some(team => part1Upper.includes(team.toUpperCase()))) return part2;
+        if (knownClubAcronyms.includes(part1Upper)) return part2;
         
         // Default to inside parentheses for standard "Team (Nick)" format
+        // This avoids bugs like "PAOK" (caps) overriding "Eros" (titlecase)
         return part2;
     }
     

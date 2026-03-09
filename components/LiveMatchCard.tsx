@@ -141,8 +141,10 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
   }, [match.score.home, match.score.away]);
 
   const isHT = activeTab === 'HT';
+  // A card is only "signaled" (highlighted) if it has a strategy AND confidence is 75% or higher
+  const isSignaled = potential !== 'none' && (confidence ?? 0) >= 75;
+  // If we have a potential but low confidence, we still want to know the strategy but without the glow
   const theme = STRATEGY_THEMES[potential] || STRATEGY_THEMES.none;
-  const isSignaled = potential !== 'none';
 
   const getDynamicColor = (value: number, opacity: number = 1) => {
     const hue = Math.min(Math.max(value * 1.2, 0), 120);
@@ -234,20 +236,20 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
         overflow: 'visible'
       }}
     >
-      {/* STRATEGY & CONFIDENCE INTEGRATED HEADER */}
-      {isSignaled && (
-        <div className="mx-2 mt-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-md relative overflow-hidden group">
-          {/* Background Glow Effect */}
-          <div className="absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20" style={{ background: `radial-gradient(circle at top right, ${theme.color}, transparent)` }}></div>
+      {/* STRATEGY & CONFIDENCE INTEGRATED HEADER - Only shown if it meets the highlighted threshold OR we have a strategy to show without glow */}
+      {potential !== 'none' && (
+        <div className={`mx-2 mt-2 p-2.5 rounded-xl border relative overflow-hidden group ${isSignaled ? 'bg-white/[0.03] border-white/10 backdrop-blur-md' : 'bg-black/20 border-white/[0.02]'}`}>
+          {/* Background Glow Effect - Only if signaled */}
+          {isSignaled && <div className="absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20" style={{ background: `radial-gradient(circle at top right, ${theme.color}, transparent)` }}></div>}
 
           <div className="flex items-center justify-between relative z-10">
-            <div className="flex items-center gap-2.5">
+            <div className={`flex items-center gap-2.5 ${!isSignaled && 'opacity-60 grayscale'}`}>
               <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg border" style={{ backgroundColor: `${theme.color}20`, borderColor: `${theme.color}40` }}>
-                <i className={`fa-solid ${theme.icon} text-xs animate-pulse`} style={{ color: theme.color }}></i>
+                <i className={`fa-solid ${theme.icon} text-xs ${isSignaled ? 'animate-pulse' : ''}`} style={{ color: theme.color }}></i>
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-black uppercase tracking-wider leading-none mb-1" style={{ color: theme.color }}>
-                  {theme.label}
+                  {theme.label} {!isSignaled && <span className="text-white/30 ml-1 text-[8px]">(OBSERVANDO)</span>}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {reasons && reasons.map((r, i) => (
@@ -257,10 +259,10 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
               </div>
             </div>
 
-            <div className="flex flex-col items-end">
+            <div className={`flex flex-col items-end ${!isSignaled && 'opacity-60'}`}>
               <div className="flex items-center gap-1.5">
                 <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Confiança</span>
-                <span className="text-sm font-black italic tabular-nums" style={{ color: confidence && confidence >= 85 ? '#10b981' : confidence && confidence >= 75 ? '#facc15' : '#fff' }}>
+                <span className="text-sm font-black italic tabular-nums" style={{ color: confidence && confidence >= 85 ? '#10b981' : confidence && confidence >= 75 ? '#facc15' : '#ef4444' }}>
                   {confidence}%
                 </span>
               </div>
@@ -269,7 +271,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
                   className="h-full transition-all duration-1000"
                   style={{
                     width: `${confidence}%`,
-                    backgroundColor: confidence && confidence >= 85 ? '#10b981' : confidence && confidence >= 75 ? '#facc15' : '#6366f1'
+                    backgroundColor: confidence && confidence >= 85 ? '#10b981' : confidence && confidence >= 75 ? '#facc15' : '#ef4444'
                   }}
                 ></div>
               </div>
