@@ -3,6 +3,17 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LiveEvent, HistoryMatch } from '../types';
 import { calculatePlayerStats, getLeagueInfo, calculateMetricProbability, normalize } from '../services/analyzer';
 
+// Helper for URL slugs
+const createSlug = (text: string) => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/[^a-z0-9\s-]/g, "") // Remove special chars except spaces and hyphens
+    .trim()
+    .replace(/\s+/g, "-"); // Replace spaces with hyphens
+};
+
 interface LiveMatchCardProps {
   match: LiveEvent;
   potential: string;
@@ -183,9 +194,35 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
     };
   }, [activePlayerTab, match.homePlayer, match.awayPlayer, historicalGames, isHT, syncLimit]);
 
-  const estrelaUrl = match.bet365EventId
-    ? `https://www.estrelabet.bet.br/apostas-ao-vivo?page=liveEvent&eventId=${match.bet365EventId}&sportId=66`
-    : "https://www.estrelabet.bet.br/apostas-ao-vivo";
+  const isAltenarLeague = match.leagueName.toLowerCase().includes('valhalla') ||
+    match.leagueName.toLowerCase().includes('valkyrie');
+
+  let bookmakerUrl = '';
+  let bookmakerName = '';
+  let bookmakerLogo = '';
+  let bookmakerBgClass = '';
+
+  if (isAltenarLeague) {
+    bookmakerUrl = match.bet365EventId
+      ? `https://www.estrelabet.bet.br/apostas-ao-vivo?page=liveEvent&eventId=${match.bet365EventId}&sportId=66`
+      : "https://www.estrelabet.bet.br/apostas-ao-vivo";
+    bookmakerName = 'ESTRELA BET';
+    bookmakerLogo = 'https://assets.staradm.com/estrelabet_favicon.ico';
+    bookmakerBgClass = 'bg-yellow-500 hover:brightness-110';
+  } else {
+    // Generate Superbet URL: atletico-madrid-stenido-x-real-madrid-solya-12272134
+    const homeStr = match.homeTeamName ? `${match.homeTeamName} ${match.homePlayer}` : match.homePlayer;
+    const awayStr = match.awayTeamName ? `${match.awayTeamName} ${match.awayPlayer}` : match.awayPlayer;
+    const matchSlug = createSlug(`${homeStr} x ${awayStr}`);
+    // If we don't have the original superbet event ID, we try to use the general one or fallback to main esports page.
+    // In the backend, the event.id should be the 'sb-12261419' format. We extract the numeric part if present.
+    let eventId = match.id.replace(/\D/g, '');
+    if (!eventId) eventId = 'v2'; // fallback
+    bookmakerUrl = `https://superbet.bet.br/odds/e-sport-futebol/${matchSlug}-${eventId}/?t=offer-live-82545&mdt=o`;
+    bookmakerName = 'SUPERBET';
+    bookmakerLogo = 'https://superbet.bet.br/static/img/icons/favicon.ico';
+    bookmakerBgClass = 'bg-[#ea2a2b] hover:brightness-110 text-white';
+  }
 
   return (
     <div
@@ -361,8 +398,10 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           <button onClick={() => onDetailClick(match)} className="flex-[0.8] bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg group">
             ANÁLISE <i className="fa-solid fa-microchip text-[10px] text-emerald-500/60 group-hover:scale-125 transition-transform"></i>
           </button>
-          <a href={estrelaUrl} target="_blank" rel="noopener noreferrer" className="flex-1 bg-yellow-500 hover:brightness-110 border border-white/5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center justify-center group shadow-2xl">
-            <span className="text-[10px] font-black uppercase text-black group-hover:scale-110 transition-transform">ABRIR ESTRELA BET</span>
+          <a href={bookmakerUrl} target="_blank" rel="noopener noreferrer" className={`flex-1 ${bookmakerBgClass} border border-white/5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 group shadow-2xl overflow-hidden relative`}>
+            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity blur-lg"></div>
+            <img src={bookmakerLogo} className="w-4 h-4 object-contain group-hover:scale-110 transition-transform relative z-10 drop-shadow-md rounded-[4px]" alt={bookmakerName} />
+            <span className={`text-[10px] font-black uppercase relative z-10 tracking-widest ${isAltenarLeague ? 'text-black' : 'text-white'}`}>{bookmakerName}</span>
           </a>
         </div>
       </div>
