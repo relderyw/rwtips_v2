@@ -200,10 +200,11 @@ const fetchAltenarHistoryGames = async (numPages: number = 10): Promise<HistoryM
         const internalResults = await Promise.all(internalPromises);
         const allInternalRaw = internalResults.flat();
         
-        // Filtra APENAS para Valhalla e Valkyrie ANTES de normalizar para economizar processamento
+        // Filtra para as ligas que nos interessam no Histórico "Interno" (que vem do Altenar)
+        const allowedAltenarKeywords = ['valhalla', 'valkyrie', 'cla', 'cyber live arena', 'adriatic', 'eal', 'h2h'];
         const filteredRaw = allInternalRaw.filter((m: any) => {
             const leagueLower = (m.league_mapped || m.competition?.name || m.competitionName || m.league || m.league_name || '').toLowerCase();
-            return leagueLower.includes('valhalla') || leagueLower.includes('valkyrie');
+            return allowedAltenarKeywords.some(keyword => leagueLower.includes(keyword));
         });
         
         return normalizeHistoryData(filteredRaw);

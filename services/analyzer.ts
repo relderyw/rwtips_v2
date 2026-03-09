@@ -139,7 +139,8 @@ export const getLeagueInfo = (fullName: string) => {
 
 export const ALLOWED_LEAGUES = [
     "GT LEAGUES", "BATTLE - 8 MIN", "VOLTA - 6 MIN", "H2H GG LEAGUE",
-    "ADRIATIC", "VALHALLA CUP", "VALKYRIE CUP", "CLA LEAGUE", "CHAMPIONS"
+    "ADRIATIC", "VALHALLA CUP", "VALKYRIE CUP", "CLA LEAGUE", "CHAMPIONS",
+    "E-SOCCER", "SOCCER", "FIFA"
 ];
 
 // Mapeamento de nomes da API de Histórico (Inglês) para a API Live (Português)
@@ -157,7 +158,8 @@ const LEAGUE_NAME_MAPPING: Record<string, string> = {
     "H2H 8 MIN": "E-Soccer - H2H GG League - 8 minutos de jogo",
     "Champions League": "Champions League",
     "Valhalla Cup": "Valhalla",
-    "Valkyrie Cup": "Valkyrie"
+    "Valkyrie Cup": "Valkyrie",
+    "Adriatic League": "Esoccer Adriatic League"
 };
 
 // === DATA NORMALIZATION ===
