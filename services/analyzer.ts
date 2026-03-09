@@ -217,16 +217,8 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
         }
         if (!dateStr) dateStr = new Date().toISOString();
 
-        // Standardize: Append Z ONLY if no timezone info is present
-        let finalDate = String(dateStr);
-        // Regex to check if string ends with Z or +/-HH:mm
-        const hasTimezone = /[Z]|[+-]\d{2}:?\d{2}$/.test(finalDate);
-        if (finalDate && !hasTimezone) {
-            // Append Z if it looks like an ISO date/time string
-            if (finalDate.match(/^\d{4}-\d{2}-\d{2}/) || finalDate.includes(':')) {
-                finalDate += 'Z';
-            }
-        }
+        // Standardize: Use raw string, let browser handle local vs offset
+        let finalDate = String(dateStr).trim();
 
         return {
             home_player: home_player,

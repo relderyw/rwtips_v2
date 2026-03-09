@@ -303,12 +303,11 @@ const App: React.FC = () => {
         return matchesSearch && matchesLeague && isAllowed;
       })
       .sort((a, b) => {
-        const parseTime = (dateStr: string) => {
-          if (!dateStr) return 0;
-          // data_realizacao is already standardized by normalizeHistoryData in fetch logic
-          return new Date(String(dateStr)).getTime() || 0;
-        };
-        return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
+        const timeA = new Date(a.data_realizacao).getTime();
+        const timeB = new Date(b.data_realizacao).getTime();
+        if (timeB !== timeA) return timeB - timeA;
+        // Secondary sort to prevent flickering/unstable order in same minute
+        return (a.home_player + a.away_player).localeCompare(b.home_player + b.away_player);
       })
       .slice(0, 500);
   }, [history, resultsSearch, resultsLeague]);

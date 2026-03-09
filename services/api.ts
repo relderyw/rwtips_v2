@@ -152,14 +152,10 @@ const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
             const tData = tournamentsMap[tournamentId];
             const leagueName = tData ? tData.name : `Liga ${tournamentId}`;
 
-            // Standardize date like we do in normalizeHistoryData
+            // Standardize date: Use as-is, let the browser handle existing offsets
+            // or treat untagged strings as local time.
             let rawDate = evt.utcDate || evt.matchDate || new Date().toISOString();
-            let finalDate = String(rawDate);
-            if (finalDate && !finalDate.includes('Z') && !finalDate.includes('+') && !finalDate.includes('GMT')) {
-                if (finalDate.match(/^\d{4}-\d{2}-\d{2}/) || finalDate.includes(':')) {
-                    finalDate += 'Z';
-                }
-            }
+            let finalDate = String(rawDate).trim();
 
             return {
                 home_player: homePlayer,
@@ -250,8 +246,14 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
             return index === firstIdx;
         });
 
-        // Ordenar por data (recente primeiro)
-        uniqueMatches.sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime());
+        // Ordenar por data (recente primeiro) e depois por jogadores para manter ordem estável
+        uniqueMatches.sort((a, b) => {
+            const timeA = new Date(a.data_realizacao).getTime();
+            const timeB = new Date(b.data_realizacao).getTime();
+            if (timeB !== timeA) return timeB - timeA;
+            // Se o tempo for idêntico, ordena por nome de jogador para ser estável
+            return (a.home_player + a.away_player).localeCompare(b.home_player + b.away_player);
+        });
         
         console.log(`📊 Histórico Unificado: ${uniqueMatches.length} jogos carregados (${sbMatches.length} SB, ${altMatches.length} ALT)`);
         
