@@ -217,9 +217,11 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
         }
         if (!dateStr) dateStr = new Date().toISOString();
 
-        // Standardize: If it's a string without timezone, assume UTC ('Z') for consistency
+        // Standardize: Append Z ONLY if no timezone info is present
         let finalDate = String(dateStr);
-        if (finalDate && !finalDate.includes('Z') && !finalDate.includes('+') && !finalDate.includes('GMT')) {
+        // Regex to check if string ends with Z or +/-HH:mm
+        const hasTimezone = /[Z]|[+-]\d{2}:?\d{2}$/.test(finalDate);
+        if (finalDate && !hasTimezone) {
             // Append Z if it looks like an ISO date/time string
             if (finalDate.match(/^\d{4}-\d{2}-\d{2}/) || finalDate.includes(':')) {
                 finalDate += 'Z';
@@ -335,7 +337,8 @@ export const calculateMetricProbability = (playerName: string, gamesData: any, m
       const parseTime = (dateStr: string | number) => {
         if (!dateStr) return 0;
         const s = String(dateStr);
-        return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || (s.includes('-') && s.split('-').length > 3) ? s : s + 'Z').getTime() || 0;
+        // data_realizacao is already standardized by normalizeHistoryData
+        return new Date(s).getTime() || 0;
       };
       return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
     })
@@ -394,7 +397,8 @@ export const calculateLeagueStats = (historyData: any, sampleSize: number = 15):
       const parseTime = (dateStr: string | number) => {
         if (!dateStr) return 0;
         const s = String(dateStr);
-        return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || (s.includes('-') && s.split('-').length > 3) ? s : s + 'Z').getTime() || 0;
+        // data_realizacao is already standardized by normalizeHistoryData
+        return new Date(s).getTime() || 0;
       };
       return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
     });
@@ -458,7 +462,8 @@ export const calculatePlayerStats = (playerName: string, gamesData: any, limit: 
       const parseTime = (dateStr: string | number) => {
         if (!dateStr) return 0;
         const s = String(dateStr);
-        return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || (s.includes('-') && s.split('-').length > 3) ? s : s + 'Z').getTime() || 0;
+        // data_realizacao is already standardized by normalizeHistoryData
+        return new Date(s).getTime() || 0;
       };
       return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
     });
