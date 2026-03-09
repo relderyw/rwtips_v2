@@ -152,6 +152,15 @@ const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
             const tData = tournamentsMap[tournamentId];
             const leagueName = tData ? tData.name : `Liga ${tournamentId}`;
 
+            // Standardize date like we do in normalizeHistoryData
+            let rawDate = evt.utcDate || evt.matchDate || new Date().toISOString();
+            let finalDate = String(rawDate);
+            if (finalDate && !finalDate.includes('Z') && !finalDate.includes('+') && !finalDate.includes('GMT')) {
+                if (finalDate.match(/^\d{4}-\d{2}-\d{2}/) || finalDate.includes(':')) {
+                    finalDate += 'Z';
+                }
+            }
+
             return {
                 home_player: homePlayer,
                 away_player: awayPlayer,
@@ -160,7 +169,7 @@ const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
                 score_away: scoreAway,
                 halftime_score_home: htHome,
                 halftime_score_away: htAway,
-                data_realizacao: evt.utcDate || evt.matchDate || new Date().toISOString()
+                data_realizacao: finalDate
             };
         });
 
@@ -228,14 +237,18 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
             return [];
         }
 
-        // Remover duplicatas por data e jogadores
-        const uniqueMatches = allMatches.filter((match, index, self) =>
-            index === self.findIndex((m) => (
-                m.data_realizacao === match.data_realizacao &&
-                m.home_player === match.home_player &&
-                m.away_player === match.away_player
-            ))
-        );
+        // Remover duplicatas por proximidade de horário (2 min) e jogadores
+        const uniqueMatches = allMatches.filter((match, index, self) => {
+            const matchTime = new Date(match.data_realizacao).getTime();
+            const firstIdx = self.findIndex((m) => {
+                const mTime = new Date(m.data_realizacao).getTime();
+                const samePlayers = (m.home_player === match.home_player && m.away_player === match.away_player) ||
+                                    (m.home_player === match.away_player && m.away_player === match.home_player);
+                const closeInTime = Math.abs(mTime - matchTime) < 120000; // 2 minutos de tolerância
+                return samePlayers && closeInTime;
+            });
+            return index === firstIdx;
+        });
 
         // Ordenar por data (recente primeiro)
         uniqueMatches.sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime());
