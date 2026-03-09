@@ -217,6 +217,15 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
         }
         if (!dateStr) dateStr = new Date().toISOString();
 
+        // Standardize: If it's a string without timezone, assume UTC ('Z') for consistency
+        let finalDate = String(dateStr);
+        if (finalDate && !finalDate.includes('Z') && !finalDate.includes('+') && !finalDate.includes('GMT')) {
+            // Append Z if it looks like an ISO date/time string
+            if (finalDate.match(/^\d{4}-\d{2}-\d{2}/) || finalDate.includes(':')) {
+                finalDate += 'Z';
+            }
+        }
+
         return {
             home_player: home_player,
             away_player: away_player,
@@ -225,7 +234,7 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             score_away: Number(game.away_score_ft ?? game.away?.score ?? game.score?.away ?? game.awayFT ?? game.total_goals_away ?? game.score_away ?? 0),
             halftime_score_home: Number(game.home_score_ht ?? game.scoreHT?.home ?? game.homeHT ?? game.home_score_ht ?? game.ht_goals_home ?? game.halftime_score_home ?? 0),
             halftime_score_away: Number(game.away_score_ht ?? game.scoreHT?.away ?? game.awayHT ?? game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
-            data_realizacao: dateStr,
+            data_realizacao: finalDate,
             home_team: game.home_raw?.replace(/\(.*?\)/, '').trim() || game.home?.teamName || game.homeClub || game.home_team || game.player_home_team_name || '',
             away_team: game.away_raw?.replace(/\(.*?\)/, '').trim() || game.away?.teamName || game.awayClub || game.away_team || game.player_away_team_name || '',
             home_team_logo: game.home?.imageUrl || game.home_team_logo || game.homeTeamLogo || '',
@@ -250,7 +259,8 @@ const calculateRecentMetrics = (playerName: string, gamesData: any, limit: numbe
       const parseTime = (dateStr: string | number) => {
         if (!dateStr) return 0;
         const s = String(dateStr);
-        return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || (s.includes('-') && s.split('-').length > 3) ? s : s + 'Z').getTime() || 0;
+        // data_realizacao is already standardized by normalizeHistoryData
+        return new Date(s).getTime() || 0;
       };
       return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
     })

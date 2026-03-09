@@ -305,8 +305,8 @@ const App: React.FC = () => {
       .sort((a, b) => {
         const parseTime = (dateStr: string) => {
           if (!dateStr) return 0;
-          const s = String(dateStr);
-          return new Date(s.includes('Z') || s.includes('GMT') || s.includes('+') || s.includes('-') && s.split('-').length > 3 ? s : s + 'Z').getTime() || 0;
+          // data_realizacao is already standardized by normalizeHistoryData in fetch logic
+          return new Date(String(dateStr)).getTime() || 0;
         };
         return parseTime(b.data_realizacao) - parseTime(a.data_realizacao);
       })
