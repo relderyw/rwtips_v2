@@ -322,7 +322,7 @@ const App: React.FC = () => {
   }, [sortedFullHistory]);
 
   const analyzedLive = useMemo(() => {
-    return liveEvents.map(event => {
+    const analyzed = liveEvents.map(event => {
       const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history, event.leagueName);
       return {
         event,
@@ -331,6 +331,23 @@ const App: React.FC = () => {
         reasons: analysis.reasons
       };
     });
+
+    // Deduplicate by players (ignoring league for matching, keeping the first occurrence)
+    const unique: typeof analyzed = [];
+    const seen = new Set<string>();
+
+    analyzed.forEach(item => {
+      const p1 = normalize(item.event.homePlayer);
+      const p2 = normalize(item.event.awayPlayer);
+      const sig = [p1, p2].sort().join('|');
+
+      if (!seen.has(sig)) {
+        unique.push(item);
+        seen.add(sig);
+      }
+    });
+
+    return unique;
   }, [liveEvents, history]);
 
   const availableLeagues = useMemo(() => {

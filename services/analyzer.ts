@@ -46,7 +46,7 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     "Esoccer Adriatic League": { 
       name: "ADRIATIC", 
       color: "#5b59acff", // Azul Marinho
-      image: "https://static.wixstatic.com/media/3f54ed_5828ae87071e4d079f972b9472626e64~mv2.png" 
+      image: "https://eadriaticleague.com/wp-content/uploads/2025/10/IMG_0893-e1759408719298.png" 
     },
     
     // New Portuguese format from API (exact match with proper capitalization)
@@ -113,14 +113,14 @@ export const getLeagueInfo = (fullName: string) => {
     if (normalized.includes('cla') || normalized.includes('cyber live arena')) {
         return LEAGUE_MAP["CLA"];
     }
+    if (normalized.includes('volta')) {
+        return LEAGUE_MAP["E-Soccer - Battle Volta - 6 minutos de jogo"];
+    }
     if (normalized.includes('battle') && normalized.includes('12 min')) {
         return { name: "BATTLE - 12 MIN", color: "#ef4444", image: "https://football.esportsbattle.com/favicon.ico" };
     }
     if (normalized.includes('battle')) {
         return LEAGUE_MAP["E-Soccer - Battle - 8 minutos de jogo"];
-    }
-    if (normalized.includes('volta')) {
-        return LEAGUE_MAP["E-Soccer - Battle Volta - 6 minutos de jogo"];
     }
     if (normalized.includes('eal')) {
         return LEAGUE_MAP["Esoccer Adriatic League"];
@@ -187,7 +187,14 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             const isPart2Caps = /^[A-Z0-9\s]+$/.test(part2) && part2.length > 1;
             if (isPart2Caps && !isPart1Caps) return part2;
             if (isPart1Caps && !isPart2Caps) return part1;
-            const commonTeams = ['Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium', 'Real Madrid', 'Barcelona', 'PSG', 'Man City', 'Liverpool'];
+            const commonTeams = [
+                'Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium',
+                'Real Madrid', 'Barcelona', 'FC Bayern', 'Man City', 'Man Utd', 'Liverpool', 'PSG', 'Juventus', 'Arsenal', 'Chelsea',
+                'Borussia Dortmund', 'Bayer Leverkusen', 'Napoli', 'AC Milan', 'Inter', 'Inter de Milão', 'Atletico Madrid', 'Sevilla',
+                'Piemonte Calcio', 'Latium', 'Genoa', 'Roma', 'RB Leipzig', 'Real Sociedad', 'Athletic Club', 'Aston Villa', 'Spurs',
+                'PAOK', 'Benfica', 'Sporting', 'Porto', 'Ajax', 'Bayern de Munique', 'Bayer de Munique', 'Inglaterra', 'França', 'Espanha',
+                'Alemanha', 'Itália', 'Argentina', 'Holanda', 'Bélgica', 'Suíça', 'Escócia', 'Áustria', 'Grécia', 'Turquia'
+            ];
             if (commonTeams.some(t => part1.includes(t))) return part2;
             if (commonTeams.some(t => part2.includes(t))) return part1;
             return part2;
