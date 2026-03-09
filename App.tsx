@@ -380,14 +380,23 @@ const App: React.FC = () => {
   ];
 
   const strategyCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: liveEvents.length };
+    const baseAnalyzed = analyzedLive.filter(({ event }) => {
+      const matchesSearch = event.homePlayer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.awayPlayer.toLowerCase().includes(searchQuery.toLowerCase());
+      const leagueNormalized = getLeagueInfo(event.leagueName).name;
+      const isAllowed = ALLOWED_LEAGUES.includes(leagueNormalized);
+      const matchesLeague = selectedLeague === 'all' || leagueNormalized === selectedLeague;
+      return matchesSearch && matchesLeague && isAllowed;
+    });
+
+    const counts: Record<string, number> = { all: baseAnalyzed.length };
     filterButtons.forEach(f => {
       if (f.id !== 'all') {
-        counts[f.id] = analyzedLive.filter(item => item.potential === f.id).length;
+        counts[f.id] = baseAnalyzed.filter(item => item.potential === f.id).length;
       }
     });
     return counts;
-  }, [analyzedLive, liveEvents.length]);
+  }, [analyzedLive, searchQuery, selectedLeague]);
 
   const filteredLive = useMemo(() => {
     return analyzedLive.filter(({ event, potential }) => {
