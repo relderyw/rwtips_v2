@@ -375,17 +375,9 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
         const json = await response.json();
         const events = json.data || [];
 
-        // Pré-filtro: manter apenas eventos de E-Sport Futebol (categoryId 954)
-        // OU que pertencem a um tournamentId conhecido (fallback robusto)
-        const filteredEvents = events.filter((evt: any) => {
-            const catId = Number(evt.categoryId);
-            const tId = Number(evt.tournamentId);
-            return catId === SUPERBET_ESOCCER_CATEGORY_ID || SUPERBET_ALLOWED_TOURNAMENT_IDS.has(tId);
-        });
+        const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA', 'GG LEAGUE', 'GT'];
 
-        const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA', 'GG LEAGUE', 'GT -'];
-
-        return filteredEvents
+        return events
             .map((evt: any): LiveEvent => {
                 // matchName format: "Team (Player)·Team (Player2)"
                 const parts = (evt.matchName || '').split('·');
