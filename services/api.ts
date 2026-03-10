@@ -320,9 +320,13 @@ const getSuperbetTournaments = async () => {
 // === SUPERBET LIVE API ===
 const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
     try {
+        const now = new Date();
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const startDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}+00:00:00`;
+
         const [tournamentsMap, response] = await Promise.all([
             getSuperbetTournaments(),
-            fetch(`${SUPERBET_LIVE_URL}?currentStatus=active&offerState=live&startDate=${`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01+${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}:00`}&sportId=75`, {
+            fetch(`${SUPERBET_LIVE_URL}?currentStatus=active&offerState=live&startDate=${startDate}&sportId=75`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' }
             })
