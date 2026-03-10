@@ -321,12 +321,16 @@ const getSuperbetTournaments = async () => {
 const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
     try {
         const now = new Date();
+        const past = new Date(now.getTime() - (12 * 60 * 60 * 1000)); // 12 hours ago is enough for live
+        
         const pad = (n: number) => String(n).padStart(2, '0');
-        const startDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}+00:00:00`;
+        const formatSuperbetDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}+${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        
+        const startDate = formatSuperbetDate(past);
 
         const [tournamentsMap, response] = await Promise.all([
             getSuperbetTournaments(),
-            fetch(`${SUPERBET_LIVE_URL}?currentStatus=active&offerState=live&startDate=${startDate}`, {
+            fetch(`${SUPERBET_LIVE_URL}?currentStatus=active&offerState=live&startDate=${startDate}&sportId=75`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' }
             })
@@ -340,50 +344,56 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
         const json = await response.json();
         const events = json.data || [];
 
-        return events.map((evt: any): LiveEvent => {
-            // matchName format: "Team (Player)·Team (Player2)"
-            const parts = (evt.matchName || '').split('·');
-            const homeNameFull = (parts[0] || 'Player 1').trim();
-            const awayNameFull = (parts[1] || 'Player 2').trim();
+        return events
+            .map((evt: any): LiveEvent => {
+                // matchName format: "Team (Player)·Team (Player2)"
+                const parts = (evt.matchName || '').split('·');
+                const homeNameFull = (parts[0] || 'Player 1').trim();
+                const awayNameFull = (parts[1] || 'Player 2').trim();
 
-            const homePlayer = extractPlayerName(homeNameFull);
-            const awayPlayer = extractPlayerName(awayNameFull);
-            const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
-            const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
+                const homePlayer = extractPlayerName(homeNameFull);
+                const awayPlayer = extractPlayerName(awayNameFull);
+                const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
+                const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
 
-            const meta = evt.metadata || {};
-            const scoreHome = parseInt(meta.homeTeamScore) || 0;
-            const scoreAway = parseInt(meta.awayTeamScore) || 0;
-            const minute = parseInt(meta.minutes) || 0;
-            const periodStatus = meta.periodStatus || meta.matchStatusLabel || 'Live';
+                const meta = evt.metadata || {};
+                const scoreHome = parseInt(meta.homeTeamScore) || 0;
+                const scoreAway = parseInt(meta.awayTeamScore) || 0;
+                const minute = parseInt(meta.minutes) || 0;
+                const periodStatus = meta.periodStatus || meta.matchStatusLabel || 'Live';
 
-            const tournamentId = evt.tournamentId;
-            const tData = tournamentsMap[tournamentId];
-            const leagueName = tData ? tData.name : `Liga ${tournamentId}`;
-            const durationInfo = tData && tData.duration ? ` (${tData.duration})` : '';
+                const tournamentId = evt.tournamentId;
+                const tData = tournamentsMap[tournamentId];
+                const leagueName = tData ? tData.name : `Liga ${tournamentId}`;
+                const durationInfo = tData && tData.duration ? ` (${tData.duration})` : '';
 
-            return {
-                id: `sb-${evt.eventId}`,
-                leagueName: leagueName,
-                eventName: `${homeNameFull} vs ${awayNameFull}`,
-                stage: periodStatus,
-                timer: {
-                    minute,
-                    second: 0,
-                    formatted: `${periodStatus} ${minute}'${durationInfo}`
-                },
-                score: {
-                    home: scoreHome,
-                    away: scoreAway
-                },
-                homePlayer,
-                awayPlayer,
-                homeTeamName: homeTeam,
-                awayTeamName: awayTeam,
-                isLive: true,
-                bet365EventId: undefined
-            };
-        });
+                return {
+                    id: `sb-${evt.eventId}`,
+                    leagueName: leagueName,
+                    eventName: `${homeNameFull} vs ${awayNameFull}`,
+                    stage: periodStatus,
+                    timer: {
+                        minute,
+                        second: 0,
+                        formatted: `${periodStatus} ${minute}'${durationInfo}`
+                    },
+                    score: {
+                        home: scoreHome,
+                        away: scoreAway
+                    },
+                    homePlayer,
+                    awayPlayer,
+                    homeTeamName: homeTeam,
+                    awayTeamName: awayTeam,
+                    isLive: true,
+                    bet365EventId: undefined
+                };
+            })
+            .filter(match => {
+                const name = match.leagueName.toUpperCase();
+                const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA'];
+                return allowedKeywords.some(keyword => name.includes(keyword));
+            });
     } catch (error) {
         console.error("Superbet Live Error:", error);
         return [];
