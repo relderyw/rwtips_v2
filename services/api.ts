@@ -269,6 +269,37 @@ export const fetchHistoryGames = async (numPages: number = 10): Promise<HistoryM
 
 import { AltenarResponse, AltenarCompetitor, AltenarChampionship } from '../types';
 
+// === IDs de torneios Superbet permitidos (fallback quando tournamentsMap falha/timeout) ===
+// Usados quando o endpoint /struct não pode ser carregado a tempo.
+const SUPERBET_ALLOWED_TOURNAMENT_IDS = new Set([
+    80560,  // H2H - GG League
+    80566,  // H2H - GG League Mixed
+    49964,  // Battle - Liga dos Campeões 1
+    49968,  // Battle - Europa League
+    49969,  // Battle - FA Cup
+    81985,  // Battle - Mundial de Clubes
+    94140,  // Battle - Conference League
+    49959,  // Battle - Premier League
+    71851,  // Battle - Liga dos Campeões 2
+    51264,  // Battle - LaLiga 1
+    82545,  // Battle - LaLiga 2
+    51302,  // Battle - Nations League
+    94993,  // Cyber Live Arena
+    67380,  // EAL - Liga dos Campeões
+    67382,  // EAL - Europa League
+    67383,  // EAL - Premier League
+    61751,  // GT - Liga dos Campeões 1
+    74950,  // GT - Liga dos Campeões 2
+    61755,  // GT - Liga dos Campeões 3
+    62997,  // GT - Liga dos Campeões 4
+    62928,  // GT - Europa League 2
+    70845,  // GT - Europa League 3
+    61756,  // GT - Europa League 1
+]);
+
+// ID da categoria E-Sport Futebol na Superbet (para pré-filtro eficiente)
+const SUPERBET_ESOCCER_CATEGORY_ID = 954;
+
 // === SUPERBET TOURNAMENT METADATA CACHE ===
 let superbetTournamentsCache: Record<number, { name: string, duration: string }> | null = null;
 let superbetTournamentsCacheTime = 0;
@@ -344,7 +375,17 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
         const json = await response.json();
         const events = json.data || [];
 
-        return events
+        // Pré-filtro: manter apenas eventos de E-Sport Futebol (categoryId 954)
+        // OU que pertencem a um tournamentId conhecido (fallback robusto)
+        const filteredEvents = events.filter((evt: any) => {
+            const catId = Number(evt.categoryId);
+            const tId = Number(evt.tournamentId);
+            return catId === SUPERBET_ESOCCER_CATEGORY_ID || SUPERBET_ALLOWED_TOURNAMENT_IDS.has(tId);
+        });
+
+        const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA', 'GG LEAGUE', 'GT -'];
+
+        return filteredEvents
             .map((evt: any): LiveEvent => {
                 // matchName format: "Team (Player)·Team (Player2)"
                 const parts = (evt.matchName || '').split('·');
@@ -362,9 +403,43 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
                 const minute = parseInt(meta.minutes) || 0;
                 const periodStatus = meta.periodStatus || meta.matchStatusLabel || 'Live';
 
-                const tournamentId = evt.tournamentId;
+                const tournamentId = Number(evt.tournamentId);
                 const tData = tournamentsMap[tournamentId];
-                const leagueName = tData ? tData.name : `Liga ${tournamentId}`;
+                // Se tournamentsMap falhou/timeout, usa nome genérico baseado no tournamentId conhecido
+                let leagueName: string;
+                if (tData) {
+                    leagueName = tData.name;
+                } else if (SUPERBET_ALLOWED_TOURNAMENT_IDS.has(tournamentId)) {
+                    // Mapa de fallback com nomes conhecidos para os principais torneios
+                    const fallbackNames: Record<number, string> = {
+                        80560: 'H2H - GG League',
+                        80566: 'H2H - GG League Mixed',
+                        49964: 'Battle - Liga dos Campeões 1',
+                        49968: 'Battle - Europa League',
+                        49969: 'Battle - FA Cup',
+                        81985: 'Battle - Mundial de Clubes',
+                        94140: 'Battle - Conference League',
+                        49959: 'Battle - Premier League',
+                        71851: 'Battle - Liga dos Campeões 2',
+                        51264: 'Battle - LaLiga 1',
+                        82545: 'Battle - LaLiga 2',
+                        51302: 'Battle - Nations League',
+                        94993: 'Cyber Live Arena',
+                        67380: 'EAL - Liga dos Campeões',
+                        67382: 'EAL - Europa League',
+                        67383: 'EAL - Premier League',
+                        61751: 'GT - Liga dos Campeões 1',
+                        74950: 'GT - Liga dos Campeões 2',
+                        61755: 'GT - Liga dos Campeões 3',
+                        62997: 'GT - Liga dos Campeões 4',
+                        62928: 'GT - Europa League 2',
+                        70845: 'GT - Europa League 3',
+                        61756: 'GT - Europa League 1',
+                    };
+                    leagueName = fallbackNames[tournamentId] || `Liga ${tournamentId}`;
+                } else {
+                    leagueName = `Liga ${tournamentId}`;
+                }
                 const durationInfo = tData && tData.duration ? ` (${tData.duration})` : '';
 
                 return {
@@ -390,10 +465,10 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
                 };
             })
             .filter(match => {
-                 const name = match.leagueName.toUpperCase();
-                 const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA'];
-                 return allowedKeywords.some(keyword => name.includes(keyword));
-             });
+                // Filtro duplo: por nome (quando tournamentsMap disponível) OU por ID (fallback)
+                const name = match.leagueName.toUpperCase();
+                return allowedKeywords.some(keyword => name.includes(keyword));
+            });
     } catch (error) {
         console.error("Superbet Live Error:", error);
         return [];
