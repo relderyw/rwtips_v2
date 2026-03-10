@@ -390,10 +390,10 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
                 };
             })
             .filter(match => {
-                const name = match.leagueName.toUpperCase();
-                const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA'];
-                return allowedKeywords.some(keyword => name.includes(keyword));
-            });
+                 const name = match.leagueName.toUpperCase();
+                 const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA'];
+                 return allowedKeywords.some(keyword => name.includes(keyword));
+             });
     } catch (error) {
         console.error("Superbet Live Error:", error);
         return [];
