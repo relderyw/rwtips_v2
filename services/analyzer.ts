@@ -43,6 +43,17 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
       color: "#A855F7", 
       image: "https://h2h.cdn-hudstats.com/assets/H2H-ltFU8AWE.svg" 
     },
+    // Alias direto para o nome retornado pela Superbet API
+    "H2H - GG League": { 
+      name: "H2H GG LEAGUE", 
+      color: "#A855F7", 
+      image: "https://h2h.cdn-hudstats.com/assets/H2H-ltFU8AWE.svg" 
+    },
+    "H2H - GG League Mixed": { 
+      name: "H2H GG LEAGUE", 
+      color: "#A855F7", 
+      image: "https://h2h.cdn-hudstats.com/assets/H2H-ltFU8AWE.svg" 
+    },
     "Esoccer Adriatic League": { 
       name: "ADRIATIC", 
       color: "#5b59acff", // Azul Marinho
@@ -101,7 +112,9 @@ export const getLeagueInfo = (fullName: string) => {
     
     // Specific pattern matching to avoid duplicates
     // H2H must be checked first to avoid matching other patterns
-    if (clean.includes('h2h gg') || clean.includes('h2h 8 min')) {
+    // NOTE: 'H2H - GG League' normalizes to 'h2h  gg league' (double space from dash),
+    // so we check 'h2h' AND 'gg' independently instead of 'h2h gg' as one string.
+    if (clean.includes('h2h') && (clean.includes('gg') || clean.includes('8 min'))) {
         return LEAGUE_MAP["E-Soccer - H2H GG League - 8 minutos de jogo"];
     }
     if (clean.includes('adriatic') || clean.includes('eal')) {
