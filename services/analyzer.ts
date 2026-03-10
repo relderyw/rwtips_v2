@@ -97,38 +97,38 @@ export const getLeagueInfo = (fullName: string) => {
     if (!fullName) return { name: "UNKNOWN", color: "#10B981", image: "" };
     
     const normalized = fullName.toLowerCase();
-    
+    const clean = normalized.replace(/[^a-z0-9]/g, ' ');
     
     // Specific pattern matching to avoid duplicates
     // H2H must be checked first to avoid matching other patterns
-    if (normalized.includes('h2h gg') || normalized.includes('h2h 8 min')) {
+    if (clean.includes('h2h gg') || clean.includes('h2h 8 min')) {
         return LEAGUE_MAP["E-Soccer - H2H GG League - 8 minutos de jogo"];
     }
-    if (normalized.includes('adriatic') || normalized.includes('eal')) {
+    if (clean.includes('adriatic') || clean.includes('eal')) {
         return LEAGUE_MAP["Esoccer Adriatic League"];
     }
-    if (normalized.includes('valhalla')) {
+    if (clean.includes('valhalla')) {
         return LEAGUE_MAP["Valhalla"];
     }
-    if (normalized.includes('valkyrie')) {
+    if (clean.includes('valkyrie')) {
         return LEAGUE_MAP["Valkyrie"];
     }
-    if (normalized.includes('cla') || normalized.includes('cyber live arena')) {
+    if (clean.includes('cla') || clean.includes('cyber live arena')) {
         return LEAGUE_MAP["CLA"];
     }
-    if (normalized.includes('volta')) {
+    if (clean.includes('volta')) {
         return LEAGUE_MAP["E-Soccer - Battle Volta - 6 minutos de jogo"];
     }
-    if (normalized.includes('battle') && normalized.includes('12 min')) {
+    if (clean.includes('battle') && clean.includes('12 min')) {
         return { name: "BATTLE - 12 MIN", color: "#ef4444", image: "https://football.esportsbattle.com/favicon.ico" };
     }
-    if (normalized.includes('battle')) {
+    if (clean.includes('battle')) {
         return LEAGUE_MAP["E-Soccer - Battle - 8 minutos de jogo"];
     }
-    if (normalized.startsWith('gt ') || normalized.includes('gt leagues')) {
+    if (normalized.startsWith('gt ') || clean.includes('gt leagues')) {
         return LEAGUE_MAP["Esoccer GT Leagues"];
     }
-    if (normalized.includes('champions league')) {
+    if (clean.includes('champions league')) {
         return { name: "CHAMPIONS", color: "#3b82f6", image: "" };
     }
     
@@ -138,7 +138,7 @@ export const getLeagueInfo = (fullName: string) => {
     
     // Try case-insensitive match
     const caseInsensitiveMatch = Object.entries(LEAGUE_MAP).find(([key]) => 
-        normalized.includes(key.toLowerCase())
+        clean.includes(key.toLowerCase().replace(/[^a-z0-9]/g, ' '))
     );
     if (caseInsensitiveMatch) return caseInsensitiveMatch[1];
     

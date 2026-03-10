@@ -326,7 +326,7 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
 
         const [tournamentsMap, response] = await Promise.all([
             getSuperbetTournaments(),
-            fetch(`${SUPERBET_LIVE_URL}?currentStatus=active&offerState=live&startDate=${startDate}&sportId=75`, {
+            fetch(`${SUPERBET_LIVE_URL}?currentStatus=active&offerState=live&startDate=${startDate}`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' }
             })
