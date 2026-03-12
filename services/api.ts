@@ -103,7 +103,7 @@ const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
         const past = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
         
         const pad = (n: number) => String(n).padStart(2, '0');
-        const formatSuperbetDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}+${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        const formatSuperbetDate = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}+${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
         
         const startDate = formatSuperbetDate(past);
         const endDate = formatSuperbetDate(now);
@@ -202,7 +202,7 @@ const fetchAltenarHistoryGames = async (numPages: number = 10): Promise<HistoryM
         const allInternalRaw = internalResults.flat();
         
         // Filtra para as ligas que nos interessam no Histórico "Interno" (que vem do Altenar)
-        const allowedAltenarKeywords = ['valhalla', 'valkyrie', 'cla', 'cyber live arena', 'adriatic', 'eal', 'h2h', 'battle', 'volta'];
+        const allowedAltenarKeywords = ['valhalla', 'valkyrie', 'cla', 'cyber live arena', 'adriatic', 'eal', 'h2h', 'battle', 'volta', 'gt'];
         const filteredRaw = allInternalRaw.filter((m: any) => {
             const leagueLower = (m.league_mapped || m.competition?.name || m.competitionName || m.league || m.league_name || '').toLowerCase();
             return allowedAltenarKeywords.some(keyword => leagueLower.includes(keyword));
@@ -324,7 +324,7 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
         const past = new Date(now.getTime() - (12 * 60 * 60 * 1000)); // 12 hours ago is enough for live
         
         const pad = (n: number) => String(n).padStart(2, '0');
-        const formatSuperbetDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}+${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        const formatSuperbetDate = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}+${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
         
         const startDate = formatSuperbetDate(past);
 
