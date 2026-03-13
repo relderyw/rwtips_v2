@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { getLeagueInfo } from '../../services/analyzer';
+import { getLeagueInfo, ALLOWED_LEAGUES } from '../../services/analyzer';
 import {
   collection,
   query,
@@ -341,7 +341,7 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
 
         data.results.forEach((match: any) => {
           const rawLeague = match.league_mapped || match.league || "";
-          const league = mapLeagueName(rawLeague);
+          const league = getLeagueInfo(rawLeague).name;
 
           leaguesSet.add(league);
 
@@ -355,7 +355,8 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
         });
 
         setPlayersCache(newCache);
-        setAvailableLeagues(Array.from(leaguesSet).sort());
+        const combinedLeagues = Array.from(new Set([...leaguesSet, ...ALLOWED_LEAGUES]));
+        setAvailableLeagues(combinedLeagues.sort());
       }
     } catch (error) {
       console.error("Erro ao buscar dados de referência:", error);
@@ -742,7 +743,8 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
 
       // Aggregate for Best League/Market
       if (bet.liga) {
-        leagueProfits[bet.liga] = (leagueProfits[bet.liga] || 0) + profit;
+        const normalizedLeague = getLeagueInfo(bet.liga).name;
+        leagueProfits[normalizedLeague] = (leagueProfits[normalizedLeague] || 0) + profit;
       }
       if (bet.mercado) {
         marketProfits[bet.mercado] = (marketProfits[bet.mercado] || 0) + profit;
@@ -763,7 +765,7 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
 
     // Calculate Detailed League Stats
     const leagueStats = Object.entries(leagueProfits).map(([league, profit]) => {
-      const leagueBets = sortedBets.filter(b => b.liga === league);
+      const leagueBets = sortedBets.filter(b => getLeagueInfo(b.liga).name === league);
       const betsCount = leagueBets.length;
       const totalStaked = leagueBets.reduce((acc, b) => acc + b.stake, 0);
       const units = profit / (unitValue || 1);
@@ -1257,7 +1259,7 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
                       <optgroup label="Fixas">
                         <option value="Battle 8 min">Battle 8 min</option>
                         <option value="Battle 6 min">Battle 6 min</option>
-                        <option value="Adriact 10 min">Adriact 10 min</option>
+                        <option value="Adriatic 10 min">Adriatic 10 min</option>
                         <option value="GT 12 min">GT 12 min</option>
                         <option value="H2H GG">H2H GG</option>
                       </optgroup>
