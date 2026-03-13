@@ -73,7 +73,7 @@ const mapLeagueName = (apiName: string) => {
   const norm = apiName.toUpperCase();
   if (norm.includes("GG")) return "H2H GG";
   if (norm.includes("8 MIN") || norm.includes("8 MINS")) return "Battle 8 min";
-  if (norm.includes("6 MIN") || norm.includes("6 MINS")) return "Battle 6 min";
+  if (norm.includes("6 MIN") || norm.includes("6 MINS")) return "VOLTA";
   if (norm.includes("10 MIN") || norm.includes("10 MINS")) return "Adriatic 10 min";
   if (norm.includes("12 MIN") || norm.includes("12 MINS")) return "GT 12 min";
   if (norm.includes("VALHALLA")) return "Valhalla Cup";
@@ -1258,7 +1258,7 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
                     {!loadingPlayers && availableLeagues.length === 0 && (
                       <optgroup label="Fixas">
                         <option value="Battle 8 min">Battle 8 min</option>
-                        <option value="Battle 6 min">Battle 6 min</option>
+                        <option value="VOLTA">VOLTA</option>
                         <option value="Adriatic 10 min">Adriatic 10 min</option>
                         <option value="GT 12 min">GT 12 min</option>
                         <option value="H2H GG">H2H GG</option>

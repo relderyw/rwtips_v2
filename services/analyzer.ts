@@ -29,7 +29,7 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
     "Esoccer Battle Volta - 6 mins play": { 
-      name: "VOLTA - 6 MIN", 
+      name: "VOLTA", 
       color: "#FACC15", 
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
@@ -67,7 +67,7 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
     "E-Soccer - Battle Volta - 6 minutos de jogo": { 
-      name: "VOLTA - 6 MIN", 
+      name: "VOLTA", 
       color: "#fa9715ff", 
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
@@ -129,9 +129,6 @@ export const getLeagueInfo = (fullName: string) => {
     if (clean.includes('cla') || clean.includes('cyber live arena')) {
         return LEAGUE_MAP["CLA"];
     }
-    if (clean.includes('volta')) {
-        return LEAGUE_MAP["E-Soccer - Battle Volta - 6 minutos de jogo"];
-    }
     if (clean.includes('battle') && clean.includes('12 min')) {
         return { name: "BATTLE - 12 MIN", color: "#ef4444", image: "https://football.esportsbattle.com/favicon.ico" };
     }
@@ -160,7 +157,7 @@ export const getLeagueInfo = (fullName: string) => {
 };
 
 export const ALLOWED_LEAGUES = [
-    "GT LEAGUES", "BATTLE - 8 MIN", "BATTLE - 12 MIN", "VOLTA - 6 MIN", "H2H GG LEAGUE",
+    "GT LEAGUES", "BATTLE - 8 MIN", "BATTLE - 12 MIN", "VOLTA", "H2H GG LEAGUE",
     "ADRIATIC", "VALHALLA CUP", "VALKYRIE CUP", "CLA LEAGUE", "CHAMPIONS",
     "E-SOCCER", "SOCCER", "FIFA"
 ];
