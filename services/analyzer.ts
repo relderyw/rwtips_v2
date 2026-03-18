@@ -84,12 +84,12 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     // New mappings for Altenar/History API
     "Valhalla": { 
       name: "VALHALLA CUP", 
-      color: "#cee028ff", // Cyan
+      color: "#cee028ff", 
       image: "https://drafted.gg/images/valhalla_cup/valhalla_cup_logo.svg" 
     },
     "Valkyrie": { 
       name: "VALKYRIE CUP", 
-      color: "#f472b6", // Pink
+      color: "#f472b6", 
       image: "https://drafted.gg/images/valkyrie_cup/valkyrie_cup_logo.svg" 
     },
     "CLA": { 
@@ -123,7 +123,8 @@ export const getLeagueInfo = (fullName: string) => {
     if (clean.includes('valhalla')) {
         return LEAGUE_MAP["Valhalla"];
     }
-    if (clean.includes('valkyrie')) {
+    if (clean.includes('valkyrie') || clean.includes('valkirye')) {
+        if (clean.includes('valkirye')) return { ...LEAGUE_MAP["Valkyrie"], name: "VALKIRYE CUP" };
         return LEAGUE_MAP["Valkyrie"];
     }
     if (clean.includes('cla') || clean.includes('cyber live arena')) {
@@ -158,8 +159,8 @@ export const getLeagueInfo = (fullName: string) => {
 
 export const ALLOWED_LEAGUES = [
     "GT LEAGUES", "BATTLE - 8 MIN", "BATTLE - 12 MIN", "VOLTA", "H2H GG LEAGUE",
-    "ADRIATIC", "VALHALLA CUP", "VALKYRIE CUP", "CLA LEAGUE", "CHAMPIONS",
-    "E-SOCCER", "SOCCER", "FIFA"
+    "ADRIATIC", "VALHALLA CUP", "VALKYRIE CUP", "VALKIRYE CUP", "CLA LEAGUE", "CHAMPIONS",
+    "E-SOCCER", "ESOCCER", "SOCCER", "FIFA"
 ];
 
 // Mapeamento de nomes da API de Histórico (Inglês) para a API Live (Português)

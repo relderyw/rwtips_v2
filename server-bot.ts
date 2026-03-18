@@ -13,7 +13,7 @@ import 'dotenv/config';
 let API_BASE = process.env.API_BASE || "https://rwtips-r943.onrender.com";
 // Remove barras finais para evitar duplicidade //api//v1
 if (API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
-const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=-180&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=66&catIds=2085,1571,1728,1594,2086,1729,2130";
+const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=240&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=0&catIds=1571,1594,1595,1597,1728,1750,1949,2020,2085";
 
 const PORT = process.env.PORT || 8080;
 const POLL_INTERVAL = 15000;
@@ -456,7 +456,8 @@ async function fetchLive(): Promise<LiveEvent[]> {
             headers: {
                 'Accept': '*/*',
                 'Origin': 'https://www.estrelabet.bet.br',
-                'Referer': 'https://www.estrelabet.bet.br/'
+                'Referer': 'https://www.estrelabet.bet.br/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
             }
         });
 
@@ -477,7 +478,7 @@ async function fetchLive(): Promise<LiveEvent[]> {
         const events = data.events || [];
 
         return events
-            .filter((evt: any) => evt.sportId === 66)
+            .filter((evt: any) => evt.sportId === 66 || evt.sportId === 146)
             .map((evt: any) => {
             const homeId = evt.competitorIds[0];
             const awayId = evt.competitorIds[1];
@@ -521,7 +522,12 @@ async function fetchLive(): Promise<LiveEvent[]> {
                 bet365EventId: undefined
             };
         })
-        .filter((match: any) => !match.leagueName.toUpperCase().includes('VIRTUAL ECOMP') && !match.leagueName.toUpperCase().includes('VIRTUAL E-COMP'));
+        .filter((match: any) => {
+            const name = match.leagueName.toUpperCase();
+            if (name.includes('VIRTUAL ECOMP') || name.includes('VIRTUAL E-COMP')) return false;
+            const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'VALKIRYE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA', 'GG LEAGUE', 'GT', 'ESOCCER', 'E-FOOTBALL'];
+            return allowedKeywords.some(keyword => name.includes(keyword));
+        });
 
     } catch (error) {
         console.error("[BOT] Live Games Error:", error);

@@ -3,7 +3,7 @@ import { HistoryMatch, LiveEvent } from '../types';
 import { normalizeHistoryData } from './analyzer';
 
 const HISTORY_API_BASE = "/api/history";
-const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=-180&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=66&catIds=2085,1571,1728,1594,2086,1729,2130";
+const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=240&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=0&catIds=1571,1594,1595,1597,1728,1750,1949,2020,2085";
 const SUPERBET_LIVE_URL = "/api/superbet-live";
 const SUPERBET_STRUCT_URL = "/api/superbet-struct";
 const API_BASE = "https://rwtips-r943.onrender.com";
@@ -202,7 +202,7 @@ const fetchAltenarHistoryGames = async (numPages: number = 10): Promise<HistoryM
         const allInternalRaw = internalResults.flat();
         
         // Filtra para as ligas que nos interessam no Histórico "Interno" (que vem do Altenar)
-        const allowedAltenarKeywords = ['valhalla', 'valkyrie', 'cla', 'cyber live arena', 'adriatic', 'eal', 'h2h', 'battle', 'volta', 'gt'];
+        const allowedAltenarKeywords = ['valhalla', 'valkyrie', 'valkirye', 'cla', 'cyber live arena', 'adriatic', 'eal', 'h2h', 'battle', 'volta', 'gt'];
         const filteredRaw = allInternalRaw.filter((m: any) => {
             const leagueLower = (m.league_mapped || m.competition?.name || m.competitionName || m.league || m.league_name || '').toLowerCase();
             return allowedAltenarKeywords.some(keyword => leagueLower.includes(keyword));
@@ -344,7 +344,7 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
         const json = await response.json();
         const events = json.data || [];
 
-        const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA', 'GG LEAGUE', 'GT'];
+        const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'VALKIRYE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA', 'GG LEAGUE', 'GT'];
 
         return events
             .map((evt: any): LiveEvent => {
@@ -402,7 +402,8 @@ const fetchAltenarLiveGames = async (): Promise<LiveEvent[]> => {
             headers: {
                 'Accept': '*/*',
                 'Origin': 'https://www.estrelabet.bet.br',
-                'Referer': 'https://www.estrelabet.bet.br/'
+                'Referer': 'https://www.estrelabet.bet.br/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
             }
         });
 
@@ -424,7 +425,7 @@ const fetchAltenarLiveGames = async (): Promise<LiveEvent[]> => {
         const events = data.events || [];
 
         return events
-            .filter((evt) => evt.sportId === 66)
+            .filter((evt) => evt.sportId === 66 || evt.sportId === 146)
             .map(evt => {
             const homeId = evt.competitorIds[0];
             const awayId = evt.competitorIds[1];
@@ -443,8 +444,8 @@ const fetchAltenarLiveGames = async (): Promise<LiveEvent[]> => {
             const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
             const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
 
-            const scoreHome = evt.score[0] || 0;
-            const scoreAway = evt.score[1] || 0;
+            const scoreHome = (evt.score && evt.score[0]) || 0;
+            const scoreAway = (evt.score && evt.score[1]) || 0;
 
             const timerFormatted = evt.liveTime || evt.ls || "Ao Vivo";
 
@@ -473,7 +474,7 @@ const fetchAltenarLiveGames = async (): Promise<LiveEvent[]> => {
         // Filtrar: Valhalla, Valkyrie e outras ligas de esoccer permitidas
         .filter(match => {
             const name = match.leagueName.toUpperCase();
-            const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA'];
+            const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'VALKIRYE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA', 'GG LEAGUE', 'GT', 'ESOCCER', 'E-FOOTBALL'];
             return allowedKeywords.some(keyword => name.includes(keyword));
         });
 
