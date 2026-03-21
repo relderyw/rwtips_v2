@@ -152,6 +152,8 @@ const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
             const tournamentId = evt.tournamentId;
             const tData = tournamentsMap[tournamentId];
             const leagueName = tData ? tData.name : `Liga ${tournamentId}`;
+            const durationInfo = tData && tData.duration ? ` (${tData.duration})` : '';
+            const finalLeagueName = leagueName + durationInfo;
 
             // Standardize date: Use as-is, let the browser handle existing offsets
             // or treat untagged strings as local time.
@@ -161,7 +163,7 @@ const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
             return {
                 home_player: homePlayer,
                 away_player: awayPlayer,
-                league_name: leagueName,
+                league_name: finalLeagueName,
                 score_home: scoreHome,
                 score_away: scoreAway,
                 halftime_score_home: htHome,
@@ -371,7 +373,7 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
 
                 return {
                     id: `sb-${evt.eventId}`,
-                    leagueName,
+                    leagueName: leagueName + durationInfo,
                     eventName: `${homeNameFull} vs ${awayNameFull}`,
                     stage: periodStatus,
                     timer: { minute, second: 0, formatted: `${periodStatus} ${minute}'${durationInfo}` },
