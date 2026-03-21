@@ -700,62 +700,68 @@ const App: React.FC = () => {
                           </button>
                         </div>
 
-                        <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-top overflow-hidden ${showThermometers ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
-                           <div className="min-h-0 space-y-3 pt-1">
-                              {Object.keys(groupedMatches).length > 0 ? (Object.entries(groupedMatches) as [string, any[]][]).map(([leagueName, matches]) => {
-                                const lInfo = getLeagueInfo(leagueName);
-                                const isCollapsed = collapsedLeagues.includes(leagueName);
-                                const stats = leagueStats.find(s => s.leagueName === leagueName);
-                                let overAvg = 0;
-                                if (stats) {
-                                   overAvg = (stats.metrics.ht15 + stats.metrics.htBtts + stats.metrics.ft25 + stats.metrics.ft35 + stats.metrics.ftBtts) / 5;
-                                }
+                        <div className={`transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-top overflow-hidden ${showThermometers ? 'opacity-100 max-h-[2000px]' : 'opacity-0 max-h-0 pointer-events-none'}`}>
+                           <div className="pt-2">
+                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {Object.keys(groupedMatches).length > 0 ? (Object.entries(groupedMatches) as [string, any[]][]).map(([leagueName, matches]) => {
+                                  const lInfo = getLeagueInfo(leagueName);
+                                  // Default is to show just the compact gauge (collapsed view)
+                                  const isExpanded = collapsedLeagues.includes(leagueName);
+                                  const stats = leagueStats.find(s => s.leagueName === leagueName);
+                                  let overAvg = 0;
+                                  if (stats) {
+                                     overAvg = (stats.metrics.ht15 + stats.metrics.htBtts + stats.metrics.ft25 + stats.metrics.ft35 + stats.metrics.ftBtts) / 5;
+                                  }
 
-                                return (
-                                  <div key={`gauge-${leagueName}`} className="bg-[#0c0c0e]/40 border border-white/[0.05] rounded-[2rem] p-3 backdrop-blur-md transition-all">
-                                    <div className="flex flex-wrap items-center justify-between gap-4 cursor-pointer group" onClick={() => toggleLeagueCollapse(leagueName)}>
-                                      <div className="flex items-center gap-4 px-2">
-                                        <div className="w-1.5 h-8 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.1)]" style={{ backgroundColor: lInfo.color, boxShadow: `0 0 15px ${lInfo.color}60` }}></div>
-                                        <h3 className="text-sm md:text-base font-black italic uppercase text-white/90 tracking-tighter group-hover:text-white transition-colors">{lInfo.name}</h3>
-                                        <div className="h-4 w-px bg-white/10 mx-2"></div>
-                                        <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em]">{matches.length} CONFRONTOS ATIVOS</span>
+                                  return (
+                                    <div 
+                                       key={`widget-${leagueName}`} 
+                                       className={`bg-white/[0.01] border border-white/[0.05] rounded-[1.5rem] p-4 backdrop-blur-md transition-all duration-500 overflow-hidden flex flex-col hover:bg-white/[0.03] ${isExpanded ? 'col-span-2 md:col-span-3 lg:col-span-4 bg-black/20 shadow-2xl scale-[1.01]' : 'col-span-1 shadow-md'}`}
+                                    >
+                                      
+                                      <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleLeagueCollapse(leagueName)}>
+                                         <div className="flex items-center gap-2 max-w-[80%]">
+                                            <div className="w-1.5 h-3 rounded-full mt-0.5" style={{ backgroundColor: lInfo.color, boxShadow: `0 0 10px ${lInfo.color}80` }}></div>
+                                            <h3 className="text-xs font-black italic uppercase text-white/90 tracking-tighter truncate" style={{color: lInfo.color}}>{lInfo.name}</h3>
+                                         </div>
+                                         <div className="flex items-center gap-3">
+                                           {isExpanded && <span className="text-[10px] font-black text-white/50 hidden sm:block">{overAvg.toFixed(0)}% OVER</span>}
+                                           <button className={`w-6 h-6 rounded-full bg-white/5 flex items-center justify-center transition-transform ${isExpanded ? 'rotate-180 bg-white/10' : ''}`}>
+                                              <i className="fa-solid fa-chevron-down text-[8px] text-white/50"></i>
+                                           </button>
+                                         </div>
                                       </div>
 
-                                      <div className="flex items-center gap-4 lg:gap-6">
-                                        <div className="flex items-center gap-4 px-5 py-2 bg-black/60 rounded-xl lg:rounded-2xl border border-white/5 shadow-inner">
-                                          <div className="flex flex-col items-center justify-center">
-                                            <span className="text-[6px] lg:text-[7px] font-black text-white/40 uppercase tracking-widest mb-1">TERMO GERAL LIGA</span>
-                                            <LeagueGauge value={overAvg} />
-                                          </div>
-                                          <div className="flex flex-col justify-center border-l border-white/5 pl-4 lg:pl-5 py-1">
-                                            <span className="text-xl lg:text-2xl font-black font-mono-numbers leading-none mb-1" style={{ color: lInfo.color, textShadow: `0 0 20px ${lInfo.color}50` }}>{overAvg.toFixed(0)}%</span>
-                                            <span className="text-[6px] lg:text-[7px] font-black uppercase text-white/30 tracking-[0.2em] leading-tight">MÉDIA DE<br/>GOLS (OVER)</span>
-                                          </div>
-                                        </div>
-
-                                        <button className={`w-8 h-8 lg:w-10 lg:h-10 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${!isCollapsed ? 'rotate-180' : ''}`}>
-                                          <i className="fa-solid fa-chevron-down text-white/50 text-xs"></i>
-                                        </button>
+                                      <div className={`transition-all duration-500 ease-in-out origin-top overflow-hidden ${isExpanded ? 'mt-4 opacity-100 max-h-[1000px]' : 'mt-4 opacity-100 max-h-[150px]'}`}>
+                                         {!isExpanded ? (
+                                            <div className="flex flex-col items-center justify-center pointer-events-none pb-2 cursor-pointer" onClick={() => toggleLeagueCollapse(leagueName)}>
+                                               <div className="scale-75 origin-center mb-1 drop-shadow-lg">
+                                                 <LeagueGauge value={overAvg} />
+                                               </div>
+                                               <span className="text-2xl font-black font-mono-numbers leading-none" style={{ color: lInfo.color, textShadow: `0 0 15px ${lInfo.color}40` }}>{overAvg.toFixed(0)}%</span>
+                                               <span className="text-[7px] text-white/30 tracking-[0.2em] font-black uppercase mt-1">Taxa de Over</span>
+                                            </div>
+                                         ) : (
+                                            <div className="text-left w-full h-full pb-2 animate-in fade-in duration-500">
+                                              {stats ? (
+                                                <div className="max-w-4xl mx-auto">
+                                                  <h4 className="text-[9px] font-black uppercase text-white/40 tracking-[0.4em] mb-4 text-center border-b border-white/5 pb-2">
+                                                    Raio-X Detalhado
+                                                  </h4>
+                                                  <LeagueThermometer stats={stats} />
+                                                </div>
+                                              ) : (
+                                                <div className="text-xs text-center p-4">Sem estatísticas suficientes hoje</div>
+                                              )}
+                                            </div>
+                                         )}
                                       </div>
                                     </div>
-                                    
-                                    <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-top overflow-hidden ${!isCollapsed ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'}`}>
-                                      <div className="min-h-0 space-y-6">
-                                        {stats && (
-                                          <div className="mx-2 max-w-4xl opacity-90 hover:opacity-100 transition-opacity bg-black/20 p-4 rounded-3xl border border-white/5">
-                                            <h4 className="text-[9px] font-black uppercase text-white/30 tracking-[0.5em] mb-4 text-left flex items-center gap-3">
-                                              <i className="fa-solid fa-chart-line"></i> Raio-X Detalhado da Liga Associada
-                                            </h4>
-                                            <LeagueThermometer stats={stats} />
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              }) : (
-                                <div className="text-center py-6 text-white/30 text-xs font-medium uppercase tracking-widest">Nenhuma liga ativa no momento</div>
-                              )}
+                                  );
+                                }) : (
+                                  <div className="col-span-full text-center py-6 text-white/30 text-[10px] font-black uppercase tracking-widest">Nenhuma liga ativa no momento</div>
+                                )}
+                             </div>
                            </div>
                         </div>
                       </div>
