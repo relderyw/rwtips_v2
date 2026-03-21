@@ -198,7 +198,8 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
     // Helper function to extract player name from "Team (PlayerName)" format
     const extractPlayerName = (str: string): string => {
         if (!str) return "";
-        const parenMatch = str.match(/(.*?)\((.*?)\)/);
+        // Greedy match on the first part to capture the last parenthesis as the player nickname
+        const parenMatch = str.match(/(.*)\((.*?)\)/);
         if (parenMatch) {
             const part1 = parenMatch[1].trim();
             const part2 = parenMatch[2].trim();
@@ -212,7 +213,8 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
                 'Borussia Dortmund', 'Bayer Leverkusen', 'Napoli', 'AC Milan', 'Inter', 'Inter de Milão', 'Atletico Madrid', 'Sevilla',
                 'Piemonte Calcio', 'Latium', 'Genoa', 'Roma', 'RB Leipzig', 'Real Sociedad', 'Athletic Club', 'Aston Villa', 'Spurs',
                 'PAOK', 'Benfica', 'Sporting', 'Porto', 'Ajax', 'Bayern de Munique', 'Bayer de Munique', 'Inglaterra', 'França', 'Espanha',
-                'Alemanha', 'Itália', 'Argentina', 'Holanda', 'Bélgica', 'Suíça', 'Escócia', 'Áustria', 'Grécia', 'Turquia'
+                'Alemanha', 'Itália', 'Argentina', 'Holanda', 'Bélgica', 'Suíça', 'Escócia', 'Áustria', 'Grécia', 'Turquia',
+                'ARG', 'BRA', 'FRA', 'ESP', 'GER', 'POR', 'NED', 'ENG', 'BEL', 'ITA', 'URY', 'CHL', 'COL'
             ];
             if (commonTeams.some(t => part1.includes(t))) return part2;
             if (commonTeams.some(t => part2.includes(t))) return part1;
@@ -266,8 +268,8 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             halftime_score_home: Number(game.home_score_ht ?? game.scoreHT?.home ?? game.homeHT ?? game.home_score_ht ?? game.ht_goals_home ?? game.halftime_score_home ?? 0),
             halftime_score_away: Number(game.away_score_ht ?? game.scoreHT?.away ?? game.awayHT ?? game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
             data_realizacao: finalDate,
-            home_team: game.home_raw?.replace(/\(.*?\)/, '').trim() || game.home?.teamName || game.homeClub || game.home_team || game.player_home_team_name || '',
-            away_team: game.away_raw?.replace(/\(.*?\)/, '').trim() || game.away?.teamName || game.awayClub || game.away_team || game.player_away_team_name || '',
+            home_team: game.home_raw?.replace(/\(.*?\)/g, '').trim() || game.home?.teamName || game.homeClub || game.home_team || game.player_home_team_name || '',
+            away_team: game.away_raw?.replace(/\(.*?\)/g, '').trim() || game.away?.teamName || game.awayClub || game.away_team || game.player_away_team_name || '',
             home_team_logo: game.home?.imageUrl || game.home_team_logo || game.homeTeamLogo || '',
             away_team_logo: game.away?.imageUrl || game.away_team_logo || game.awayTeamLogo || ''
         };

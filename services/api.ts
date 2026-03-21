@@ -21,7 +21,8 @@ const extractPlayerName = (str: string): string => {
     if (!str) return "";
     
     // 1. Check for "Team (Player)" or "Player (Team)" format
-    const parenMatch = str.match(/(.*?)\((.*?)\)/);
+    // Modified to use greedy matching on the team part to prioritize the last parenthesis as the player nick
+    const parenMatch = str.match(/(.*)\((.*?)\)/);
     
     // Common team names check to help differentiate
     const commonTeams = [
@@ -30,7 +31,8 @@ const extractPlayerName = (str: string): string => {
         'Borussia Dortmund', 'Bayer Leverkusen', 'Napoli', 'AC Milan', 'Inter', 'Inter de Milão', 'Atletico Madrid', 'Sevilla',
         'Piemonte Calcio', 'Latium', 'Genoa', 'Roma', 'RB Leipzig', 'Real Sociedad', 'Athletic Club', 'Aston Villa', 'Spurs',
         'PAOK', 'Benfica', 'Sporting', 'Porto', 'Ajax', 'Bayern de Munique', 'Bayer de Munique', 'Inglaterra', 'França', 'Espanha',
-        'Alemanha', 'Itália', 'Argentina', 'Holanda', 'Bélgica', 'Suíça', 'Escócia', 'Áustria', 'Grécia', 'Turquia'
+        'Alemanha', 'Itália', 'Argentina', 'Holanda', 'Bélgica', 'Suíça', 'Escócia', 'Áustria', 'Grécia', 'Turquia',
+        'ARG', 'BRA', 'FRA', 'ESP', 'GER', 'POR', 'NED', 'ENG', 'BEL', 'ITA', 'URY', 'CHL', 'COL'
     ];
     
     const knownClubAcronyms = ['PSG', 'RMA', 'FCB', 'MCI', 'MUN', 'LIV', 'CHE', 'ARS', 'TOT', 'JUV', 'MIL', 'INT', 'NAP', 'BVB', 'ATM', 'FC', 'CF', 'SC', 'PAOK'];
@@ -357,8 +359,8 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
 
                 const homePlayer = extractPlayerName(homeNameFull);
                 const awayPlayer = extractPlayerName(awayNameFull);
-                const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
-                const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
+                const homeTeam = homeNameFull.replace(/\(.*?\)/g, '').trim();
+                const awayTeam = awayNameFull.replace(/\(.*?\)/g, '').trim();
 
                 const meta = evt.metadata || {};
                 const scoreHome = parseInt(meta.homeTeamScore) || 0;
@@ -443,8 +445,8 @@ const fetchAltenarLiveGames = async (): Promise<LiveEvent[]> => {
             const awayPlayer = extractPlayerName(awayNameFull);
             
             // Extract Team Name if available (removes the player name part)
-            const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
-            const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
+            const homeTeam = homeNameFull.replace(/\(.*?\)/g, '').trim();
+            const awayTeam = awayNameFull.replace(/\(.*?\)/g, '').trim();
 
             const scoreHome = (evt.score && evt.score[0]) || 0;
             const scoreAway = (evt.score && evt.score[1]) || 0;
