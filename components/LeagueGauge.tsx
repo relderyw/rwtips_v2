@@ -38,7 +38,10 @@ export const LeagueGauge = ({ value }: { value: number }) => {
         />
 
         {/* Needle */}
-        <g transform={`rotate(${angle} 50 50)`} className="transition-transform duration-1000 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-[50px_50px]">
+        <g 
+           style={{ transform: `rotate(${angle}deg)`, transformOrigin: '50px 50px' }} 
+           className="transition-transform duration-1000 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+        >
           {/* Shadow */}
           <line x1="50" y1="50" x2="50" y2="10" stroke="rgba(0,0,0,0.5)" strokeWidth="3" strokeLinecap="round" transform="translate(1, 2)" />
           {/* Main Needle */}

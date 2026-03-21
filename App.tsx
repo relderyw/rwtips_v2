@@ -716,45 +716,48 @@ const App: React.FC = () => {
                                   return (
                                     <div 
                                        key={`widget-${leagueName}`} 
-                                       className={`bg-white/[0.01] border border-white/[0.05] rounded-[1.5rem] p-4 backdrop-blur-md transition-all duration-500 overflow-hidden flex flex-col hover:bg-white/[0.03] ${isExpanded ? 'col-span-2 md:col-span-3 lg:col-span-4 bg-black/20 shadow-2xl scale-[1.01]' : 'col-span-1 shadow-md'}`}
+                                       className="group relative bg-[#0a0a0c]/80 border border-white/[0.05] rounded-[1.5rem] p-4 backdrop-blur-md transition-all duration-500 overflow-hidden flex flex-col hover:bg-[#111115] hover:border-white/10 hover:shadow-2xl hover:shadow-black/50 hover:z-50 cursor-default"
                                     >
+                                      {/* Background Glow */}
+                                      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full opacity-5 blur-3xl group-hover:opacity-20 transition-opacity duration-1000 pointer-events-none" style={{ backgroundColor: lInfo.color }}></div>
                                       
-                                      <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleLeagueCollapse(leagueName)}>
+                                      <div className="flex items-center justify-between pointer-events-none relative z-10 w-full mb-4">
                                          <div className="flex items-center gap-2 max-w-[80%]">
-                                            <div className="w-1.5 h-3 rounded-full mt-0.5" style={{ backgroundColor: lInfo.color, boxShadow: `0 0 10px ${lInfo.color}80` }}></div>
+                                            <div className="w-1.5 h-3 rounded-full mt-0.5 shadow-[0_0_10px_rgba(255,255,255,0.1)]" style={{ backgroundColor: lInfo.color, boxShadow: `0 0 10px ${lInfo.color}80` }}></div>
                                             <h3 className="text-xs font-black italic uppercase text-white/90 tracking-tighter truncate" style={{color: lInfo.color}}>{lInfo.name}</h3>
                                          </div>
                                          <div className="flex items-center gap-3">
-                                           {isExpanded && <span className="text-[10px] font-black text-white/50 hidden sm:block">{overAvg.toFixed(0)}% OVER</span>}
-                                           <button className={`w-6 h-6 rounded-full bg-white/5 flex items-center justify-center transition-transform ${isExpanded ? 'rotate-180 bg-white/10' : ''}`}>
-                                              <i className="fa-solid fa-chevron-down text-[8px] text-white/50"></i>
-                                           </button>
+                                           <div className={`w-2 h-2 rounded-full ${overAvg >= 75 ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : overAvg >= 50 ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]'} animate-[pulse_2s_ease-in-out_infinite]`}></div>
                                          </div>
                                       </div>
 
-                                      <div className={`transition-all duration-500 ease-in-out origin-top overflow-hidden ${isExpanded ? 'mt-4 opacity-100 max-h-[1000px]' : 'mt-4 opacity-100 max-h-[150px]'}`}>
-                                         {!isExpanded ? (
-                                            <div className="flex flex-col items-center justify-center pointer-events-none pb-2 cursor-pointer" onClick={() => toggleLeagueCollapse(leagueName)}>
-                                               <div className="scale-75 origin-center mb-1 drop-shadow-lg">
-                                                 <LeagueGauge value={overAvg} />
-                                               </div>
-                                               <span className="text-2xl font-black font-mono-numbers leading-none" style={{ color: lInfo.color, textShadow: `0 0 15px ${lInfo.color}40` }}>{overAvg.toFixed(0)}%</span>
-                                               <span className="text-[7px] text-white/30 tracking-[0.2em] font-black uppercase mt-1">Taxa de Over</span>
-                                            </div>
-                                         ) : (
-                                            <div className="text-left w-full h-full pb-2 animate-in fade-in duration-500">
+                                      <div className="flex flex-col items-center justify-center relative z-10 group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+                                         <div className="scale-90 origin-bottom drop-shadow-2xl">
+                                           <LeagueGauge value={overAvg} />
+                                         </div>
+                                         <span className="text-3xl font-black font-mono-numbers leading-none" style={{ color: lInfo.color, textShadow: `0 0 20px ${lInfo.color}50` }}>{overAvg.toFixed(0)}%</span>
+                                         <div className="mt-2.5 px-3 py-1 bg-white/[0.03] border border-white/5 rounded-full flex items-center gap-2 shadow-inner">
+                                           <span className="text-[8px] text-white/50 tracking-[0.2em] font-black uppercase">Taxa de Over</span>
+                                         </div>
+                                      </div>
+
+                                      <div className="grid grid-rows-[0fr] opacity-0 group-hover:grid-rows-[1fr] group-hover:opacity-100 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] relative z-10 group-hover:mt-6 mt-0">
+                                         <div className="min-h-0 overflow-hidden">
+                                            <div className="pt-6 border-t border-white/[0.05]">
                                               {stats ? (
-                                                <div className="max-w-4xl mx-auto">
-                                                  <h4 className="text-[9px] font-black uppercase text-white/40 tracking-[0.4em] mb-4 text-center border-b border-white/5 pb-2">
+                                                <div className="w-full">
+                                                  <h4 className="text-[8px] font-black uppercase text-white/30 tracking-[0.3em] mb-6 text-center">
                                                     Raio-X Detalhado
                                                   </h4>
-                                                  <LeagueThermometer stats={stats} />
+                                                  <div className="scale-95 origin-top md:scale-100">
+                                                    <LeagueThermometer stats={stats} />
+                                                  </div>
                                                 </div>
                                               ) : (
-                                                <div className="text-xs text-center p-4">Sem estatísticas suficientes hoje</div>
+                                                <div className="text-[10px] uppercase font-black tracking-widest text-center p-4 text-white/20">Sem estatísticas suficientes hoje</div>
                                               )}
                                             </div>
-                                         )}
+                                         </div>
                                       </div>
                                     </div>
                                   );
