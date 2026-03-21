@@ -66,6 +66,11 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
       color: "#ef4444", 
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
+    "E-Soccer - Battle - 12 minutos de jogo": { 
+      name: "BATTLE - 12 MIN", 
+      color: "#ef4444", 
+      image: "https://football.esportsbattle.com/favicon.ico" 
+    },
     "E-Soccer - Battle Volta - 6 minutos de jogo": { 
       name: "VOLTA", 
       color: "#fa9715", 
@@ -130,10 +135,10 @@ export const getLeagueInfo = (fullName: string) => {
     if (clean.includes('cla') || clean.includes('cyber live arena')) {
         return LEAGUE_MAP["CLA"];
     }
-    if (clean.includes('battle') && clean.includes('12 min')) {
-        return LEAGUE_MAP["E-Soccer - GT Leagues - 12 minutos de jogo"] || { name: "BATTLE - 12 MIN", color: "#ef4444", image: "https://football.esportsbattle.com/favicon.ico" };
+    if (clean.includes('battle') && (clean.includes('12 min') || clean.includes('2x6'))) {
+        return LEAGUE_MAP["E-Soccer - Battle - 12 minutos de jogo"];
     }
-    if (clean.includes('battle') && (clean.includes('volta') || clean.includes('6 min'))) {
+    if (clean.includes('battle') && (clean.includes('volta') || clean.includes('6 min') || clean.includes('2x3'))) {
         return LEAGUE_MAP["E-Soccer - Battle Volta - 6 minutos de jogo"];
     }
     if (clean.includes('battle')) {
