@@ -1,6 +1,6 @@
-
 import { HistoryMatch, LiveEvent } from '../types';
 import { normalizeHistoryData } from './analyzer';
+import { extractTeamAndPlayer } from './nameExtractor';
 
 const HISTORY_API_BASE = "/api/history";
 const LIVE_API_URL = "https://sb2frontend-altenar2.biahosted.com/api/widget/GetLiveEvents?culture=pt-BR&timezoneOffset=240&integration=estrelabet&deviceType=1&numFormat=en-GB&countryCode=BR&eventCount=0&sportId=0&catIds=1571,1594,1595,1597,1728,1750,1949,2020,2085";
@@ -128,11 +128,14 @@ const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
             const homeNameFull = (parts[0] || 'Player 1').trim();
             const awayNameFull = (parts[1] || 'Player 2').trim();
 
-            const homePlayer = extractPlayerName(homeNameFull);
-            const awayPlayer = extractPlayerName(awayNameFull);
+            const homeExtracted = extractTeamAndPlayer(homeNameFull);
+            const awayExtracted = extractTeamAndPlayer(awayNameFull);
+
+            const homePlayer = homeExtracted.player;
+            const awayPlayer = awayExtracted.player;
             
-            const homeTeam = (evt.home_team || homeNameFull.replace(/\(.*?\)/g, '')).trim();
-            const awayTeam = (evt.away_team || awayNameFull.replace(/\(.*?\)/g, '')).trim();
+            const homeTeam = (evt.home_team || homeExtracted.team || homeNameFull.replace(/\(.*?\)/g, '')).trim();
+            const awayTeam = (evt.away_team || awayExtracted.team || awayNameFull.replace(/\(.*?\)/g, '')).trim();
 
             const meta = evt.metadata || {};
             
@@ -360,10 +363,13 @@ const fetchSuperbetLiveGames = async (): Promise<LiveEvent[]> => {
                 const homeNameFull = (parts[0] || 'Player 1').trim();
                 const awayNameFull = (parts[1] || 'Player 2').trim();
 
-                const homePlayer = extractPlayerName(homeNameFull);
-                const awayPlayer = extractPlayerName(awayNameFull);
-                const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
-                const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
+                const homeExtracted = extractTeamAndPlayer(homeNameFull);
+                const awayExtracted = extractTeamAndPlayer(awayNameFull);
+
+                const homePlayer = homeExtracted.player;
+                const awayPlayer = awayExtracted.player;
+                const homeTeam = (homeExtracted.team || homeNameFull.replace(/\(.*?\)/g, '')).trim();
+                const awayTeam = (awayExtracted.team || awayNameFull.replace(/\(.*?\)/g, '')).trim();
 
                 const meta = evt.metadata || {};
                 const scoreHome = parseInt(meta.homeTeamScore) || 0;
@@ -444,12 +450,15 @@ const fetchAltenarLiveGames = async (): Promise<LiveEvent[]> => {
             const homeNameFull = homeComp?.name || "Player 1";
             const awayNameFull = awayComp?.name || "Player 2";
 
-            const homePlayer = extractPlayerName(homeNameFull);
-            const awayPlayer = extractPlayerName(awayNameFull);
+            const homeExtracted = extractTeamAndPlayer(homeNameFull);
+            const awayExtracted = extractTeamAndPlayer(awayNameFull);
+
+            const homePlayer = homeExtracted.player;
+            const awayPlayer = awayExtracted.player;
             
-            // Extract Team Name if available (removes the player name part)
-            const homeTeam = homeNameFull.replace(/\(.*?\)/, '').trim();
-            const awayTeam = awayNameFull.replace(/\(.*?\)/, '').trim();
+            // Extract Team Name if available
+            const homeTeam = (homeExtracted.team || homeNameFull.replace(/\(.*?\)/g, '')).trim();
+            const awayTeam = (awayExtracted.team || awayNameFull.replace(/\(.*?\)/g, '')).trim();
 
             const scoreHome = (evt.score && evt.score[0]) || 0;
             const scoreAway = (evt.score && evt.score[1]) || 0;
@@ -553,15 +562,19 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
         };
 
         const matches = deduplicate(allMatchesRaw
-            .map((m: any) => ({
-                match_date: m.finished_at || new Date().toISOString(),
-                home_player: extractPlayerName(m.home_nick || m.home_raw || ""),
-                away_player: extractPlayerName(m.away_nick || m.away_raw || ""),
-                home_score_ft: m.home_score_ft,
-                away_score_ft: m.away_score_ft,
-                home_score_ht: m.home_score_ht,
-                away_score_ht: m.away_score_ht,
-            })))
+            .map((m: any) => {
+                const homeExtracted = extractTeamAndPlayer(m.home_nick || m.home_raw || "");
+                const awayExtracted = extractTeamAndPlayer(m.away_nick || m.away_raw || "");
+                return {
+                    match_date: m.finished_at || new Date().toISOString(),
+                    home_player: homeExtracted.player,
+                    away_player: awayExtracted.player,
+                    home_score_ft: m.home_score_ft,
+                    away_score_ft: m.away_score_ft,
+                    home_score_ht: m.home_score_ht,
+                    away_score_ht: m.away_score_ht,
+                };
+            }))
             .filter((m: any) => {
                 const hNorm = m.home_player.toLowerCase().trim();
                 const aNorm = m.away_player.toLowerCase().trim();
@@ -583,8 +596,10 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
         ]);
 
         const mapDot = (m: any) => {
-            const h = extractPlayerName(m.home_nick || m.home_raw || "");
-            const a = extractPlayerName(m.away_nick || m.away_raw || "");
+            const homeExtracted = extractTeamAndPlayer(m.home_nick || m.home_raw || "");
+            const awayExtracted = extractTeamAndPlayer(m.away_nick || m.away_raw || "");
+            const h = homeExtracted.player;
+            const a = awayExtracted.player;
             const date = m.finished_at || m.created_at || new Date().toISOString();
             return {
                 id: m.id || `${date}-${h}-${a}`, // Use server ID or composite key
