@@ -1,7 +1,6 @@
 // src/services/analyzer.ts
 
 import { HistoryMatch, PlayerStats, LeagueStats } from '../types';
-import { extractTeamAndPlayer } from './nameExtractor';
 
 // Normaliza nomes de jogadores para comparação consistente
 export const normalize = (name: string) => {
@@ -196,6 +195,32 @@ const LEAGUE_NAME_MAPPING: Record<string, string> = {
 export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
     if (!apiData) return [];
     
+    // Helper function to extract player name from "Team (PlayerName)" format
+    const extractPlayerName = (str: string): string => {
+        if (!str) return "";
+        const parenMatch = str.match(/(.*?)\((.*?)\)/);
+        if (parenMatch) {
+            const part1 = parenMatch[1].trim();
+            const part2 = parenMatch[2].trim();
+            const isPart1Caps = /^[A-Z0-9\s]+$/.test(part1) && part1.length > 1;
+            const isPart2Caps = /^[A-Z0-9\s]+$/.test(part2) && part2.length > 1;
+            if (isPart2Caps && !isPart1Caps) return part2;
+            if (isPart1Caps && !isPart2Caps) return part1;
+            const commonTeams = [
+                'Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium',
+                'Real Madrid', 'Barcelona', 'FC Bayern', 'Man City', 'Man Utd', 'Liverpool', 'PSG', 'Juventus', 'Arsenal', 'Chelsea',
+                'Borussia Dortmund', 'Bayer Leverkusen', 'Napoli', 'AC Milan', 'Inter', 'Inter de Milão', 'Atletico Madrid', 'Sevilla',
+                'Piemonte Calcio', 'Latium', 'Genoa', 'Roma', 'RB Leipzig', 'Real Sociedad', 'Athletic Club', 'Aston Villa', 'Spurs',
+                'PAOK', 'Benfica', 'Sporting', 'Porto', 'Ajax', 'Bayern de Munique', 'Bayer de Munique', 'Inglaterra', 'França', 'Espanha',
+                'Alemanha', 'Itália', 'Argentina', 'Holanda', 'Bélgica', 'Suíça', 'Escócia', 'Áustria', 'Grécia', 'Turquia'
+            ];
+            if (commonTeams.some(t => part1.includes(t))) return part2;
+            if (commonTeams.some(t => part2.includes(t))) return part1;
+            return part2;
+        }
+        return str.trim();
+    };
+    
     // Handle different API response structures
     let games: any[] = [];
     if (Array.isArray(apiData)) {
@@ -216,14 +241,8 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
         const home_player_source = game.home_nick || game.home_raw || game.home?.name || game.homeTeam || game.home_player || game.player_home_name || game.player_name_1 || '';
         const away_player_source = game.away_nick || game.away_raw || game.away?.name || game.awayTeam || game.away_player || game.player_away_name || game.player_name_2 || '';
         
-        const homeExtracted = extractTeamAndPlayer(home_player_source);
-        const awayExtracted = extractTeamAndPlayer(away_player_source);
-        
-        const home_player = homeExtracted.player;
-        const away_player = awayExtracted.player;
-        
-        const home_team = (game.home_team || game.homeTeam || homeExtracted.team || home_player_source.replace(/\(.*?\)/g, '')).trim();
-        const away_team = (game.away_team || game.awayTeam || awayExtracted.team || away_player_source.replace(/\(.*?\)/g, '')).trim();
+        const home_player = extractPlayerName(home_player_source);
+        const away_player = extractPlayerName(away_player_source);
         
         const rawLeague = game.league_mapped || game.competition?.name || game.competitionName || game.league || game.league_name || '';
         const mappedLeague = LEAGUE_NAME_MAPPING[rawLeague] || rawLeague;
@@ -247,8 +266,8 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
             halftime_score_home: Number(game.home_score_ht ?? game.scoreHT?.home ?? game.homeHT ?? game.home_score_ht ?? game.ht_goals_home ?? game.halftime_score_home ?? 0),
             halftime_score_away: Number(game.away_score_ht ?? game.scoreHT?.away ?? game.awayHT ?? game.away_score_ht ?? game.ht_goals_away ?? game.halftime_score_away ?? 0),
             data_realizacao: finalDate,
-            home_team: home_team || game.home_raw?.replace(/\(.*?\)/, '').trim() || game.home?.teamName || game.homeClub || game.player_home_team_name || '',
-            away_team: away_team || game.away_raw?.replace(/\(.*?\)/, '').trim() || game.away?.teamName || game.awayClub || game.player_away_team_name || '',
+            home_team: game.home_raw?.replace(/\(.*?\)/, '').trim() || game.home?.teamName || game.homeClub || game.home_team || game.player_home_team_name || '',
+            away_team: game.away_raw?.replace(/\(.*?\)/, '').trim() || game.away?.teamName || game.awayClub || game.away_team || game.player_away_team_name || '',
             home_team_logo: game.home?.imageUrl || game.home_team_logo || game.homeTeamLogo || '',
             away_team_logo: game.away?.imageUrl || game.away_team_logo || game.awayTeamLogo || ''
         };

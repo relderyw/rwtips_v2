@@ -15,7 +15,7 @@ import { StrategyHistory } from './components/StrategyHistory';
 import { NBADashboard } from './components/NBA/NBADashboard';
 import { ModuleSelector } from './components/ModuleSelector';
 import LiveModule from './components/LIVE/LiveModule';
-import { getTeamLogo } from './utils/logos';
+
 
 interface GoalNotification {
   id: string;
@@ -913,15 +913,9 @@ const App: React.FC = () => {
                                     </div>
 
                                     <div className="grid grid-cols-[1fr_20px_1fr] items-center gap-2">
-                                      <div className="flex items-center justify-end gap-2 overflow-hidden">
-                                        <span className="text-sm font-black uppercase truncate text-right" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
-                                        {getTeamLogo(game.home_team) && <img src={getTeamLogo(game.home_team)!} alt="" className="w-5 h-5 object-contain brightness-110 shrink-0" />}
-                                      </div>
+                                      <span className="text-sm font-black uppercase truncate text-right" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
                                       <span className="text-[8px] italic font-black uppercase opacity-20 text-center" style={{ color: lInfo.color }}>vs</span>
-                                      <div className="flex items-center justify-start gap-2 overflow-hidden">
-                                        {getTeamLogo(game.away_team) && <img src={getTeamLogo(game.away_team)!} alt="" className="w-5 h-5 object-contain brightness-110 shrink-0" />}
-                                        <span className="text-sm font-black uppercase truncate text-left" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
-                                      </div>
+                                      <span className="text-sm font-black uppercase truncate text-left" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
                                     </div>
 
                                     <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6 justify-end">
@@ -965,15 +959,9 @@ const App: React.FC = () => {
                                         </div>
 
                                         <div className="grid grid-cols-[1fr_20px_1fr] items-center gap-2">
-                                          <div className="flex items-center justify-end gap-2 overflow-hidden">
-                                            <span className="text-sm font-black uppercase truncate text-right" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
-                                            {getTeamLogo(game.home_team) && <img src={getTeamLogo(game.home_team)!} alt="" className="w-5 h-5 object-contain brightness-110 shrink-0" />}
-                                          </div>
+                                          <span className="text-sm font-black uppercase truncate text-right" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
                                           <span className="text-[8px] italic font-black uppercase opacity-20 text-center" style={{ color: lInfo.color }}>vs</span>
-                                          <div className="flex items-center justify-start gap-2 overflow-hidden">
-                                            {getTeamLogo(game.away_team) && <img src={getTeamLogo(game.away_team)!} alt="" className="w-5 h-5 object-contain brightness-110 shrink-0" />}
-                                            <span className="text-sm font-black uppercase truncate text-left" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
-                                          </div>
+                                          <span className="text-sm font-black uppercase truncate text-left" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
                                         </div>
 
                                         <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6 justify-end">
