@@ -68,7 +68,7 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     },
     "E-Soccer - Battle - 12 minutos de jogo": { 
       name: "BATTLE - 12 MIN", 
-      color: "#ef4444", 
+      color: "#e41a67e7", 
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
     "E-Soccer - Battle Volta - 6 minutos de jogo": { 

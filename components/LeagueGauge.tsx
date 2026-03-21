@@ -9,8 +9,8 @@ export const LeagueGauge = ({ value }: { value: number }) => {
   const angle = -90 + (normalizedValue / 100) * 180;
 
   return (
-    <div className="relative flex flex-col items-center justify-center w-20 h-10 mt-1">
-      <svg viewBox="0 0 100 50" className="w-full h-full overflow-visible drop-shadow-2xl">
+    <div className="relative flex flex-col items-center justify-center w-20 h-12 mt-1 -mb-1">
+      <svg viewBox="-5 -5 110 65" className="w-full h-full overflow-visible drop-shadow-2xl">
         <defs>
           <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ef4444" />

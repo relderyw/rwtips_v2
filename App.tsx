@@ -115,6 +115,7 @@ const App: React.FC = () => {
   const [isSyncingHistory, setIsSyncingHistory] = useState(false);
   const [pinnedMatchIds, setPinnedMatchIds] = useState<string[]>([]);
   const [collapsedLeagues, setCollapsedLeagues] = useState<string[]>([]);
+  const [showThermometers, setShowThermometers] = useState(true);
 
   const togglePin = (matchId: string) => {
     setPinnedMatchIds(prev => 
@@ -679,74 +680,114 @@ const App: React.FC = () => {
                             </div>
                           </section>
                         )}
+                      {/* --- LEAGUE THERMOMETERS DASHBOARD --- */}
+                      <div className="space-y-4 mb-4 mt-8 pt-8 border-t border-white/[0.04]">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer bg-white/[0.02] border border-white/5 rounded-2xl p-4 hover:bg-white/[0.04] transition-colors" 
+                          onClick={() => setShowThermometers(!showThermometers)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center border border-orange-500/20">
+                              <i className="fa-solid fa-temperature-half text-lg"></i>
+                            </div>
+                            <div>
+                              <h3 className="text-white/90 text-sm font-black tracking-tight">TERMÔMETRO GERAL DE MERCADO</h3>
+                              <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">Clique para recolher/expandir o dashboard das Ligas</p>
+                            </div>
+                          </div>
+                          <button className={`w-9 h-9 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-transform duration-500 ${showThermometers ? 'rotate-180' : ''}`}>
+                             <i className="fa-solid fa-chevron-down text-white/50 text-xs"></i>
+                          </button>
+                        </div>
 
+                        <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-top overflow-hidden ${showThermometers ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
+                           <div className="min-h-0 space-y-3 pt-1">
+                              {Object.keys(groupedMatches).length > 0 ? (Object.entries(groupedMatches) as [string, any[]][]).map(([leagueName, matches]) => {
+                                const lInfo = getLeagueInfo(leagueName);
+                                const isCollapsed = collapsedLeagues.includes(leagueName);
+                                const stats = leagueStats.find(s => s.leagueName === leagueName);
+                                let overAvg = 0;
+                                if (stats) {
+                                   overAvg = (stats.metrics.ht15 + stats.metrics.htBtts + stats.metrics.ft25 + stats.metrics.ft35 + stats.metrics.ftBtts) / 5;
+                                }
+
+                                return (
+                                  <div key={`gauge-${leagueName}`} className="bg-[#0c0c0e]/40 border border-white/[0.05] rounded-[2rem] p-3 backdrop-blur-md transition-all">
+                                    <div className="flex flex-wrap items-center justify-between gap-4 cursor-pointer group" onClick={() => toggleLeagueCollapse(leagueName)}>
+                                      <div className="flex items-center gap-4 px-2">
+                                        <div className="w-1.5 h-8 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.1)]" style={{ backgroundColor: lInfo.color, boxShadow: `0 0 15px ${lInfo.color}60` }}></div>
+                                        <h3 className="text-sm md:text-base font-black italic uppercase text-white/90 tracking-tighter group-hover:text-white transition-colors">{lInfo.name}</h3>
+                                        <div className="h-4 w-px bg-white/10 mx-2"></div>
+                                        <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em]">{matches.length} CONFRONTOS ATIVOS</span>
+                                      </div>
+
+                                      <div className="flex items-center gap-4 lg:gap-6">
+                                        <div className="flex items-center gap-4 px-5 py-2 bg-black/60 rounded-xl lg:rounded-2xl border border-white/5 shadow-inner">
+                                          <div className="flex flex-col items-center justify-center">
+                                            <span className="text-[6px] lg:text-[7px] font-black text-white/40 uppercase tracking-widest mb-1">TERMO GERAL LIGA</span>
+                                            <LeagueGauge value={overAvg} />
+                                          </div>
+                                          <div className="flex flex-col justify-center border-l border-white/5 pl-4 lg:pl-5 py-1">
+                                            <span className="text-xl lg:text-2xl font-black font-mono-numbers leading-none mb-1" style={{ color: lInfo.color, textShadow: `0 0 20px ${lInfo.color}50` }}>{overAvg.toFixed(0)}%</span>
+                                            <span className="text-[6px] lg:text-[7px] font-black uppercase text-white/30 tracking-[0.2em] leading-tight">MÉDIA DE<br/>GOLS (OVER)</span>
+                                          </div>
+                                        </div>
+
+                                        <button className={`w-8 h-8 lg:w-10 lg:h-10 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${!isCollapsed ? 'rotate-180' : ''}`}>
+                                          <i className="fa-solid fa-chevron-down text-white/50 text-xs"></i>
+                                        </button>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-top overflow-hidden ${!isCollapsed ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'}`}>
+                                      <div className="min-h-0 space-y-6">
+                                        {stats && (
+                                          <div className="mx-2 max-w-4xl opacity-90 hover:opacity-100 transition-opacity bg-black/20 p-4 rounded-3xl border border-white/5">
+                                            <h4 className="text-[9px] font-black uppercase text-white/30 tracking-[0.5em] mb-4 text-left flex items-center gap-3">
+                                              <i className="fa-solid fa-chart-line"></i> Raio-X Detalhado da Liga Associada
+                                            </h4>
+                                            <LeagueThermometer stats={stats} />
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              }) : (
+                                <div className="text-center py-6 text-white/30 text-xs font-medium uppercase tracking-widest">Nenhuma liga ativa no momento</div>
+                              )}
+                           </div>
+                        </div>
+                      </div>
+
+                      {/* Live Matches List */}
+                      <div className="space-y-8 mt-4 pt-6 border-t border-white/[0.04]">
                         {Object.keys(groupedMatches).length > 0 ? (Object.entries(groupedMatches) as [string, any[]][]).map(([leagueName, matches]) => {
                           const lInfo = getLeagueInfo(leagueName);
-                          const isCollapsed = collapsedLeagues.includes(leagueName);
-                          const stats = leagueStats.find(s => s.leagueName === leagueName);
-                          
-                          let overAvg = 0;
-                          if (stats) {
-                             overAvg = (stats.metrics.ht15 + stats.metrics.htBtts + stats.metrics.ft25 + stats.metrics.ft35 + stats.metrics.ftBtts) / 5;
-                          }
 
                           return (
-                            <section key={leagueName} className="space-y-4 bg-[#0c0c0e]/40 border border-white/[0.05] rounded-[2.5rem] p-4 backdrop-blur-md shadow-2xl transition-all">
-                              <div 
-                                className="flex flex-wrap items-center justify-between gap-4 cursor-pointer group"
-                                onClick={() => toggleLeagueCollapse(leagueName)}
-                              >
-                                <div className="flex items-center gap-4 px-2">
-                                  <div className="w-1.5 h-8 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.1)]" style={{ backgroundColor: lInfo.color, boxShadow: `0 0 15px ${lInfo.color}60` }}></div>
-                                  <h3 className="text-base font-black italic uppercase text-white/90 tracking-tighter group-hover:text-white transition-colors">{lInfo.name}</h3>
-                                  <div className="h-4 w-px bg-white/10 mx-2"></div>
-                                  <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em]">{matches.length} CONFRONTOS ATIVOS</span>
-                                </div>
-
-                                <div className="flex items-center gap-4 lg:gap-6">
-                                  <div className="flex items-center gap-4 px-5 py-2.5 bg-black/60 rounded-2xl border border-white/5 shadow-inner">
-                                    <div className="flex flex-col items-center justify-center">
-                                      <span className="text-[7px] font-black text-white/40 uppercase tracking-widest mb-0.5">TERMO GERAL LIGA</span>
-                                      <LeagueGauge value={overAvg} />
-                                    </div>
-                                    <div className="flex flex-col justify-center border-l border-white/5 pl-5 py-1">
-                                      <span className="text-2xl font-black font-mono-numbers leading-none mb-1" style={{ color: lInfo.color, textShadow: `0 0 20px ${lInfo.color}50` }}>{overAvg.toFixed(0)}%</span>
-                                      <span className="text-[7px] font-black uppercase text-white/30 tracking-[0.2em] leading-tight">MÉDIA DE<br/>GOLS (OVER)</span>
-                                    </div>
-                                  </div>
-
-                                  <button className={`w-10 h-10 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${!isCollapsed ? 'rotate-180' : ''}`}>
-                                    <i className="fa-solid fa-chevron-down text-white/50 text-xs"></i>
-                                  </button>
-                                </div>
+                            <section key={`matches-${leagueName}`} className="space-y-5">
+                              <div className="flex items-center gap-4 border-b border-white/[0.04] pb-3 px-2">
+                                <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: lInfo.color }}></div>
+                                <h3 className="text-sm font-black italic uppercase text-white/80 tracking-tight">{lInfo.name}</h3>
+                                <div className="h-4 w-px bg-white/5 mx-2"></div>
+                                <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em]">{matches.length} CONFRONTOS ATIVOS</span>
                               </div>
                               
-                              <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-top overflow-hidden ${!isCollapsed ? 'grid-rows-[1fr] opacity-100 mt-6' : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'}`}>
-                                <div className="min-h-0 space-y-6">
-                                  {stats && (
-                                    <div className="mx-2 max-w-4xl opacity-90 hover:opacity-100 transition-opacity">
-                                      <h4 className="text-[9px] font-black uppercase text-white/30 tracking-[0.5em] mb-4 text-left ml-4 flex items-center gap-3">
-                                        <i className="fa-solid fa-chart-line"></i> Raio-X da Liga Associada
-                                      </h4>
-                                      <LeagueThermometer stats={stats} />
-                                    </div>
-                                  )}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6 border-t border-white/[0.03]">
-                                    {matches.map(({ event, potential, confidence, reasons }: any) => (
-                                      <LiveMatchCard
-                                        key={event.id}
-                                        match={event}
-                                        potential={potential}
-                                        confidence={confidence}
-                                        reasons={reasons}
-                                        historicalGames={history}
-                                        onDetailClick={handleAnalyze}
-                                        isPinned={false}
-                                        onTogglePin={() => togglePin(event.id)}
-                                      />
-                                    ))}
-                                  </div>
-                                </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {matches.map(({ event, potential, confidence, reasons }: any) => (
+                                  <LiveMatchCard
+                                    key={event.id}
+                                    match={event}
+                                    potential={potential}
+                                    confidence={confidence}
+                                    reasons={reasons}
+                                    historicalGames={history}
+                                    onDetailClick={handleAnalyze}
+                                    isPinned={false}
+                                    onTogglePin={() => togglePin(event.id)}
+                                  />
+                                ))}
                               </div>
                             </section>
                           );
@@ -757,8 +798,9 @@ const App: React.FC = () => {
                           </div>
                         ) : null}
                       </div>
-                    </>
-                  ) : activeMainTab === 'results' ? (
+                    </div>
+                  </>
+                ) : activeMainTab === 'results' ? (
                     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
                       <div className="bg-white/[0.01] border border-white/[0.05] p-6 rounded-[2.5rem] backdrop-blur-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
                         <div className="flex flex-col">
