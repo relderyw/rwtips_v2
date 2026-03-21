@@ -130,6 +130,9 @@ const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
 
             const homePlayer = extractPlayerName(homeNameFull);
             const awayPlayer = extractPlayerName(awayNameFull);
+            
+            const homeTeam = (evt.home_team || homeNameFull.replace(/\(.*?\)/g, '')).trim();
+            const awayTeam = (evt.away_team || awayNameFull.replace(/\(.*?\)/g, '')).trim();
 
             const meta = evt.metadata || {};
             
@@ -168,7 +171,9 @@ const fetchSuperbetHistoryGames = async (): Promise<HistoryMatch[]> => {
                 score_away: scoreAway,
                 halftime_score_home: htHome,
                 halftime_score_away: htAway,
-                data_realizacao: finalDate
+                data_realizacao: finalDate,
+                home_team: homeTeam,
+                away_team: awayTeam
             };
         });
 

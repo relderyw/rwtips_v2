@@ -244,6 +244,9 @@ export const normalizeHistoryData = (apiData: any): HistoryMatch[] => {
         const home_player = extractPlayerName(home_player_source);
         const away_player = extractPlayerName(away_player_source);
         
+        const home_team = (game.home_team || game.homeTeam || home_player_source.replace(/\(.*?\)/g, '')).trim();
+        const away_team = (game.away_team || game.awayTeam || away_player_source.replace(/\(.*?\)/g, '')).trim();
+        
         const rawLeague = game.league_mapped || game.competition?.name || game.competitionName || game.league || game.league_name || '';
         const mappedLeague = LEAGUE_NAME_MAPPING[rawLeague] || rawLeague;
 

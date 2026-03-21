@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LiveEvent, HistoryMatch } from '../types';
 import { calculatePlayerStats, getLeagueInfo, calculateMetricProbability, normalize } from '../services/analyzer';
+import { getTeamLogo } from '../utils/logos';
 
 // Helper for URL slugs
 const createSlug = (text: string) => {
@@ -73,8 +74,12 @@ const FormDots = ({ results, stats }: { results: string[], stats: any }) => {
                 <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mb-1.5">{statusText}</span>
 
                 {/* Nomes dos Jogadores do histórico */}
-                <h5 className="text-[11px] font-black text-white/90 mb-2 tracking-tight whitespace-nowrap">
-                  {game.home_player} <span className="text-white/30 mx-0.5">x</span> {game.away_player}
+                <h5 className="text-[11px] font-black text-white/90 mb-2 tracking-tight whitespace-nowrap flex items-center justify-center gap-2">
+                  {getTeamLogo(game.home_team) && <img src={getTeamLogo(game.home_team)!} alt="" className="w-4 h-4 object-contain brightness-110" />}
+                  <span>{game.home_player}</span> 
+                  <span className="text-white/30 mx-0.5">x</span> 
+                  <span>{game.away_player}</span>
+                  {getTeamLogo(game.away_team) && <img src={getTeamLogo(game.away_team)!} alt="" className="w-4 h-4 object-contain brightness-110" />}
                 </h5>
 
                 {/* Pill do Placar (Cor sincronizada com a bolinha) */}
@@ -228,6 +233,9 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
     bookmakerBgClass = 'bg-[#ea2a2b] hover:brightness-110 text-white';
   }
 
+  const homeLogo = getTeamLogo(match.homeTeamName);
+  const awayLogo = getTeamLogo(match.awayTeamName);
+
   return (
     <div
       className={`relative bg-[#0d0d0f] rounded-2xl border flex flex-col transition-all duration-500 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01] shadow-[0_0_40px_rgba(0,0,0,0.8)]' : 'card-glow border-white/5'}`}
@@ -289,8 +297,12 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             <img src={leagueInfo.image} className="w-full h-full object-contain brightness-110" alt="" />
           </div>
           <div className="flex flex-col min-w-0">
-            <h4 className="text-[14px] font-black uppercase tracking-tight truncate leading-tight mb-1" style={{ color: leagueInfo.color }}>
-              {match.homePlayer} <span className="text-white/20 italic mx-0.5">vs</span> {match.awayPlayer}
+            <h4 className="flex items-center gap-2 text-[14px] font-black uppercase tracking-tight truncate leading-tight mb-1" style={{ color: leagueInfo.color }}>
+              {homeLogo && <img src={homeLogo} alt="" className="w-4 h-4 object-contain drop-shadow-md brightness-110" />}
+              <span>{match.homePlayer}</span> 
+              <span className="text-white/20 italic mx-0.5 text-[10px]">VS</span> 
+              <span>{match.awayPlayer}</span>
+              {awayLogo && <img src={awayLogo} alt="" className="w-4 h-4 object-contain drop-shadow-md brightness-110" />}
             </h4>
             <span className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: `${leagueInfo.color}80` }}>
               {leagueInfo.name}
@@ -317,8 +329,15 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
 
       <div className="p-3 pb-2.5 flex flex-col gap-2.5 flex-1 relative z-10">
         <div className="flex items-center justify-between bg-black/40 p-3 rounded-2xl border border-white/[0.03] shadow-inner">
-          <div className="text-center flex-1 min-w-0">
-            <h3 className="text-[11px] font-black text-white/80 uppercase truncate mb-1">{match.homePlayer}</h3>
+          <div className="text-center flex-1 min-w-0 flex flex-col items-center">
+            {homeLogo ? (
+               <div className="flex flex-col items-center mb-1">
+                 <img src={homeLogo} alt="" className="w-8 h-8 object-contain mb-1 drop-shadow-xl brightness-110" />
+                 <h3 className="text-[9px] font-black text-white/80 uppercase truncate w-full">{match.homePlayer}</h3>
+               </div>
+            ) : (
+               <h3 className="text-[11px] font-black text-white/80 uppercase truncate mb-1">{match.homePlayer}</h3>
+            )}
             {p1.lastMatches && p1.lastMatches.length >= 3 ? (
               <FormDots results={p1.last5} stats={p1} />
             ) : (
@@ -342,8 +361,15 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             </div>
           </div>
 
-          <div className="text-center flex-1 min-w-0">
-            <h3 className="text-[11px] font-black text-white/80 uppercase truncate mb-1">{match.awayPlayer}</h3>
+          <div className="text-center flex-1 min-w-0 flex flex-col items-center">
+            {awayLogo ? (
+               <div className="flex flex-col items-center mb-1">
+                 <img src={awayLogo} alt="" className="w-8 h-8 object-contain mb-1 drop-shadow-xl brightness-110" />
+                 <h3 className="text-[9px] font-black text-white/80 uppercase truncate w-full">{match.awayPlayer}</h3>
+               </div>
+            ) : (
+               <h3 className="text-[11px] font-black text-white/80 uppercase truncate mb-1">{match.awayPlayer}</h3>
+            )}
             {p2.lastMatches && p2.lastMatches.length >= 3 ? (
               <FormDots results={p2.last5} stats={p2} />
             ) : (
