@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var nameExtractor_1 = require("./services/nameExtractor");
+console.log('1:', (0, nameExtractor_1.extractTeamAndPlayer)('Boca Juniors (ARG) (Stenido)'));
+console.log('2:', (0, nameExtractor_1.extractTeamAndPlayer)('River Plate (ARG) (Solya)'));
+console.log('3:', (0, nameExtractor_1.extractTeamAndPlayer)('Racing Club (Kosta)'));
+console.log('4:', (0, nameExtractor_1.extractTeamAndPlayer)('Portugal (EMPEROR)'));
+console.log('5:', (0, nameExtractor_1.extractTeamAndPlayer)('França (JAEGER)'));
+console.log('6:', (0, nameExtractor_1.extractTeamAndPlayer)('Noruega (Alexis)'));
+console.log('7:', (0, nameExtractor_1.extractTeamAndPlayer)('Itália (Luigi)'));
+console.log('8:', (0, nameExtractor_1.extractTeamAndPlayer)('Manchester United (Klaus)'));
+console.log('9:', (0, nameExtractor_1.extractTeamAndPlayer)('Chelsea (Vendetta)'));
+console.log('10:', (0, nameExtractor_1.extractTeamAndPlayer)('Athletic Club MG (SpeciAL)'));
+console.log('11:', (0, nameExtractor_1.extractTeamAndPlayer)('Barcelona (Gaga)'));

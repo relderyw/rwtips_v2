@@ -297,12 +297,12 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             <img src={leagueInfo.image} className="w-full h-full object-contain brightness-110" alt="" />
           </div>
           <div className="flex flex-col min-w-0">
-            <h4 className="flex items-center gap-2 text-[14px] font-black uppercase tracking-tight truncate leading-tight mb-1" style={{ color: leagueInfo.color }}>
-              {homeLogo && <img src={homeLogo} alt="" className="w-4 h-4 object-contain drop-shadow-md brightness-110" />}
-              <span>{match.homePlayer}</span> 
-              <span className="text-white/20 italic mx-0.5 text-[10px]">VS</span> 
-              <span>{match.awayPlayer}</span>
-              {awayLogo && <img src={awayLogo} alt="" className="w-4 h-4 object-contain drop-shadow-md brightness-110" />}
+            <h4 className="flex items-center gap-2 text-[14px] font-black uppercase tracking-tight leading-tight mb-1" style={{ color: leagueInfo.color }}>
+              {homeLogo && <img src={homeLogo} alt="" className="w-4 h-4 object-contain drop-shadow-md brightness-110 shrink-0" />}
+              <span className="truncate">{match.homePlayer}</span> 
+              <span className="text-white/20 italic mx-0.5 text-[10px] shrink-0">VS</span> 
+              <span className="truncate">{match.awayPlayer}</span>
+              {awayLogo && <img src={awayLogo} alt="" className="w-4 h-4 object-contain drop-shadow-md brightness-110 shrink-0" />}
             </h4>
             <span className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: `${leagueInfo.color}80` }}>
               {leagueInfo.name}
