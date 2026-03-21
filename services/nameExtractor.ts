@@ -19,11 +19,13 @@ export const extractTeamAndPlayer = (str: string): { player: string, team: strin
     if (!str) return { player: "", team: "" };
     
     // 1. Check for "Team (Player)" or "Player (Team)" format
-    const parenMatch = str.match(/(.*?)\((.*?)\)/);
-
-    if (parenMatch) {
-        const part1 = parenMatch[1].trim();
-        const part2 = parenMatch[2].trim();
+    // We look for the LAST set of parentheses to handle cases like "Boca Juniors (ARG) (Stenido)"
+    const lastOpen = str.lastIndexOf('(');
+    const lastClose = str.lastIndexOf(')');
+    
+    if (lastOpen !== -1 && lastClose > lastOpen) {
+        const part1 = str.substring(0, lastOpen).trim();
+        const part2 = str.substring(lastOpen + 1, lastClose).trim();
         
         const part2Upper = part2.toUpperCase();
         const part1Upper = part1.toUpperCase();
