@@ -112,6 +112,13 @@ const App: React.FC = () => {
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
   const [isSyncingLive, setIsSyncingLive] = useState(false);
   const [isSyncingHistory, setIsSyncingHistory] = useState(false);
+  const [pinnedMatchIds, setPinnedMatchIds] = useState<string[]>([]);
+
+  const togglePin = (matchId: string) => {
+    setPinnedMatchIds(prev => 
+      prev.includes(matchId) ? prev.filter(id => id !== matchId) : [...prev, matchId]
+    );
+  };
 
   const [resultsSampleSize, setResultsSampleSize] = useState(15);
   const [viewingLeagueStats, setViewingLeagueStats] = useState<LeagueStats | null>(null);
@@ -433,16 +440,22 @@ const App: React.FC = () => {
     });
   }, [analyzedLive, searchQuery, filter, selectedLeague]);
 
+  const pinnedLive = useMemo(() => {
+    return filteredLive.filter(item => pinnedMatchIds.includes(item.event.id));
+  }, [filteredLive, pinnedMatchIds]);
+
   const groupedMatches = useMemo(() => {
     const groups: Record<string, typeof filteredLive> = {};
     filteredLive.forEach(item => {
+      if (pinnedMatchIds.includes(item.event.id)) return;
+      
       // Use normalized league name to avoid duplicates
       const normalizedLeagueName = getLeagueInfo(item.event.leagueName).name;
       if (!groups[normalizedLeagueName]) groups[normalizedLeagueName] = [];
       groups[normalizedLeagueName].push(item);
     });
     return groups;
-  }, [filteredLive]);
+  }, [filteredLive, pinnedMatchIds]);
 
   const handleAnalyze = async (match: LiveEvent) => {
     setSelectedMatch(match);
@@ -635,6 +648,32 @@ const App: React.FC = () => {
                       </div>
 
                       <div className="space-y-16">
+                        {pinnedLive.length > 0 && (
+                          <section className="space-y-6">
+                            <div className="flex items-center gap-4 border-b border-amber-500/20 pb-3 px-2">
+                              <i className="fa-solid fa-star text-amber-400"></i>
+                              <h3 className="text-sm font-black italic uppercase text-amber-400 tracking-tight">Favoritos</h3>
+                              <div className="h-4 w-px bg-white/5 mx-2"></div>
+                              <span className="text-[8px] font-black text-amber-500/40 uppercase tracking-[0.4em]">{pinnedLive.length} CONFRONTOS FIXADOS</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {pinnedLive.map(({ event, potential, confidence, reasons }: any) => (
+                                <LiveMatchCard
+                                  key={event.id}
+                                  match={event}
+                                  potential={potential}
+                                  confidence={confidence}
+                                  reasons={reasons}
+                                  historicalGames={history}
+                                  onDetailClick={handleAnalyze}
+                                  isPinned={true}
+                                  onTogglePin={() => togglePin(event.id)}
+                                />
+                              ))}
+                            </div>
+                          </section>
+                        )}
+
                         {Object.keys(groupedMatches).length > 0 ? (Object.entries(groupedMatches) as [string, any[]][]).map(([leagueName, matches]) => {
                           const lInfo = getLeagueInfo(leagueName);
                           return (
@@ -655,17 +694,19 @@ const App: React.FC = () => {
                                     reasons={reasons}
                                     historicalGames={history}
                                     onDetailClick={handleAnalyze}
+                                    isPinned={false}
+                                    onTogglePin={() => togglePin(event.id)}
                                   />
                                 ))}
                               </div>
                             </section>
                           );
-                        }) : (
+                        }) : pinnedLive.length === 0 ? (
                           <div className="py-56 text-center opacity-10">
                             <i className="fa-solid fa-satellite-dish text-5xl mb-6 animate-pulse"></i>
                             <p className="text-[10px] font-black uppercase tracking-[1.5em]">Buscando Oportunidades... </p>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </>
                   ) : activeMainTab === 'results' ? (

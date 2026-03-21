@@ -21,6 +21,8 @@ interface LiveMatchCardProps {
   reasons?: string[];
   historicalGames: HistoryMatch[];
   onDetailClick: (match: LiveEvent) => void;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
 }
 
 const STRATEGY_THEMES: Record<string, { label: string, color: string, icon: string, secondary: string }> = {
@@ -109,7 +111,7 @@ const FormDots = ({ results, stats }: { results: string[], stats: any }) => {
   );
 };
 
-export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, confidence, reasons, historicalGames, onDetailClick }) => {
+export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, confidence, reasons, historicalGames, onDetailClick, isPinned, onTogglePin }) => {
   const [activeTab, setActiveTab] = useState<'HT' | 'FT'>('FT');
   const [activePlayerTab, setActivePlayerTab] = useState<'H' | 'A'>('H');
 
@@ -296,8 +298,19 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           </div>
         </div>
         <div className="flex flex-col items-end gap-1.5 ml-1 shrink-0">
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 shadow-inner">
-            <span className="text-[12px] font-mono-numbers font-black text-emerald-400 tracking-tighter">{match.timer.formatted}</span>
+          <div className="flex items-center gap-2">
+            {onTogglePin && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onTogglePin(); }} 
+                className="w-8 h-8 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center hover:bg-white/10 transition-all group/pin shadow-inner cursor-pointer" 
+                title={isPinned ? "Desfixar Confronto" : "Fixar Confronto"}
+              >
+                <i className={`fa-solid fa-star ${isPinned ? 'text-amber-400' : 'text-white/20 group-hover/pin:text-amber-400/50'}`}></i>
+              </button>
+            )}
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 shadow-inner">
+              <span className="text-[12px] font-mono-numbers font-black text-emerald-400 tracking-tighter">{match.timer.formatted}</span>
+            </div>
           </div>
         </div>
       </div>

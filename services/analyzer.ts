@@ -56,7 +56,7 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     },
     "Esoccer Adriatic League": { 
       name: "ADRIATIC", 
-      color: "#5b59acff", // Azul Marinho
+      color: "#5b59ac", // Azul Marinho
       image: "https://eadriaticleague.com/wp-content/uploads/2025/10/IMG_0893-e1759408719298.png" 
     },
     
@@ -68,12 +68,12 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     },
     "E-Soccer - Battle Volta - 6 minutos de jogo": { 
       name: "VOLTA", 
-      color: "#fa9715ff", 
+      color: "#fa9715", 
       image: "https://football.esportsbattle.com/favicon.ico" 
     },
     "E-Soccer - GT Leagues - 12 minutos de jogo": { 
       name: "GT LEAGUES", 
-      color: "#29f500ff", 
+      color: "#29f500", 
       image: "https://img1.wsimg.com/isteam/ip/8a6541ea-9c44-481b-bcea-c4fbc17257e9/gt2.png/:/cr=t:25%25,l:0%25,w:100%25,h:50%25/rs=w:400,h:200,cg:true" 
     },
     "E-Soccer - H2H GG League - 8 minutos de jogo": { 
@@ -84,7 +84,7 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     // New mappings for Altenar/History API
     "Valhalla": { 
       name: "VALHALLA CUP", 
-      color: "#cee028ff", 
+      color: "#cee028", 
       image: "https://drafted.gg/images/valhalla_cup/valhalla_cup_logo.svg" 
     },
     "Valkyrie": { 
@@ -94,12 +94,12 @@ export const LEAGUE_MAP: Record<string, { name: string, color: string, image: st
     },
     "CLA": { 
       name: "CLA LEAGUE", 
-      color: "#24e2fbff", // Amber
+      color: "#24e2fb", // Amber
       image: "https://static.wixstatic.com/media/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png" 
     },
     "Cyber Live Arena": { 
       name: "CLA LEAGUE", 
-      color: "#24fbf0ff", // Amber 
+      color: "#24fbf0", // Amber 
       image: "https://static.wixstatic.com/media/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/3f54ed_4c8dd8b8b6464226a58ad4ba09c455c7%7Emv2.png" 
     }
 };
@@ -131,7 +131,10 @@ export const getLeagueInfo = (fullName: string) => {
         return LEAGUE_MAP["CLA"];
     }
     if (clean.includes('battle') && clean.includes('12 min')) {
-        return { name: "BATTLE - 12 MIN", color: "#ef4444", image: "https://football.esportsbattle.com/favicon.ico" };
+        return LEAGUE_MAP["E-Soccer - GT Leagues - 12 minutos de jogo"] || { name: "BATTLE - 12 MIN", color: "#ef4444", image: "https://football.esportsbattle.com/favicon.ico" };
+    }
+    if (clean.includes('battle') && (clean.includes('volta') || clean.includes('6 min'))) {
+        return LEAGUE_MAP["E-Soccer - Battle Volta - 6 minutos de jogo"];
     }
     if (clean.includes('battle')) {
         return LEAGUE_MAP["E-Soccer - Battle - 8 minutos de jogo"];
