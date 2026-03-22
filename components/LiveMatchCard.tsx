@@ -259,29 +259,42 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
       });
 
       const base64Image = canvas.toDataURL('image/png');
-      const strategyText = theme.label ? `📈 Estratégia: ${theme.label}` : '';
-      const caption = `🎮 <b>RW TIPS - OPORTUNIDADE</b>\n\n🏆 ${match.leagueName}\n⚔️ ${match.homePlayer} vs ${match.awayPlayer}\n${strategyText}\n\n🔗 <a href="${bookmakerUrl}"><b>ABRIR NA CASA</b></a>`;
+      const strategyText = theme.label ? `📈 ${theme.label}` : '';
+      const caption = `🎮 <b>RW TIPS</b>\n🏆 ${match.leagueName}\n⚔️ ${match.homePlayer} vs ${match.awayPlayer}\n${strategyText}`;
 
-      // Autenticação (mesma lógica do services/api.ts)
-      const apiKey = (import.meta as any).env.VITE_API_INTERNAL_SECRET || 'rw_secret_key_v2_2026';
-      const token = localStorage.getItem('authToken');
+      // Credenciais Telegram via variáveis VITE (disponíveis no browser)
+      const BOT_TOKEN = (import.meta as any).env.VITE_TELEGRAM_BOT_TOKEN;
+      const CHAT_ID = (import.meta as any).env.VITE_TELEGRAM_CHAT_ID;
 
-      // Chamada direta ao bot server (bypass proxy Netlify para POST)
-      const botUrl = 'https://rwtips-r943.onrender.com/api/send-screenshot';
-      const response = await fetch(botUrl, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({ image: base64Image, caption })
-      });
+      if (!BOT_TOKEN || !CHAT_ID) {
+        throw new Error('VITE_TELEGRAM_BOT_TOKEN ou VITE_TELEGRAM_CHAT_ID não configurados');
+      }
+
+      // Converte base64 → Blob → FormData para a API do Telegram
+      const parts = base64Image.split(';base64,');
+      const contentType = parts[0].split(':')[1];
+      const raw = window.atob(parts[1]);
+      const uInt8 = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) uInt8[i] = raw.charCodeAt(i);
+      const blob = new Blob([uInt8], { type: contentType });
+
+      const formData = new FormData();
+      formData.append('chat_id', CHAT_ID);
+      formData.append('photo', blob, 'card.png');
+      formData.append('caption', caption);
+      formData.append('parse_mode', 'HTML');
+
+      // Chamada direta à API do Telegram (sem servidor intermediário - sem CORS)
+      const response = await fetch(
+        `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
+        { method: 'POST', body: formData }
+      );
 
       if (response.ok) {
-        toast.success("Card enviado com sucesso!", { id: toastId });
+        toast.success("Card enviado com sucesso! ✅", { id: toastId });
       } else {
-        throw new Error("Falha no servidor");
+        const err = await response.json();
+        throw new Error(err.description || 'Falha no Telegram');
       }
     } catch (err) {
       console.error(err);
