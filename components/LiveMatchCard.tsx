@@ -323,8 +323,8 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
       <div className="p-3 pb-2.5 flex flex-col gap-2.5 flex-1 relative z-10">
         <div className="flex items-center justify-between bg-black/40 p-3 rounded-2xl border border-white/[0.03] shadow-inner">
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[7px] font-black text-white/20 uppercase truncate mb-0.5 tracking-tighter">{match.homeTeamName || '–'}</p>
-            <h3 className="text-[11px] font-black text-white/80 uppercase truncate mb-1">{match.homePlayer}</h3>
+            <p className="text-[9px] font-bold text-white/40 uppercase truncate mb-1 tracking-widest">{match.homeTeamName || '–'}</p>
+            <h3 className="text-[14px] font-black text-white uppercase truncate mb-1.5">{match.homePlayer}</h3>
             {p1.lastMatches && p1.lastMatches.length >= 3 ? (
               <FormDots results={p1.last5} stats={p1} />
             ) : (
@@ -349,8 +349,8 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           </div>
 
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[7px] font-black text-white/20 uppercase truncate mb-0.5 tracking-tighter">{match.awayTeamName || '–'}</p>
-            <h3 className="text-[11px] font-black text-white/80 uppercase truncate mb-1">{match.awayPlayer}</h3>
+            <p className="text-[9px] font-bold text-white/40 uppercase truncate mb-1 tracking-widest">{match.awayTeamName || '–'}</p>
+            <h3 className="text-[14px] font-black text-white uppercase truncate mb-1.5">{match.awayPlayer}</h3>
             {p2.lastMatches && p2.lastMatches.length >= 3 ? (
               <FormDots results={p2.last5} stats={p2} />
             ) : (
