@@ -1,7 +1,7 @@
 import express from 'express';
 // Force Render Update - V2
 import { analyzeMatchPotential, calculatePlayerStats } from './services/analyzer';
-import { sendTelegramAlert } from './services/telegram';
+import { sendTelegramAlert, sendTelegramPhoto } from './services/telegram';
 import { LiveEvent, HistoryMatch } from './types';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
@@ -49,7 +49,8 @@ app.use(cors({
     }
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 const apiAuth = (req: any, res: any, next: any) => {
     const apiKey = req.headers['x-api-key'];
@@ -94,6 +95,21 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀 [V2.2 - SENSOR PROXY DEBUG]'));
+
+app.post('/api/send-screenshot', async (req, res) => {
+    try {
+        const { image, caption } = req.body;
+        if (!image) return res.status(400).json({ error: 'Missing image data' });
+        
+        console.log(`[BOT] Recebendo screenshot para envio...`);
+        await sendTelegramPhoto(image, caption || 'RW TIPS - Snapshot');
+        
+        res.json({ success: true });
+    } catch (error: any) {
+        console.error('[BOT] Erro ao processar screenshot:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Proxy para SensorFIFA (Evitar CORS) - Usando .all para capturar qualquer método
 // Rota /api/sensor-matches removida conforme solicitação

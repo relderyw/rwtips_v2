@@ -166,6 +166,11 @@ export default defineConfig(({ mode }) => {
                         proxyReq.setHeader('Accept', 'application/json');
                     });
                 }
+            },
+            '/api/send-screenshot': {
+                target: 'http://localhost:8080',
+                changeOrigin: true,
+                secure: false
             }
         }
       },

@@ -2,6 +2,8 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LiveEvent, HistoryMatch } from '../types';
 import { calculatePlayerStats, getLeagueInfo, calculateMetricProbability, normalize } from '../services/analyzer';
+import html2canvas from 'html2canvas';
+import { toast } from 'sonner';
 
 // Helper for URL slugs
 const createSlug = (text: string) => {
@@ -226,15 +228,59 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
     bookmakerBgClass = 'bg-[#ea2a2b] hover:brightness-110 text-white';
   }
 
-  const shareToTelegram = (e: React.MouseEvent) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  const shareToTelegram = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const strategyText = theme.label ? `\n📈 Estratégia: *${theme.label}*` : '';
-    const text = `🎮 *RW TIPS - OPORTUNIDADE*\n\n🏆 ${match.leagueName}\n⚔️ ${match.homePlayer} vs ${match.awayPlayer}${strategyText}\n\nLink: ${bookmakerUrl}`;
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(bookmakerUrl)}&text=${encodeURIComponent(text)}`, '_blank');
+    if (!cardRef.current) return;
+    
+    setIsCapturing(true);
+    const toastId = toast.loading("Gerando imagem do card...");
+
+    try {
+      // Pequeno delay para garantir que o hover state ou outros efeitos se acalmem
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#0d0d0f',
+        scale: 2, // Melhor qualidade
+        useCORS: true,
+        logging: false,
+        onclone: (clonedDoc) => {
+          // Ajustes no clone se necessário (ex: remover botões de ação)
+          const shareBtn = clonedDoc.querySelector('[title="Enviar para Telegram"]');
+          if (shareBtn) shareBtn.remove();
+        }
+      });
+
+      const base64Image = canvas.toDataURL('image/png');
+      const strategyText = theme.label ? `📈 Estratégia: ${theme.label}` : '';
+      const caption = `🎮 <b>RW TIPS - OPORTUNIDADE</b>\n\n🏆 ${match.leagueName}\n⚔️ ${match.homePlayer} vs ${match.awayPlayer}\n${strategyText}\n\n🔗 <a href="${bookmakerUrl}"><b>ABRIR NA CASA</b></a>`;
+
+      // Chamada para o backend
+      const response = await fetch('/api/send-screenshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Image, caption })
+      });
+
+      if (response.ok) {
+        toast.success("Card enviado com sucesso!", { id: toastId });
+      } else {
+        throw new Error("Falha no servidor");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao enviar card. Tente novamente.", { id: toastId });
+    } finally {
+      setIsCapturing(false);
+    }
   };
 
   return (
     <div
+      ref={cardRef}
       className={`relative bg-[#0d0d0f] rounded-2xl border flex flex-col transition-all duration-500 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01] shadow-[0_0_40px_rgba(0,0,0,0.8)]' : 'card-glow border-white/5'}`}
       style={{
         borderColor: isSignaled ? theme.color : 'rgba(255,255,255,0.05)',
@@ -307,10 +353,11 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             {/* Telegram Button (Small) */}
             <button 
               onClick={shareToTelegram}
-              className="w-8 h-8 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center hover:bg-[#229ED9]/20 hover:border-[#229ED9]/40 transition-all group/tg cursor-pointer"
+              disabled={isCapturing}
+              className={`w-8 h-8 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center hover:bg-[#229ED9]/20 hover:border-[#229ED9]/40 transition-all group/tg cursor-pointer ${isCapturing ? 'opacity-50 cursor-not-allowed' : ''}`}
               title="Enviar para Telegram"
             >
-              <i className="fa-brands fa-telegram text-[#229ED9]/40 group-hover/tg:text-[#229ED9] text-xs"></i>
+              <i className={`fa-brands fa-telegram ${isCapturing ? 'animate-pulse' : ''} text-[#229ED9]/40 group-hover/tg:text-[#229ED9] text-xs`}></i>
             </button>
 
             {onTogglePin && (
