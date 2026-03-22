@@ -1,7 +1,7 @@
 import express from 'express';
 // Force Render Update - V2
 import { analyzeMatchPotential, calculatePlayerStats } from './services/analyzer';
-import { sendTelegramAlert, sendTelegramPhoto } from './services/telegram';
+import { sendTelegramAlert } from './services/telegram';
 import { LiveEvent, HistoryMatch } from './types';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
@@ -88,44 +88,7 @@ const apiAuth = (req: any, res: any, next: any) => {
 };
 
 
-// Rota pública - preflight explícito para evitar bloqueio de CORS
-app.options('/api/send-screenshot', (req, res) => {
-    res.set({
-        'Access-Control-Allow-Origin': req.headers.origin || '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
-        'Access-Control-Max-Age': '86400',
-    });
-    res.sendStatus(204);
-});
 
-app.post('/api/send-screenshot', async (req, res) => {
-    // Headers CORS explícitos (bypass de qualquer problema de middleware)
-    res.set({
-        'Access-Control-Allow-Origin': req.headers.origin || '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
-    });
-
-    // Exige pelo menos um Bearer token (Firebase JWT)
-    const auth = req.headers['authorization'] as string;
-    if (!auth || !auth.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Unauthorized: Missing Bearer token' });
-    }
-
-    try {
-        const { image, caption } = req.body;
-        if (!image) return res.status(400).json({ error: 'Missing image data' });
-        
-        console.log(`[BOT] Recebendo screenshot para envio...`);
-        await sendTelegramPhoto(image, caption || 'RW TIPS - Snapshot');
-        
-        res.json({ success: true });
-    } catch (error: any) {
-        console.error('[BOT] Erro ao processar screenshot:', error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
 
 app.use(apiAuth);
 

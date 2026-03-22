@@ -2,7 +2,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LiveEvent, HistoryMatch } from '../types';
 import { calculatePlayerStats, getLeagueInfo, calculateMetricProbability, normalize } from '../services/analyzer';
-import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 
 // Helper for URL slugs
@@ -228,191 +227,12 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
     bookmakerBgClass = 'bg-[#ea2a2b] hover:brightness-110 text-white';
   }
 
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
 
-  const shareToTelegram = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsCapturing(true);
-    const toastId = toast.loading("Gerando card...");
 
-    try {
-      const W = 800, H = 520;
-      const canvas = document.createElement('canvas');
-      canvas.width = W; canvas.height = H;
-      const ctx = canvas.getContext('2d')!;
 
-      const leagueColor = leagueInfo.color || '#6366f1';
-      const themeColor = isSignaled ? theme.color : leagueColor;
-
-      // === BACKGROUND ===
-      const bg = ctx.createLinearGradient(0, 0, 0, H);
-      bg.addColorStop(0, '#111115'); bg.addColorStop(1, '#0a0a0c');
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-
-      // Left accent bar
-      ctx.fillStyle = themeColor;
-      ctx.fillRect(0, 0, 5, H);
-
-      // === HEADER SECTION ===
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
-      ctx.beginPath(); ctx.roundRect(10, 10, W - 20, 70, 12); ctx.fill();
-
-      // League name
-      ctx.font = 'bold 13px Arial'; ctx.fillStyle = themeColor;
-      ctx.fillText(match.leagueName.toUpperCase(), 24, 32);
-
-      // Timer badge
-      const timerText = match.timer?.formatted || '--';
-      ctx.font = 'bold 12px Arial'; ctx.fillStyle = '#fff';
-      const timerW = ctx.measureText(timerText).width + 20;
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.beginPath(); ctx.roundRect(W - timerW - 20, 16, timerW, 26, 8); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Arial';
-      ctx.fillText(timerText, W - timerW - 10, 34);
-
-      // Strategy badge (if signaled)
-      if (isSignaled && theme.label) {
-        ctx.fillStyle = themeColor + '25';
-        ctx.beginPath(); ctx.roundRect(22, 42, W - 44, 28, 8); ctx.fill();
-        ctx.font = 'bold 11px Arial'; ctx.fillStyle = themeColor;
-        ctx.textAlign = 'center';
-        ctx.fillText(`⚡ ${theme.label}`, W / 2, 61);
-        ctx.textAlign = 'left';
-      }
-
-      // === PLAYERS & SCORE ROW ===
-      const midY = 120;
-      ctx.fillStyle = 'rgba(255,255,255,0.03)';
-      ctx.beginPath(); ctx.roundRect(10, 90, W - 20, 80, 10); ctx.fill();
-
-      // Home player
-      ctx.textAlign = 'left';
-      if (match.homeTeamName) {
-        ctx.font = '11px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.fillText(match.homeTeamName.toUpperCase(), 24, 110);
-      }
-      ctx.font = 'bold 22px Arial'; ctx.fillStyle = '#ffffff';
-      ctx.fillText(match.homePlayer, 24, midY);
-
-      // Away player
-      ctx.textAlign = 'right';
-      if (match.awayTeamName) {
-        ctx.font = '11px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.fillText(match.awayTeamName.toUpperCase(), W - 24, 110);
-      }
-      ctx.font = 'bold 22px Arial'; ctx.fillStyle = '#ffffff';
-      ctx.fillText(match.awayPlayer, W - 24, midY);
-
-      // Score in center
-      const score = `${match.score?.home ?? '-'} - ${match.score?.away ?? '-'}`;
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 28px Arial'; ctx.fillStyle = themeColor;
-      ctx.fillText(score, W / 2, midY + 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      ctx.font = 'bold 11px Arial'; ctx.fillText('VS', W / 2, 108);
-      ctx.textAlign = 'left';
-
-      // === STATS BARS ===
-      const ft15 = ((p1?.ft15Rate ?? 0) + (p2?.ft15Rate ?? 0)) / 2;
-      const ft25 = ((p1?.ftOver25Rate ?? 0) + (p2?.ftOver25Rate ?? 0)) / 2;
-      const btts = ((p1?.ftBttsRate ?? 0) + (p2?.ftBttsRate ?? 0)) / 2;
-      const ht05 = ((p1?.htOver05Rate ?? 0) + (p2?.htOver05Rate ?? 0)) / 2;
-      const statsData = [
-        { label: 'OVER 1.5 FT', value: ft15, color: '#10b981' },
-        { label: 'OVER 2.5 FT', value: ft25, color: '#6366f1' },
-        { label: 'BTTS FT',    value: btts, color: '#ec4899' },
-        { label: 'OVER 0.5 HT', value: ht05, color: '#f97316' },
-      ];
-
-      const barX = 20, barY = 185, barW = W - 40, barH = 14, barGap = 34;
-      ctx.font = 'bold 11px Arial';
-
-      statsData.forEach((stat, i) => {
-        const y = barY + i * barGap;
-        const pct = Math.min(1, (stat.value || 0) / 100);
-        const pctText = `${Math.round(stat.value || 0)}%`;
-
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.fillText(stat.label, barX, y);
-        ctx.fillStyle = '#fff'; ctx.textAlign = 'right';
-        ctx.fillText(pctText, W - barX, y);
-        ctx.textAlign = 'left';
-
-        // Bar track
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.beginPath(); ctx.roundRect(barX, y + 4, barW, barH, 6); ctx.fill();
-
-        // Bar fill
-        const fillGrad = ctx.createLinearGradient(barX, 0, barX + barW * pct, 0);
-        fillGrad.addColorStop(0, stat.color + 'aa'); fillGrad.addColorStop(1, stat.color);
-        ctx.fillStyle = fillGrad;
-        ctx.beginPath(); ctx.roundRect(barX, y + 4, barW * pct, barH, 6); ctx.fill();
-      });
-
-      // Confidence row (if signaled)
-      if (isSignaled && confidence) {
-        const confY = barY + statsData.length * barGap + 12;
-        ctx.fillStyle = 'rgba(255,255,255,0.03)';
-        ctx.beginPath(); ctx.roundRect(10, confY, W - 20, 28, 8); ctx.fill();
-        ctx.font = 'bold 12px Arial'; ctx.fillStyle = themeColor;
-        ctx.textAlign = 'center';
-        ctx.fillText(`CONFIANÇA: ${confidence}%`, W / 2, confY + 18);
-        ctx.textAlign = 'left';
-      }
-
-      // === FOOTER ===
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
-      ctx.fillRect(0, H - 44, W, 44);
-      ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(0, H - 44, W, 1);
-
-      ctx.font = 'bold 13px Arial'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
-      ctx.fillText('RW TIPS', 20, H - 16);
-      ctx.font = '11px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.fillText('Análise em tempo real', 90, H - 16);
-      ctx.textAlign = 'right'; ctx.fillStyle = themeColor;
-      const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      ctx.fillText(now, W - 20, H - 16);
-      ctx.textAlign = 'left';
-
-      // === SEND TO TELEGRAM ===
-      const base64 = canvas.toDataURL('image/png');
-      const caption = `🎮 <b>RW TIPS</b>\n🏆 ${match.leagueName}\n⚔️ ${match.homePlayer} vs ${match.awayPlayer}${isSignaled ? `\n⚡ ${theme.label}` : ''}`;
-
-      const BOT_TOKEN = (import.meta as any).env.VITE_TELEGRAM_BOT_TOKEN;
-      const CHAT_ID = (import.meta as any).env.VITE_TELEGRAM_CHAT_ID;
-      if (!BOT_TOKEN || !CHAT_ID) throw new Error('Telegram não configurado');
-
-      const parts = base64.split(';base64,');
-      const raw = window.atob(parts[1]);
-      const uInt8 = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i++) uInt8[i] = raw.charCodeAt(i);
-      const blob = new Blob([uInt8], { type: 'image/png' });
-
-      const fd = new FormData();
-      fd.append('chat_id', CHAT_ID);
-      fd.append('photo', blob, 'rwtips-card.png');
-      fd.append('caption', caption);
-      fd.append('parse_mode', 'HTML');
-
-      const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
-      if (res.ok) {
-        toast.success("Card enviado! ✅", { id: toastId });
-      } else {
-        const err = await res.json();
-        throw new Error(err.description || 'Erro Telegram');
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(`Erro: ${err.message || 'Tente novamente'}`, { id: toastId });
-    } finally {
-      setIsCapturing(false);
-    }
-  };
 
   return (
     <div
-      ref={cardRef}
       className={`relative bg-[#0d0d0f] rounded-2xl border flex flex-col transition-all duration-500 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01] shadow-[0_0_40px_rgba(0,0,0,0.8)]' : 'card-glow border-white/5'}`}
       style={{
         borderColor: isSignaled ? theme.color : 'rgba(255,255,255,0.05)',
@@ -482,15 +302,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
         </div>
         <div className="flex flex-col items-end gap-1.5 ml-1 shrink-0">
           <div className="flex items-center gap-2">
-            {/* Telegram Button (Small) */}
-            <button 
-              onClick={shareToTelegram}
-              disabled={isCapturing}
-              className={`w-8 h-8 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center hover:bg-[#229ED9]/20 hover:border-[#229ED9]/40 transition-all group/tg cursor-pointer ${isCapturing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title="Enviar para Telegram"
-            >
-              <i className={`fa-brands fa-telegram ${isCapturing ? 'animate-pulse' : ''} text-[#229ED9]/40 group-hover/tg:text-[#229ED9] text-xs`}></i>
-            </button>
+
 
             {onTogglePin && (
               <button 
