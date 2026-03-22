@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import LoadingSpinner from './LoadingSpinner';
@@ -460,8 +461,8 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
         }
     };
 
-    return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-start justify-center p-4 z-50 pt-10 overflow-y-auto">
+    return createPortal(
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-start justify-center p-4 z-[9999] pt-10 overflow-y-auto">
             <div className="bg-black border border-zinc-800 rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-2xl shadow-emerald-900/10">
                 {/* Top bar */}
                 <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50 sticky top-0 backdrop-blur-md z-10">
@@ -1024,7 +1025,8 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

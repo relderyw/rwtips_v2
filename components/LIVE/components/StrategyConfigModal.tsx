@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Save, RotateCcw, Zap, Flame, Shield, Target } from 'lucide-react';
 import { StrategyConfig, defaultStrategyConfig, strategyPresets } from '../utils/liveStrategies';
 
@@ -39,9 +40,9 @@ const StrategyConfigModal: React.FC<StrategyConfigModalProps> = ({ isOpen, onClo
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 transition-all"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999] transition-all"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl shadow-emerald-900/10 flex flex-col max-h-[95vh]">
@@ -231,7 +232,8 @@ const StrategyConfigModal: React.FC<StrategyConfigModalProps> = ({ isOpen, onClo
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
