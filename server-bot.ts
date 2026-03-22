@@ -83,6 +83,29 @@ const apiAuth = (req: any, res: any, next: any) => {
     next();
 };
 
+
+// Rota pública autenticada por Bearer token (sem X-API-Key necessário)
+app.post('/api/send-screenshot', async (req, res) => {
+    // Exige pelo menos um Bearer token (Firebase JWT)
+    const auth = req.headers['authorization'] as string;
+    if (!auth || !auth.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing Bearer token' });
+    }
+
+    try {
+        const { image, caption } = req.body;
+        if (!image) return res.status(400).json({ error: 'Missing image data' });
+        
+        console.log(`[BOT] Recebendo screenshot para envio...`);
+        await sendTelegramPhoto(image, caption || 'RW TIPS - Snapshot');
+        
+        res.json({ success: true });
+    } catch (error: any) {
+        console.error('[BOT] Erro ao processar screenshot:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.use(apiAuth);
 
 // Filtro de User-Agent (Anti-Bot Simples)
@@ -103,21 +126,6 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => res.send('RW TIPS BOT IS ALIVE! 🚀 [V2.2 - SENSOR PROXY DEBUG]'));
-
-app.post('/api/send-screenshot', async (req, res) => {
-    try {
-        const { image, caption } = req.body;
-        if (!image) return res.status(400).json({ error: 'Missing image data' });
-        
-        console.log(`[BOT] Recebendo screenshot para envio...`);
-        await sendTelegramPhoto(image, caption || 'RW TIPS - Snapshot');
-        
-        res.json({ success: true });
-    } catch (error: any) {
-        console.error('[BOT] Erro ao processar screenshot:', error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
 
 // Proxy para SensorFIFA (Evitar CORS) - Usando .all para capturar qualquer método
 // Rota /api/sensor-matches removida conforme solicitação
