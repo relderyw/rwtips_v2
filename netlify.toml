@@ -5,6 +5,13 @@
 [functions]
   node_bundler = "esbuild"
 
+# Dedicated redirect for screenshot endpoint (must come before generic /api/*)
+[[redirects]]
+  from = "/api/send-screenshot"
+  to = "/.netlify/functions/send-screenshot"
+  status = 200
+  force = true
+
 # Redirect for API calls to the serverless function
 [[redirects]]
   from = "/api/*"
