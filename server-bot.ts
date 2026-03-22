@@ -37,25 +37,29 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// CORS: whitelist all known origins
-const allowedOrigins = [
-    'http://localhost:5173',
-    'https://rwtips.dpdns.org',
-    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
-];
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            // Log to help diagnosis
-            console.warn(`[CORS] Blocked origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
-}));
+
+// CORS manual: aceita as origens conhecidas e responde ao preflight
+app.use((req: any, res: any, next: any) => {
+    const allowedOrigins = [
+        'http://localhost:5173',
+        'https://rwtips.dpdns.org',
+        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+    ];
+    const origin = req.headers.origin;
+    if (!origin || allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    
+    // Responde imediatamente ao preflight OPTIONS
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(204);
+        return;
+    }
+    next();
+});
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
