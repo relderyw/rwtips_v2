@@ -218,8 +218,6 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
     const homeStr = match.homeTeamName ? `${match.homeTeamName} ${match.homePlayer}` : match.homePlayer;
     const awayStr = match.awayTeamName ? `${match.awayTeamName} ${match.awayPlayer}` : match.awayPlayer;
     const matchSlug = createSlug(`${homeStr} x ${awayStr}`);
-    // If we don't have the original superbet event ID, we try to use the general one or fallback to main esports page.
-    // In the backend, the event.id should be the 'sb-12261419' format. We extract the numeric part if present.
     let eventId = match.id.replace(/\D/g, '');
     if (!eventId) eventId = 'v2'; // fallback
     bookmakerUrl = `https://superbet.bet.br/odds/e-sport-futebol/${matchSlug}-${eventId}/?t=offer-live-82545&mdt=o`;
@@ -227,6 +225,13 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
     bookmakerLogo = 'https://superbet.bet.br/static/img/icons/favicon.ico';
     bookmakerBgClass = 'bg-[#ea2a2b] hover:brightness-110 text-white';
   }
+
+  const shareToTelegram = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const strategyText = theme.label ? `\n📈 Estratégia: *${theme.label}*` : '';
+    const text = `🎮 *RW TIPS - OPORTUNIDADE*\n\n🏆 ${match.leagueName}\n⚔️ ${match.homePlayer} vs ${match.awayPlayer}${strategyText}\n\nLink: ${bookmakerUrl}`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(bookmakerUrl)}&text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   return (
     <div
@@ -289,13 +294,6 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             <img src={leagueInfo.image} className="w-full h-full object-contain brightness-110" alt="" />
           </div>
           <div className="flex flex-col min-w-0">
-            {/* Team Names (Small) */}
-            <div className="flex items-center gap-1 mb-1 opacity-50">
-              <span className="text-[8px] font-black uppercase tracking-tighter truncate max-w-[80px]">{match.homeTeamName || '–'}</span>
-              <span className="text-[7px] text-white/20 italic">x</span>
-              <span className="text-[8px] font-black uppercase tracking-tighter truncate max-w-[80px]">{match.awayTeamName || '–'}</span>
-            </div>
-            
             <h4 className="text-[14px] font-black uppercase tracking-tight truncate leading-tight mb-0.5" style={{ color: leagueInfo.color }}>
               {match.homePlayer} <span className="text-white/20 italic mx-0.5">vs</span> {match.awayPlayer}
             </h4>
@@ -308,6 +306,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           <div className="flex items-center gap-2">
             {/* Telegram Button (Small) */}
             <button 
+              onClick={shareToTelegram}
               className="w-8 h-8 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center hover:bg-[#229ED9]/20 hover:border-[#229ED9]/40 transition-all group/tg cursor-pointer"
               title="Enviar para Telegram"
             >
