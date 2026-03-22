@@ -20,11 +20,12 @@ const getAuthToken = () => {
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
     
-    // 1. Check for "Team (Player)" or "Player (Team)" format
-    // Modified to use greedy matching on the team part to prioritize the last parenthesis as the player nick
-    const parenMatch = str.match(/(.*)\((.*?)\)/);
+    // Normalize string: Remove extra spaces and handle common variations
+    let cleanStr = str.trim();
     
-    // Common team names check to help differentiate
+    // 1. Check for "Team (Player)" or "(Player) Team" formats
+    const parenMatch = cleanStr.match(/(.*)\((.*?)\)/) || cleanStr.match(/\((.*?)\)(.*)/);
+    
     const commonTeams = [
         'Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium',
         'Real Madrid', 'Barcelona', 'FC Bayern', 'Man City', 'Man Utd', 'Liverpool', 'PSG', 'Juventus', 'Arsenal', 'Chelsea',
@@ -32,64 +33,65 @@ const extractPlayerName = (str: string): string => {
         'Piemonte Calcio', 'Latium', 'Genoa', 'Roma', 'RB Leipzig', 'Real Sociedad', 'Athletic Club', 'Aston Villa', 'Spurs',
         'PAOK', 'Benfica', 'Sporting', 'Porto', 'Ajax', 'Bayern de Munique', 'Bayer de Munique', 'Inglaterra', 'França', 'Espanha',
         'Alemanha', 'Itália', 'Argentina', 'Holanda', 'Bélgica', 'Suíça', 'Escócia', 'Áustria', 'Grécia', 'Turquia',
+        'Borussia M\'gladbach', 'Eintracht Frankfurt', 'Wolfsburg', 'Werder Bremen', 'Everton', 'Lille', 'Monaco', 'Marseille', 'Lyon',
         'ARG', 'BRA', 'FRA', 'ESP', 'GER', 'POR', 'NED', 'ENG', 'BEL', 'ITA', 'URY', 'CHL', 'COL'
     ];
     
-    const knownClubAcronyms = ['PSG', 'RMA', 'FCB', 'MCI', 'MUN', 'LIV', 'CHE', 'ARS', 'TOT', 'JUV', 'MIL', 'INT', 'NAP', 'BVB', 'ATM', 'FC', 'CF', 'SC', 'PAOK'];
+    const knownClubAcronyms = ['PSG', 'RMA', 'FCB', 'MCI', 'MUN', 'LIV', 'CHE', 'ARS', 'TOT', 'JUV', 'MIL', 'INT', 'NAP', 'BVB', 'ATM', 'BBM', 'SGE', 'WOB', 'EVR', 'LIL', 'ASM', 'OM', 'OL'];
 
     if (parenMatch) {
-        const part1 = parenMatch[1].trim();
-        const part2 = parenMatch[2].trim();
+        // Find which part is likely the player
+        const parts = [parenMatch[1], parenMatch[2]].map(p => p ? p.trim() : "");
+        const part1 = parts[0];
+        const part2 = parts[1];
         
-        const part2Upper = part2.toUpperCase();
-        const part1Upper = part1.toUpperCase();
+        if (!part1) return part2;
+        if (!part2) return part1;
 
-        // If explicitly part2 is a recognized team name, return part1 as the player
-        if (commonTeams.some(team => part2Upper.includes(team.toUpperCase()))) return part1;
-        if (knownClubAcronyms.includes(part2Upper)) return part1;
-        
-        if (commonTeams.some(team => part1Upper.includes(team.toUpperCase()))) return part2;
-        if (knownClubAcronyms.includes(part1Upper)) return part2;
-        
-        // Default to inside parentheses for standard "Team (Nick)" format
-        // This avoids bugs like "PAOK" (caps) overriding "Eros" (titlecase)
+        const p1U = part1.toUpperCase();
+        const p2U = part2.toUpperCase();
+
+        // Heuristic 1: Common Team Names
+        if (commonTeams.some(t => p1U.includes(t.toUpperCase()))) return part2;
+        if (commonTeams.some(t => p2U.includes(t.toUpperCase()))) return part1;
+
+        // Heuristic 2: Acronyms
+        if (knownClubAcronyms.includes(p1U)) return part2;
+        if (knownClubAcronyms.includes(p2U)) return part1;
+
+        // Heuristic 3: Length (Players usually have shorter nicks than team names)
+        if (part1.length > part2.length + 5) return part2;
+        if (part2.length > part1.length + 5) return part1;
+
+        // Default: If it's "Team (Player)", return Player
         return part2;
     }
     
-    // 2. Fallback for strings without parentheses (e.g., "PSG DANGERDIM77" or "Bayern Munich BECKHAM")
-    let cleanStr = str.trim();
-    
-    // Split if there's an explicit separator like " vs " or " - " or "·"
-    // Usually, the raw string here represents ONE side of the match (e.g., "PSG BECKHAM") 
-    // because it was already split by "·" before calling this function in Superbet fetching.
-    
-    // First, let's remove any known team name or acronym from the string
-    const teamWordsToRemove = [...commonTeams, ...knownClubAcronyms].sort((a, b) => b.length - a.length); // Longest first
+    // 2. Fallback for strings without parentheses (e.g., "PSG DANGERDIM77")
+    // Remove known team names
+    let isolated = cleanStr;
+    const teamWordsToRemove = [...commonTeams, ...knownClubAcronyms].sort((a, b) => b.length - a.length);
     
     for (const team of teamWordsToRemove) {
         const regex = new RegExp(`\\b${team}\\b`, 'i');
-        if (regex.test(cleanStr)) {
-            cleanStr = cleanStr.replace(regex, '').trim();
-            // If replacing it left us with a valid string, we keep going (there might be multiple team words, though unlikely)
+        if (regex.test(isolated)) {
+            isolated = isolated.replace(regex, '').trim();
         }
     }
     
-    // Clean up any stray hyphens or extra spaces left behind
-    cleanStr = cleanStr.replace(/^[-·]+|[-·]+$/g, '').replace(/\s+/g, ' ').trim();
+    isolated = isolated.replace(/^[-·]+|[-·]+$/g, '').replace(/\s+/g, ' ').trim();
     
-    // If we've successfully isolated a string, return it
-    if (cleanStr && cleanStr.length > 0) {
-        return cleanStr;
+    if (isolated && isolated.length > 0 && isolated.length < cleanStr.length) {
+        return isolated;
     }
     
-    // 3. Absolute Last Resort if the above wiped everything out (e.g., the string was literally just "PSG")
-    const originalParts = str.trim().split(/\s+/);
-    if (originalParts.length > 1) {
-        // Assume the last word is the player
-        return originalParts[originalParts.length - 1];
+    // 3. Last resort: Take the last word if it looks like a nick
+    const words = cleanStr.split(/\s+/);
+    if (words.length > 1) {
+        return words[words.length - 1];
     }
     
-    return str.trim();
+    return cleanStr;
 };
 
 export const loginDev3 = async (force: boolean = false): Promise<string | null> => {

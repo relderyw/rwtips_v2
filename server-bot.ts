@@ -409,9 +409,78 @@ const server = app.listen(Number(PORT), '0.0.0.0', () => {
 
 const extractPlayerName = (str: string): string => {
     if (!str) return "";
-    const parenMatch = str.match(/\((.*?)\)/);
-    if (parenMatch && parenMatch[1]) return parenMatch[1].trim();
-    return str.trim();
+    
+    // Normalize string: Remove extra spaces and handle common variations
+    let cleanStr = str.trim();
+    
+    // 1. Check for "Team (Player)" or "(Player) Team" formats
+    const parenMatch = cleanStr.match(/(.*)\((.*?)\)/) || cleanStr.match(/\((.*?)\)(.*)/);
+    
+    const commonTeams = [
+        'Spain', 'France', 'Germany', 'Italy', 'Brazil', 'Argentina', 'Portugal', 'Netherlands', 'England', 'Belgium',
+        'Real Madrid', 'Barcelona', 'FC Bayern', 'Man City', 'Man Utd', 'Liverpool', 'PSG', 'Juventus', 'Arsenal', 'Chelsea',
+        'Borussia Dortmund', 'Bayer Leverkusen', 'Napoli', 'AC Milan', 'Inter', 'Inter de Milão', 'Atletico Madrid', 'Sevilla',
+        'Piemonte Calcio', 'Latium', 'Genoa', 'Roma', 'RB Leipzig', 'Real Sociedad', 'Athletic Club', 'Aston Villa', 'Spurs',
+        'PAOK', 'Benfica', 'Sporting', 'Porto', 'Ajax', 'Bayern de Munique', 'Bayer de Munique', 'Inglaterra', 'França', 'Espanha',
+        'Alemanha', 'Itália', 'Argentina', 'Holanda', 'Bélgica', 'Suíça', 'Escócia', 'Áustria', 'Grécia', 'Turquia',
+        'Borussia M\'gladbach', 'Eintracht Frankfurt', 'Wolfsburg', 'Werder Bremen', 'Everton', 'Lille', 'Monaco', 'Marseille', 'Lyon',
+        'ARG', 'BRA', 'FRA', 'ESP', 'GER', 'POR', 'NED', 'ENG', 'BEL', 'ITA', 'URY', 'CHL', 'COL'
+    ];
+    
+    const knownClubAcronyms = ['PSG', 'RMA', 'FCB', 'MCI', 'MUN', 'LIV', 'CHE', 'ARS', 'TOT', 'JUV', 'MIL', 'INT', 'NAP', 'BVB', 'ATM', 'BBM', 'SGE', 'WOB', 'EVR', 'LIL', 'ASM', 'OM', 'OL'];
+
+    if (parenMatch) {
+        // Find which part is likely the player
+        const parts = [parenMatch[1], parenMatch[2]].map(p => p ? p.trim() : "");
+        const part1 = parts[0];
+        const part2 = parts[1];
+        
+        if (!part1) return part2;
+        if (!part2) return part1;
+
+        const p1U = part1.toUpperCase();
+        const p2U = part2.toUpperCase();
+
+        // Heuristic 1: Common Team Names
+        if (commonTeams.some(t => p1U.includes(t.toUpperCase()))) return part2;
+        if (commonTeams.some(t => p2U.includes(t.toUpperCase()))) return part1;
+
+        // Heuristic 2: Acronyms
+        if (knownClubAcronyms.includes(p1U)) return part2;
+        if (knownClubAcronyms.includes(p2U)) return part1;
+
+        // Heuristic 3: Length (Players usually have shorter nicks than team names)
+        if (part1.length > part2.length + 5) return part2;
+        if (part2.length > part1.length + 5) return part1;
+
+        // Default: If it's "Team (Player)", return Player
+        return part2;
+    }
+    
+    // 2. Fallback for strings without parentheses (e.g., "PSG DANGERDIM77")
+    let isolated = cleanStr;
+    const teamWordsToRemove = [...commonTeams, ...knownClubAcronyms].sort((a, b) => b.length - a.length);
+    
+    for (const team of teamWordsToRemove) {
+        const regex = new RegExp(`\\b${team}\\b`, 'i');
+        if (regex.test(isolated)) {
+            isolated = isolated.replace(regex, '').trim();
+        }
+    }
+    
+    isolated = isolated.replace(/^[-·]+|[-·]+$/g, '').replace(/\s+/g, ' ').trim();
+    
+    if (isolated && isolated.length > 0 && isolated.length < cleanStr.length) {
+        return isolated;
+    }
+    
+    // 3. Last resort: Take the last word if it looks like a nick
+    const words = cleanStr.split(/\s+/);
+    if (words.length > 1) {
+        return words[words.length - 1];
+    }
+    
+    return cleanStr;
 };
 
 const sentTips = new Set<string>();
