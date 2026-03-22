@@ -272,6 +272,42 @@ export const handler: Handler = async (event: HandlerEvent) => {
               body: JSON.stringify({ error: 'Failed to fetch History API data', details: error.message }),
           };
       }
+  } else if (event.path.includes('send-screenshot')) {
+      // Proxy to Bot / Screenshot API
+      console.log(`[Proxy] Forwarding to Bot API: ${event.path}`);
+      const baseUrl = "https://rwtips-r943.onrender.com";
+      
+      try {
+          const config: any = {
+              method: 'POST',
+              url: `${baseUrl}/api/send-screenshot`,
+              data: event.body ? (typeof event.body === 'string' ? JSON.parse(event.body) : event.body) : {},
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+              }
+          };
+
+          // Forward headers if present
+          if (event.headers['x-api-key']) config.headers['X-API-Key'] = event.headers['x-api-key'];
+          if (event.headers['authorization']) config.headers['Authorization'] = event.headers['authorization'];
+
+          const response = await axios(config);
+          return {
+              statusCode: 200,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+              },
+              body: JSON.stringify(response.data),
+          };
+      } catch (error: any) {
+          console.error('[Proxy Error] Bot API:', error.message);
+          return {
+              statusCode: error.response?.status || 500,
+              body: JSON.stringify({ error: 'Failed to send screenshot via Bot', details: error.message }),
+          };
+      }
   }
 
   if (!targetPath) {
