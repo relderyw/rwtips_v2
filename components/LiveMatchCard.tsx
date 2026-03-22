@@ -266,8 +266,9 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
       const apiKey = (import.meta as any).env.VITE_API_INTERNAL_SECRET || 'rw_secret_key_v2_2026';
       const token = localStorage.getItem('authToken');
 
-      // Chamada para o backend
-      const response = await fetch('/api/send-screenshot', {
+      // Chamada direta ao bot server (bypass proxy Netlify para POST)
+      const botUrl = 'https://rwtips-r943.onrender.com/api/send-screenshot';
+      const response = await fetch(botUrl, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

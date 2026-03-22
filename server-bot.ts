@@ -37,16 +37,24 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// Restrição de CORS (ajuste para o seu domínio real em produção)
-const allowedOrigins = [process.env.FRONTEND_URL || 'http://localhost:5173'];
+// CORS: whitelist all known origins
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://rwtips.dpdns.org',
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+];
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            // Log to help diagnosis
+            console.warn(`[CORS] Blocked origin: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
-    }
+    },
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
 }));
 
 app.use(express.json({ limit: '10mb' }));
