@@ -84,8 +84,25 @@ const apiAuth = (req: any, res: any, next: any) => {
 };
 
 
-// Rota pública autenticada por Bearer token (sem X-API-Key necessário)
+// Rota pública - preflight explícito para evitar bloqueio de CORS
+app.options('/api/send-screenshot', (req, res) => {
+    res.set({
+        'Access-Control-Allow-Origin': req.headers.origin || '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+        'Access-Control-Max-Age': '86400',
+    });
+    res.sendStatus(204);
+});
+
 app.post('/api/send-screenshot', async (req, res) => {
+    // Headers CORS explícitos (bypass de qualquer problema de middleware)
+    res.set({
+        'Access-Control-Allow-Origin': req.headers.origin || '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+    });
+
     // Exige pelo menos um Bearer token (Firebase JWT)
     const auth = req.headers['authorization'] as string;
     if (!auth || !auth.startsWith('Bearer ')) {
