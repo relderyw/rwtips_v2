@@ -244,17 +244,28 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
 
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: '#0d0d0f',
-        scale: 2, // Melhor qualidade
+        scale: 2.5,
         useCORS: true,
+        allowTaint: false,
         logging: false,
-        onclone: (clonedDoc) => {
-          // Ajustes no clone para evitar erros de CORS e limpar o visual
-          const shareBtn = clonedDoc.querySelector('[title="Enviar para Telegram"]');
-          if (shareBtn) shareBtn.remove();
-          
-          // Remove ícones externos que causam erro de CORS (Superbet/Estrela)
-          const externalIcons = clonedDoc.querySelectorAll('img[src*="favicon"], img[src*="estrelabet"]');
-          externalIcons.forEach(img => (img as HTMLImageElement).style.visibility = 'hidden');
+        onclone: (_doc, clonedEl) => {
+          // Remove todos os botões de ação (não devem aparecer no print)
+          clonedEl.querySelectorAll('button').forEach((el: HTMLElement) => {
+            el.style.display = 'none';
+          });
+
+          // Remove imagens externas (favicon, logos de casas) que causam preto no canvas
+          clonedEl.querySelectorAll('img').forEach((img: HTMLImageElement) => {
+            const src = img.src || '';
+            if (src.startsWith('http') && !src.startsWith(window.location.origin)) {
+              img.style.display = 'none';
+            }
+          });
+
+          // Remove tooltips e overlays absolutos que possam vazar para fora do card
+          clonedEl.querySelectorAll('[class*="tooltip"], [class*="popover"], [class*="dropdown"]').forEach((el: HTMLElement) => {
+            el.style.display = 'none';
+          });
         }
       });
 
