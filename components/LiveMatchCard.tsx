@@ -289,7 +289,14 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             <img src={leagueInfo.image} className="w-full h-full object-contain brightness-110" alt="" />
           </div>
           <div className="flex flex-col min-w-0">
-            <h4 className="text-[14px] font-black uppercase tracking-tight truncate leading-tight mb-1" style={{ color: leagueInfo.color }}>
+            {/* Team Names (Small) */}
+            <div className="flex items-center gap-1 mb-1 opacity-50">
+              <span className="text-[8px] font-black uppercase tracking-tighter truncate max-w-[80px]">{match.homeTeamName || '–'}</span>
+              <span className="text-[7px] text-white/20 italic">x</span>
+              <span className="text-[8px] font-black uppercase tracking-tighter truncate max-w-[80px]">{match.awayTeamName || '–'}</span>
+            </div>
+            
+            <h4 className="text-[14px] font-black uppercase tracking-tight truncate leading-tight mb-0.5" style={{ color: leagueInfo.color }}>
               {match.homePlayer} <span className="text-white/20 italic mx-0.5">vs</span> {match.awayPlayer}
             </h4>
             <span className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: `${leagueInfo.color}80` }}>
@@ -299,6 +306,14 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
         </div>
         <div className="flex flex-col items-end gap-1.5 ml-1 shrink-0">
           <div className="flex items-center gap-2">
+            {/* Telegram Button (Small) */}
+            <button 
+              className="w-8 h-8 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center hover:bg-[#229ED9]/20 hover:border-[#229ED9]/40 transition-all group/tg cursor-pointer"
+              title="Enviar para Telegram"
+            >
+              <i className="fa-brands fa-telegram text-[#229ED9]/40 group-hover/tg:text-[#229ED9] text-xs"></i>
+            </button>
+
             {onTogglePin && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onTogglePin(); }} 
@@ -318,6 +333,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
       <div className="p-3 pb-2.5 flex flex-col gap-2.5 flex-1 relative z-10">
         <div className="flex items-center justify-between bg-black/40 p-3 rounded-2xl border border-white/[0.03] shadow-inner">
           <div className="text-center flex-1 min-w-0">
+            <p className="text-[7px] font-black text-white/20 uppercase truncate mb-0.5 tracking-tighter">{match.homeTeamName || '–'}</p>
             <h3 className="text-[11px] font-black text-white/80 uppercase truncate mb-1">{match.homePlayer}</h3>
             {p1.lastMatches && p1.lastMatches.length >= 3 ? (
               <FormDots results={p1.last5} stats={p1} />
@@ -343,6 +359,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           </div>
 
           <div className="text-center flex-1 min-w-0">
+            <p className="text-[7px] font-black text-white/20 uppercase truncate mb-0.5 tracking-tighter">{match.awayTeamName || '–'}</p>
             <h3 className="text-[11px] font-black text-white/80 uppercase truncate mb-1">{match.awayPlayer}</h3>
             {p2.lastMatches && p2.lastMatches.length >= 3 ? (
               <FormDots results={p2.last5} stats={p2} />

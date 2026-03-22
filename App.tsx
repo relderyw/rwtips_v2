@@ -692,7 +692,7 @@ const App: React.FC = () => {
                             </div>
                             <div>
                               <h3 className="text-white/90 text-sm font-black tracking-tight">TERMÔMETRO GERAL DE MERCADO</h3>
-                              <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">Clique para recolher/expandir o dashboard das Ligas</p>
+                              <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">Clique para recolher/expandir • Baseado nos últimos {resultsSampleSize} jogos</p>
                             </div>
                           </div>
                           <button className={`w-9 h-9 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-transform duration-500 ${showThermometers ? 'rotate-180' : ''}`}>
@@ -747,7 +747,7 @@ const App: React.FC = () => {
                                               {stats ? (
                                                 <div className="w-full">
                                                   <h4 className="text-[8px] font-black uppercase text-white/30 tracking-[0.3em] mb-6 text-center">
-                                                    Raio-X Detalhado
+                                                    Raio-X Detalhado ({resultsSampleSize}J)
                                                   </h4>
                                                   <div className="scale-95 origin-top md:scale-100">
                                                     <LeagueThermometer stats={stats} />
