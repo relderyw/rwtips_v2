@@ -695,9 +695,25 @@ const App: React.FC = () => {
                               <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">Clique para recolher/expandir • Baseado nos últimos {resultsSampleSize} jogos</p>
                             </div>
                           </div>
-                          <button className={`w-9 h-9 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-transform duration-500 ${showThermometers ? 'rotate-180' : ''}`}>
-                             <i className="fa-solid fa-chevron-down text-white/50 text-xs"></i>
-                          </button>
+                          
+                          <div className="flex items-center gap-3">
+                            {/* Discrete Sample Selector */}
+                            <div className="hidden sm:flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5 mr-2" onClick={(e) => e.stopPropagation()}>
+                               {[5, 10, 15, 20, 30].map(size => (
+                                 <button
+                                   key={`dash-sample-${size}`}
+                                   onClick={() => setResultsSampleSize(size)}
+                                   className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all duration-300 border ${resultsSampleSize === size ? 'bg-orange-500 text-black border-orange-400 shadow-lg shadow-orange-500/20 scale-105' : 'text-white/10 border-transparent hover:text-white/30'}`}
+                                 >
+                                   {size}J
+                                 </button>
+                               ))}
+                            </div>
+
+                            <button className={`w-9 h-9 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-transform duration-500 ${showThermometers ? 'rotate-180' : ''}`}>
+                               <i className="fa-solid fa-chevron-down text-white/50 text-xs"></i>
+                            </button>
+                          </div>
                         </div>
 
                         <div className={`transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-top overflow-hidden ${showThermometers ? 'opacity-100 max-h-[2000px]' : 'opacity-0 max-h-0 pointer-events-none'}`}>
