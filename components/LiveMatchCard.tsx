@@ -233,11 +233,11 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
 
   return (
     <div
-      className={`relative bg-[#0d0d0f] rounded-2xl border flex flex-col transition-all duration-500 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01] shadow-[0_0_40px_rgba(0,0,0,0.8)]' : 'card-glow border-white/5'}`}
+      className={`relative bg-[#0d0d0f] rounded-2xl border flex flex-col transition-all duration-500 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01]' : 'card-glow border-white/[0.03]'}`}
       style={{
-        borderColor: isSignaled ? theme.color : 'rgba(255,255,255,0.05)',
-        boxShadow: isSignaled ? `0 0 20px ${theme.secondary}, 0 20px 40px rgba(0,0,0,0.6)` : '',
-        borderLeft: isSignaled ? `6px solid ${theme.color}` : `5px solid ${leagueInfo.color}`,
+        borderColor: isSignaled ? `${theme.color}40` : 'rgba(255,255,255,0.03)',
+        boxShadow: isSignaled ? `0 20px 50px rgba(0,0,0,0.8), 0 0 15px ${theme.color}20` : '',
+        borderLeft: isSignaled ? `5px solid ${theme.color}` : `4px solid ${leagueInfo.color}60`,
         overflow: 'visible'
       }}
     >
