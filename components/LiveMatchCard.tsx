@@ -248,9 +248,13 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
         useCORS: true,
         logging: false,
         onclone: (clonedDoc) => {
-          // Ajustes no clone se necessário (ex: remover botões de ação)
+          // Ajustes no clone para evitar erros de CORS e limpar o visual
           const shareBtn = clonedDoc.querySelector('[title="Enviar para Telegram"]');
           if (shareBtn) shareBtn.remove();
+          
+          // Remove ícones externos que causam erro de CORS (Superbet/Estrela)
+          const externalIcons = clonedDoc.querySelectorAll('img[src*="favicon"], img[src*="estrelabet"]');
+          externalIcons.forEach(img => (img as HTMLImageElement).style.visibility = 'hidden');
         }
       });
 
@@ -258,10 +262,18 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
       const strategyText = theme.label ? `📈 Estratégia: ${theme.label}` : '';
       const caption = `🎮 <b>RW TIPS - OPORTUNIDADE</b>\n\n🏆 ${match.leagueName}\n⚔️ ${match.homePlayer} vs ${match.awayPlayer}\n${strategyText}\n\n🔗 <a href="${bookmakerUrl}"><b>ABRIR NA CASA</b></a>`;
 
+      // Autenticação (mesma lógica do services/api.ts)
+      const apiKey = (import.meta as any).env.VITE_API_INTERNAL_SECRET || 'rw_secret_key_v2_2026';
+      const token = localStorage.getItem('authToken');
+
       // Chamada para o backend
       const response = await fetch('/api/send-screenshot', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ image: base64Image, caption })
       });
 
