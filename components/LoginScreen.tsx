@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { auth, db } from '../services/firebase';
+import { sendLoginNotification } from '../services/telegram';
 
 interface LoginScreenProps {
     onLoginSuccess: (isAdmin?: boolean, goToAdmin?: boolean) => void;
@@ -69,6 +70,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             sessionStorage.setItem('loggedIn', 'true');
 
             sessionStorage.setItem('userRole', isAdmin ? 'admin' : 'user');
+
+            // --- NOTIFICAÇÃO TELEGRAM ---
+            sendLoginNotification(email, userData.role || 'user', adminMode)
+                .catch(err => console.error("Erro ao enviar notificação de login:", err));
+            // -----------------------------
 
             // goToAdmin = true apenas se loginMode é admin E o usuário é admin
             onLoginSuccess(isAdmin, adminMode && isAdmin);

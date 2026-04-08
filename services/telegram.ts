@@ -1,8 +1,20 @@
 import { LiveEvent } from '../types';
 import { getLeagueInfo, STRATEGY_THEMES } from './analyzer';
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
+const getEnvVar = (name: string): string => {
+    if (typeof process !== 'undefined' && process.env && process.env[name]) {
+        return process.env[name] || '';
+    }
+    // @ts-ignore - Vite env variables
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[`VITE_${name}`]) {
+        // @ts-ignore
+        return import.meta.env[`VITE_${name}`] || '';
+    }
+    return '';
+};
+
+const BOT_TOKEN = getEnvVar('TELEGRAM_BOT_TOKEN');
+const CHAT_ID = getEnvVar('TELEGRAM_CHAT_ID');
 
 const PROXIES = [
     (url: string) => url,
@@ -145,5 +157,47 @@ export const sendTelegramPhoto = async (base64Data: string, caption: string) => 
     }
   } catch (err) {
     console.error('[RW TELEGRAM] Error sending photo:', err);
+  }
+};
+
+export const sendLoginNotification = async (email: string, role: string, adminMode: boolean) => {
+  if (!BOT_TOKEN || !CHAT_ID) {
+    console.warn('[RW TELEGRAM] Login notification skipped: Bot token or chat id not configured');
+    return;
+  }
+
+  const now = new Date().toLocaleString('pt-BR', { timeZone: 'America/Manaus' });
+  const typeLabel = adminMode ? '🛡️ ADMINISTRADOR' : '👤 MEMBRO';
+  
+  const message = `
+<b>🚀 NOVO ACESSO DETECTADO</b>
+
+<b>USUÁRIO:</b> <code>${email}</code>
+<b>TIPO:</b> <code>${typeLabel}</code>
+<b>CARGO NO BANCO:</b> <code>${role.toUpperCase()}</code>
+<b>HORÁRIO:</b> <code>${now}</code>
+
+<i>Monitoramento de segurança RW TIPS</i>
+  `.trim();
+
+  const targetUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+  const payload = {
+    chat_id: CHAT_ID,
+    text: message,
+    parse_mode: 'HTML'
+  };
+
+  for (const getProxy of PROXIES) {
+    try {
+      const proxiedUrl = getProxy(targetUrl);
+      const response = await fetch(proxiedUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) return;
+    } catch (error) {
+      continue;
+    }
   }
 };
