@@ -167,11 +167,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
                 <div className="mt-8 pt-8 border-t border-white/5 w-full flex flex-col gap-4">
                     <p className="text-center text-[10px] font-bold text-white/10 uppercase tracking-widest">Suporte Direto</p>
-                    <div className="flex gap-4">
-                        <a href="https://wa.me/5592994951771" target="_blank" className="flex-1 bg-white/[0.02] border border-white/5 py-3 rounded-xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500/5 hover:border-emerald-500/20 transition-all">
-                            <i className="fa-brands fa-whatsapp text-emerald-500"></i> WhatsApp
-                        </a>
-                        <a href="https://t.me/assuncaoIII" target="_blank" className="flex-1 bg-white/[0.02] border border-white/5 py-3 rounded-xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest hover:bg-blue-500/5 hover:border-blue-500/20 transition-all">
+                    <div className="flex justify-center">
+                        <a href="https://t.me/assuncaoIII" target="_blank" className="w-full bg-white/[0.02] border border-white/5 py-3 rounded-xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest hover:bg-blue-500/5 hover:border-blue-500/20 transition-all">
                             <i className="fa-brands fa-telegram text-blue-500"></i> Telegram
                         </a>
                     </div>
