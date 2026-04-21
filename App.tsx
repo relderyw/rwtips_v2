@@ -10,11 +10,10 @@ import { LoginScreen } from './components/LoginScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { checkSession, logout as firebaseLogout, auth, db, firebaseInstance } from './services/firebase';
 import { BankrollManager } from './components/Bankroll/BankrollManager';
-import { H2HSearch } from './components/H2HSearch';
-import { StrategyHistory } from './components/StrategyHistory';
 import { NBADashboard } from './components/NBA/NBADashboard';
 import { ModuleSelector } from './components/ModuleSelector';
 import LiveModule from './components/LIVE/LiveModule';
+import { FifaAnalyticsDashboard } from './components/FifaAnalyticsDashboard';
 
 
 interface GoalNotification {
@@ -102,7 +101,7 @@ const App: React.FC = () => {
   });
   const [isDevMode, setIsDevMode] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
-  const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'bankroll' | 'h2h' | 'relatorios' | 'nba'>('radar');
+  const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'bankroll' | 'analytics' | 'nba'>('radar');
   const [selectedModule, setSelectedModule] = useState<'fifa' | 'futebol' | 'basquete' | null>(null);
   const [history, setHistory] = useState<HistoryMatch[]>([]);
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
@@ -560,13 +559,8 @@ const App: React.FC = () => {
                   <>
                     <button onClick={() => setActiveMainTab('radar')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'radar' ? 'bg-white text-black shadow-2xl scale-105' : 'text-white/30 hover:text-white/60'}`}>Radar Live</button>
                     <button onClick={() => setActiveMainTab('results')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'results' ? 'bg-white text-black shadow-2xl scale-105' : 'text-white/30 hover:text-white/60'}`}>Resultados</button>
-                    <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'bankroll' ? 'bg-emerald-500 text-black shadow-2xl scale-105' : 'text-white/30 hover:text-emerald-500'}`}>Gestão de Banca</button>
-                  </>
-                )}
-                {selectedModule === 'fifa' && (
-                  <>
-                    <button onClick={() => setActiveMainTab('h2h')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'h2h' ? 'bg-indigo-500 text-white shadow-2xl scale-105' : 'text-white/30 hover:text-indigo-500'}`}>H2H PRO</button>
-                    <button onClick={() => setActiveMainTab('relatorios')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'relatorios' ? 'bg-rose-500 text-white shadow-2xl scale-105' : 'text-white/30 hover:text-rose-500'}`}>Relatórios</button>
+                    <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'bankroll' ? 'bg-emerald-500 text-black shadow-2xl scale-105' : 'text-white/30 hover:text-emerald-500'}`}>Banca</button>
+                    <button onClick={() => setActiveMainTab('analytics')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'analytics' ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-2xl scale-105' : 'text-white/30 hover:text-indigo-400'}`}>H2H &amp; BACKTEST</button>
                   </>
                 )}
               </nav>
@@ -1005,10 +999,8 @@ const App: React.FC = () => {
                     </div>
                   ) : activeMainTab === 'bankroll' ? (
                     <BankrollManager userEmail={auth.currentUser?.email || ''} />
-                  ) : activeMainTab === 'h2h' ? (
-                    <H2HSearch />
-                  ) : activeMainTab === 'relatorios' ? (
-                    <StrategyHistory history={history} />
+                  ) : activeMainTab === 'analytics' ? (
+                    <FifaAnalyticsDashboard history={history} />
                   ) : null}
                 </>
               ) : selectedModule === 'futebol' ? (

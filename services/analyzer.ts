@@ -839,3 +839,336 @@ export const generateStrategyReport = (history: HistoryMatch[], limitPerLeague?:
     return a.league.localeCompare(b.league);
   });
 };
+
+// ============================================================
+// === BACKTEST ENGINE — FUNÇÕES DE ANÁLISE PREDITIVA       ===
+// ============================================================
+
+export interface BacktestTimelineEntry {
+  date: string;
+  result: 'G' | 'R' | 'N';
+  score: string;
+  homePlayer: string;
+  awayPlayer: string;
+}
+
+export interface BacktestResult {
+  league: string;
+  strategy: string;
+  activations: number;
+  greens: number;
+  reds: number;
+  winRate: number;
+  roi: number; // ROI estimado em %, considerando odd 1.80
+  trend: 'heating' | 'cooling' | 'stable';
+  timeline: BacktestTimelineEntry[];
+  avgConfidence: number;
+}
+
+export interface PlayerMarketResult {
+  date: string;
+  result: 'G' | 'R';
+  homePlayer: string;
+  awayPlayer: string;
+  score: string;
+  htScore: string;
+  value: number; // gols do mercado específico
+}
+
+export interface PlayerBacktestResult {
+  player: string;
+  market: string;
+  displayMarket: string;
+  totalGames: number;
+  greens: number;
+  reds: number;
+  winRate: number;
+  currentStreak: number;
+  streakType: 'G' | 'R' | 'N';
+  lastN: ('G' | 'R')[];
+  predictedProbability: number;
+  confidence: 'high' | 'medium' | 'low';
+  trend: 'heating' | 'cooling' | 'stable';
+  recentGames: PlayerMarketResult[];
+}
+
+export interface PredictionSignal {
+  player: string;
+  league: string;
+  market: string;
+  displayMarket: string;
+  probability: number;
+  confidence: number;
+  signal: 'strong_buy' | 'buy' | 'neutral' | 'avoid';
+  reasoning: string[];
+  trend: 'heating' | 'cooling' | 'stable';
+  streak: number;
+  streakType: 'G' | 'R' | 'N';
+  lastN: ('G' | 'R')[];
+}
+
+// ----------------------------------
+// Avalia se um jogo satisfaz o mercado
+// ----------------------------------
+const evaluateMarket = (game: HistoryMatch, market: string, perspective: 'home' | 'away' | 'both' = 'both'): { hit: boolean; value: number } => {
+  const ftH = Number(game.score_home || 0);
+  const ftA = Number(game.score_away || 0);
+  const htH = Number(game.halftime_score_home || 0);
+  const htA = Number(game.halftime_score_away || 0);
+  const totFT = ftH + ftA;
+  const totHT = htH + htA;
+
+  switch (market) {
+    case 'over_0.5_ht': return { hit: totHT > 0.5, value: totHT };
+    case 'over_1.5_ht': return { hit: totHT > 1.5, value: totHT };
+    case 'over_2.5_ht': return { hit: totHT > 2.5, value: totHT };
+    case 'btts_ht': return { hit: htH > 0 && htA > 0, value: htH > 0 && htA > 0 ? 1 : 0 };
+    case 'over_1.5_ft': return { hit: totFT > 1.5, value: totFT };
+    case 'over_2.5_ft': return { hit: totFT > 2.5, value: totFT };
+    case 'over_3.5_ft': return { hit: totFT > 3.5, value: totFT };
+    case 'over_4.5_ft': return { hit: totFT > 4.5, value: totFT };
+    case 'btts_ft': return { hit: ftH > 0 && ftA > 0, value: ftH > 0 && ftA > 0 ? 1 : 0 };
+    case 'home_win': return { hit: ftH > ftA, value: ftH - ftA };
+    case 'away_win': return { hit: ftA > ftH, value: ftA - ftH };
+    case 'draw': return { hit: ftH === ftA, value: 0 };
+    default: return { hit: false, value: 0 };
+  }
+};
+
+// ----------------------------------
+// Calcula tendência (heating/cooling/stable) a partir de resultados
+// ----------------------------------
+const calcTrend = (results: ('G' | 'R')[]): 'heating' | 'cooling' | 'stable' => {
+  if (results.length < 4) return 'stable';
+  const half = Math.floor(results.length / 2);
+  const recent = results.slice(0, half);
+  const older = results.slice(half);
+  const rateRecent = recent.filter(r => r === 'G').length / recent.length;
+  const rateOlder = older.filter(r => r === 'G').length / older.length;
+  if (rateRecent > rateOlder + 0.15) return 'heating';
+  if (rateRecent < rateOlder - 0.15) return 'cooling';
+  return 'stable';
+};
+
+// ----------------------------------
+// BACKTEST POR LIGA × ESTRATÉGIA
+// ----------------------------------
+export const runLeagueBacktest = (
+  history: HistoryMatch[],
+  leagueName: string,
+  strategyKey: string,
+  sampleSize: number = 20
+): BacktestResult => {
+  const allGames = normalizeHistoryData(history);
+  const targetLeagueInfo = getLeagueInfo(leagueName);
+
+  const leagueGames = (leagueName === 'all' ? allGames : allGames.filter(g => {
+    const info = getLeagueInfo(g.league_name);
+    return info.name === targetLeagueInfo.name;
+  }))
+    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+    .slice(0, sampleSize * 4); // Busca pool amplo para encontrar ativações
+
+  const timeline: BacktestTimelineEntry[] = [];
+  let greens = 0, reds = 0, confidenceSum = 0;
+
+  for (let i = 15; i < leagueGames.length; i++) {
+    const match = leagueGames[i];
+    const pastData = leagueGames.slice(i + 1);
+    const analysis = analyzeMatchPotential(match.home_player, match.away_player, pastData, match.league_name);
+
+    if (analysis.key === strategyKey || strategyKey === 'all') {
+      if (strategyKey !== 'all' && analysis.confidence < 70) continue;
+      const isSuccess = checkStrategySuccess(strategyKey === 'all' ? analysis.key : strategyKey, match);
+      const result: 'G' | 'R' | 'N' = analysis.key === 'none' ? 'N' : (isSuccess ? 'G' : 'R');
+
+      if (result !== 'N') {
+        if (result === 'G') greens++;
+        else reds++;
+        confidenceSum += analysis.confidence;
+        timeline.push({
+          date: new Date(match.data_realizacao).toLocaleDateString('pt-BR'),
+          result,
+          score: `${match.score_home}-${match.score_away}`,
+          homePlayer: match.home_player,
+          awayPlayer: match.away_player,
+        });
+        if (timeline.length >= sampleSize) break;
+      }
+    }
+  }
+
+  const total = greens + reds;
+  const winRate = total > 0 ? (greens / total) * 100 : 0;
+  // ROI = (greens * 0.80 - reds) / total * 100 (odd 1.80)
+  const roi = total > 0 ? ((greens * 0.80 - reds) / total) * 100 : 0;
+  const resultSeq = timeline.map(t => t.result as ('G' | 'R' | 'N')).filter((r): r is 'G' | 'R' => r !== 'N');
+  const trend = calcTrend(resultSeq);
+
+  return {
+    league: leagueName === 'all' ? 'TODAS AS LIGAS' : targetLeagueInfo.name,
+    strategy: strategyKey,
+    activations: total,
+    greens, reds, winRate, roi, trend, timeline,
+    avgConfidence: total > 0 ? confidenceSum / total : 0,
+  };
+};
+
+// ----------------------------------
+// BACKTEST POR PLAYER × MERCADO
+// ----------------------------------
+export const runPlayerBacktest = (
+  history: HistoryMatch[],
+  playerName: string,
+  market: string,
+  sampleSize: number = 20
+): PlayerBacktestResult => {
+  const MARKET_LABELS: Record<string, string> = {
+    over_0_5_ht: 'Over 0.5 HT', over_1_5_ht: 'Over 1.5 HT', over_2_5_ht: 'Over 2.5 HT',
+    btts_ht: 'BTTS HT', over_1_5_ft: 'Over 1.5 FT', over_2_5_ft: 'Over 2.5 FT',
+    over_3_5_ft: 'Over 3.5 FT', over_4_5_ft: 'Over 4.5 FT', btts_ft: 'BTTS FT',
+    home_win: 'Vitória Casa', away_win: 'Vitória Fora', draw: 'Empate',
+    // underscore format kept as-is
+    over_0_5_ht2: 'Over 0.5 HT',
+  };
+
+  const allGames = normalizeHistoryData(history);
+  const targetName = normalize(playerName);
+
+  const playerGames = allGames
+    .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
+    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+    .slice(0, sampleSize);
+
+  const recentGames: PlayerMarketResult[] = [];
+  const lastN: ('G' | 'R')[] = [];
+
+  playerGames.forEach(g => {
+    const { hit, value } = evaluateMarket(g, market);
+    const result: 'G' | 'R' = hit ? 'G' : 'R';
+    lastN.push(result);
+    recentGames.push({
+      date: new Date(g.data_realizacao).toLocaleDateString('pt-BR'),
+      result,
+      homePlayer: g.home_player,
+      awayPlayer: g.away_player,
+      score: `${g.score_home}-${g.score_away}`,
+      htScore: `${g.halftime_score_home}-${g.halftime_score_away}`,
+      value,
+    });
+  });
+
+  const greens = lastN.filter(r => r === 'G').length;
+  const reds = lastN.filter(r => r === 'R').length;
+  const total = greens + reds;
+  const winRate = total > 0 ? (greens / total) * 100 : 0;
+
+  // Calcular streak atual
+  let streak = 0;
+  let streakType: 'G' | 'R' | 'N' = 'N';
+  if (lastN.length > 0) {
+    streakType = lastN[0];
+    for (const r of lastN) {
+      if (r === streakType) streak++;
+      else break;
+    }
+  }
+
+  const trend = calcTrend(lastN);
+
+  // Projeção preditiva baseada nos últimos 5 vs banda anterior
+  const last5Rate = lastN.slice(0, 5).filter(r => r === 'G').length / Math.max(1, Math.min(5, lastN.length));
+  const older5Rate = lastN.slice(5, 10).filter(r => r === 'G').length / Math.max(1, Math.min(5, lastN.slice(5).length));
+  const baseRate = winRate / 100;
+  const trendBonus = trend === 'heating' ? 0.08 : trend === 'cooling' ? -0.08 : 0;
+  const streakBonus = streak >= 3 && streakType === 'G' ? 0.05 : streak >= 3 && streakType === 'R' ? -0.05 : 0;
+  const predictedProbability = Math.min(99, Math.max(1, (baseRate + trendBonus + streakBonus) * 100));
+
+  const confidence: 'high' | 'medium' | 'low' = total >= 15 && Math.abs(winRate - 50) > 25
+    ? 'high' : total >= 8
+      ? 'medium' : 'low';
+
+  const displayMarket = MARKET_LABELS[market.replace(/\./g, '_')] || market.toUpperCase().replace(/_/g, ' ');
+
+  return {
+    player: playerName, market, displayMarket,
+    totalGames: total, greens, reds, winRate,
+    currentStreak: streak, streakType, lastN: lastN.slice(0, 10),
+    predictedProbability, confidence, trend, recentGames,
+  };
+};
+
+// ----------------------------------
+// GERADOR DE SINAIS PREDITIVOS (Ranking de players)
+// ----------------------------------
+export const generatePredictionSignals = (
+  history: HistoryMatch[],
+  market: string,
+  minGames: number = 5,
+  topN: number = 20
+): PredictionSignal[] => {
+  const allGames = normalizeHistoryData(history);
+
+  // Coletar todos os players únicos
+  const playerSet = new Set<string>();
+  allGames.forEach(g => {
+    if (g.home_player) playerSet.add(g.home_player);
+    if (g.away_player) playerSet.add(g.away_player);
+  });
+
+  const signals: PredictionSignal[] = [];
+
+  playerSet.forEach(player => {
+    const result = runPlayerBacktest(history, player, market, 20);
+    if (result.totalGames < minGames) return;
+
+    const playerGames = allGames.filter(g =>
+      normalize(g.home_player) === normalize(player) || normalize(g.away_player) === normalize(player)
+    );
+    const league = playerGames.length > 0 ? getLeagueInfo(playerGames[0].league_name).name : 'N/A';
+
+    // Score de confiança baseado em: amostras + consistência + tendência
+    let confidenceScore = 0;
+    if (result.totalGames >= 15) confidenceScore += 30;
+    else if (result.totalGames >= 10) confidenceScore += 20;
+    else confidenceScore += 10;
+
+    if (result.winRate >= 90) confidenceScore += 40;
+    else if (result.winRate >= 75) confidenceScore += 30;
+    else if (result.winRate >= 60) confidenceScore += 15;
+
+    if (result.trend === 'heating') confidenceScore += 20;
+    else if (result.trend === 'stable') confidenceScore += 10;
+
+    if (result.currentStreak >= 3 && result.streakType === 'G') confidenceScore += 10;
+    confidenceScore = Math.min(100, confidenceScore);
+
+    const signal: 'strong_buy' | 'buy' | 'neutral' | 'avoid' =
+      result.predictedProbability >= 80 && confidenceScore >= 70 ? 'strong_buy' :
+        result.predictedProbability >= 65 ? 'buy' :
+          result.predictedProbability <= 35 ? 'avoid' : 'neutral';
+
+    const reasoning: string[] = [];
+    if (result.trend === 'heating') reasoning.push(`Tendência aquecendo (últimos jogos acima da média)`);
+    if (result.currentStreak >= 3 && result.streakType === 'G') reasoning.push(`Sequência de ${result.currentStreak} greens consecutivos`);
+    if (result.winRate >= 80) reasoning.push(`Taxa histórica de ${result.winRate.toFixed(0)}% de green`);
+    if (result.totalGames >= 15) reasoning.push(`Base sólida: ${result.totalGames} jogos analisados`);
+
+    signals.push({
+      player, league, market,
+      displayMarket: result.displayMarket,
+      probability: result.predictedProbability,
+      confidence: confidenceScore,
+      signal, reasoning,
+      trend: result.trend,
+      streak: result.currentStreak,
+      streakType: result.streakType,
+      lastN: result.lastN,
+    });
+  });
+
+  return signals
+    .filter(s => s.signal === 'strong_buy' || s.signal === 'buy')
+    .sort((a, b) => (b.probability * 0.6 + b.confidence * 0.4) - (a.probability * 0.6 + a.confidence * 0.4))
+    .slice(0, topN);
+};
