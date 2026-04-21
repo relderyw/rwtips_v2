@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { HistoryMatch } from '../types';
 import {
   runLeagueBacktest, runPlayerBacktest, generatePredictionSignals,
   BacktestResult, PlayerBacktestResult, PredictionSignal,
-  getLeagueInfo, ALLOWED_LEAGUES, STRATEGY_THEMES
+  getLeagueInfo, ALLOWED_LEAGUES, STRATEGY_THEMES, normalize
 } from '../services/analyzer';
+import { fetchPlayers } from '../services/api';
 
 // =========================================================
 // CONSTANTS
@@ -106,6 +107,27 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
   const [btRunning, setBtRunning] = useState(false);
   const [signalMarket, setSignalMarket] = useState('over_2.5_ft');
   const [signalMinGames, setSignalMinGames] = useState(5);
+
+  // ─── AUTOCOMPLETE STATE ───
+  const [playerSuggestions, setPlayerSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const playerInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (btPlayerName.length >= 2) {
+        setLoadingSuggestions(true);
+        fetchPlayers(btPlayerName).then(s => {
+          setPlayerSuggestions(s);
+          setLoadingSuggestions(false);
+        });
+      } else {
+        setPlayerSuggestions([]);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [btPlayerName]);
 
   // Available leagues from history
   const availableLeagues = useMemo(() => {
@@ -284,12 +306,41 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
           {btMode === 'player' && (
             <div className="space-y-4">
               <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-wrap items-end gap-6">
-                <div className="flex-1 min-w-[200px]">
+                <div className="flex-1 min-w-[200px] relative">
                   <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-2">Nome do Player</div>
-                  <input type="text" value={btPlayerName} onChange={e => setBtPlayerName(e.target.value)}
-                    placeholder="Ex: NEYMARJR, RONALDO..."
-                    className="w-full bg-black/60 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-cyan-500/50 transition-all placeholder:text-zinc-600" />
-                </div>
+                  <input
+                      ref={playerInputRef}
+                      type="text"
+                      value={btPlayerName}
+                      onChange={e => { setBtPlayerName(e.target.value); setShowSuggestions(true); }}
+                      onFocus={() => setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      placeholder="Ex: NEYMARJR, RONALDO..."
+                      className="w-full bg-black/60 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-cyan-500/50 transition-all placeholder:text-zinc-600" />
+                  
+                  {showSuggestions && (playerSuggestions.length > 0 || loadingSuggestions) && (
+                      <div className="absolute top-full left-0 mt-1 w-full bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden">
+                        {loadingSuggestions ? (
+                          <div className="px-4 py-3 text-xs text-zinc-500">Buscando jogadores...</div>
+                        ) : (
+                          playerSuggestions.map((name, i) => (
+                            <button
+                              key={i}
+                              onMouseDown={(e) => {
+                                e.preventDefault(); // Impede o onBlur de fechar antes do clique
+                                setBtPlayerName(name);
+                                setPlayerSuggestions([]);
+                                setShowSuggestions(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-800 transition-all text-white/80 border-b border-white/5 last:border-0 truncate"
+                            >
+                              {name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 <div>
                   <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-2">Mercado</div>
                   <select value={btMarket} onChange={e => setBtMarket(e.target.value)}
