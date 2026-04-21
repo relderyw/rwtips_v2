@@ -79,10 +79,28 @@ const ConfidenceBadge: React.FC<{ conf: 'high' | 'medium' | 'low'; score?: numbe
     low: 'bg-zinc-700/40 text-zinc-500 border-zinc-600/20',
   };
   return (
-    <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase ${map[conf]}`}>
-      {conf === 'high' ? '🔒 Alta' : conf === 'medium' ? '⚠️ Média' : '📉 Baixa'}
-      {score !== undefined && ` (${score})`}
-    </span>
+    <div className="group relative inline-block">
+      <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase cursor-help ${map[conf]}`}>
+        {conf === 'high' ? '🔒 Alta' : conf === 'medium' ? '⚠️ Média' : '📉 Baixa'}
+        {score !== undefined && ` (${score})`}
+      </span>
+      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block w-48 p-2 bg-zinc-900 border border-white/10 rounded-lg shadow-2xl z-[100]">
+        <p className="text-[8px] text-zinc-400 leading-tight">
+          {conf === 'high' ? 'Base de dados sólida e padrões consistentes detectados.' : 
+           conf === 'medium' ? 'Padrões moderados, considere reduzir a stake.' : 
+           'Dados insuficientes ou alta volatilidade. Evite entradas.'}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const MarketIcon: React.FC<{ market: string }> = ({ market }) => {
+  const m = MARKETS.find(x => x.id === market) || { icon: 'fa-circle', color: '#71717a' };
+  return (
+    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 border border-white/10">
+      <i className={`fa-solid ${m.icon} text-xs`} style={{ color: m.color }}></i>
+    </div>
   );
 };
 
@@ -242,57 +260,80 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                     <span className="text-[9px] text-emerald-500 font-black uppercase">Ordenado por probabilidade × confiança</span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {btSignals.map((sig, i) => (
                       <div key={i}
-                        className={`relative p-4 rounded-2xl border transition-all overflow-hidden ${sig.signal === 'strong_buy' ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-white/[0.02] border-white/5'}`}>
+                        className={`relative p-5 rounded-[2rem] border transition-all overflow-hidden ${sig.signal === 'strong_buy' ? 'bg-emerald-500/[0.03] border-emerald-500/30 shadow-2xl shadow-emerald-500/5' : 'bg-white/[0.02] border-white/5'}`}>
                         {sig.signal === 'strong_buy' && (
-                          <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
+                          <div className="absolute top-0 right-0 px-4 py-1.5 bg-emerald-500 text-black text-[9px] font-black uppercase rounded-bl-2xl tracking-tighter">
+                            ⚡ ENTRADA RECOMENDADA
+                          </div>
                         )}
 
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[9px] bg-white/5 border border-white/10 rounded px-2 py-0.5 text-white/40 font-black uppercase">#{i + 1}</span>
-                              <span className="text-[9px] text-zinc-500 uppercase font-black">{sig.league}</span>
+                        <div className="flex items-start justify-between gap-3 mb-5">
+                          <div className="flex items-center gap-4">
+                            <MarketIcon market={sig.market} />
+                            <div>
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="text-[10px] text-zinc-500 uppercase font-black">{sig.league}</span>
+                              </div>
+                              <div className="text-xl font-black text-white leading-tight tracking-tight">{sig.player}</div>
                             </div>
-                            <div className="text-base font-black text-white leading-tight">{sig.player}</div>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className="text-3xl font-black text-emerald-400 leading-none">{sig.probability.toFixed(0)}%</div>
-                            <div className="text-[8px] text-zinc-600 uppercase mt-0.5">probabilidade</div>
+                            <div className="text-4xl font-black text-emerald-400 leading-none">{sig.probability.toFixed(0)}%</div>
+                            <div className="text-[9px] text-zinc-600 uppercase mt-1.5 font-bold">Probabilidade</div>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2 mb-3">
-                          <SignalBadge signal={sig.signal} />
-                          <TrendBadge trend={sig.trend} />
-                          {sig.streak >= 2 && (
-                            <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black ${sig.streakType === 'G' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
-                              {sig.streak}× {sig.streakType === 'G' ? '🟢' : '🔴'} seguidos
-                            </span>
-                          )}
+                        <div className="grid grid-cols-2 gap-3 mb-5">
+                          <div className="bg-black/40 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center">
+                            <div className="text-[9px] text-zinc-500 uppercase font-black mb-1">Decisão</div>
+                            <SignalBadge signal={sig.signal} />
+                          </div>
+                          <div className="bg-black/40 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center">
+                            <div className="text-[9px] text-zinc-500 uppercase font-black mb-1">Momento</div>
+                            <TrendBadge trend={sig.trend} />
+                          </div>
                         </div>
 
-                        <DotStreak results={sig.lastN} />
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex items-center justify-between mb-2 px-1">
+                              <span className="text-[9px] text-zinc-500 uppercase font-black">Histórico Recente (10J)</span>
+                              {sig.streak >= 2 && (
+                                <span className={`text-[9px] font-black uppercase ${sig.streakType === 'G' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                  {sig.streak}× {sig.streakType === 'G' ? 'GREEN' : 'RED'}
+                                </span>
+                              )}
+                            </div>
+                            <DotStreak results={sig.lastN} size="md" />
+                          </div>
 
-                        {sig.reasoning.length > 0 && (
-                          <div className="mt-3 space-y-1">
-                            {sig.reasoning.map((r, ri) => (
-                              <div key={ri} className="flex items-center gap-1.5 text-[9px] text-zinc-500">
-                                <i className="fa-solid fa-check text-emerald-500/60 text-[8px]"></i> {r}
+                          {sig.reasoning.length > 0 && (
+                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                              <div className="text-[9px] text-zinc-500 uppercase font-black mb-3 tracking-widest">Análise de Risco</div>
+                              <div className="space-y-2">
+                                {sig.reasoning.map((r, ri) => (
+                                  <div key={ri} className="flex items-start gap-2 text-[10px] text-white/70 leading-relaxed">
+                                    <i className="fa-solid fa-circle-check text-emerald-500/60 mt-0.5 shrink-0"></i>
+                                    {r}
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        )}
+                            </div>
+                          )}
 
-                        {/* Confidence bar */}
-                        <div className="mt-3 flex items-center gap-2">
-                          <span className="text-[8px] text-zinc-600 uppercase font-black w-16">Confiança</span>
-                          <div className="flex-1 h-1 bg-zinc-900 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-500/60 rounded-full" style={{ width: `${sig.confidence}%` }} />
+                          {/* Confidence bar */}
+                          <div className="pt-2">
+                            <div className="flex items-center justify-between mb-2 px-1">
+                              <span className="text-[9px] text-zinc-500 uppercase font-black">Índice de Confiança</span>
+                              <span className="text-[10px] font-black text-white">{sig.confidence}%</span>
+                            </div>
+                            <div className="h-1.5 bg-zinc-900 rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full" style={{ width: `${sig.confidence}%` }} />
+                            </div>
                           </div>
-                          <span className="text-[9px] font-black text-zinc-400">{sig.confidence}</span>
                         </div>
                       </div>
                     ))}
@@ -373,81 +414,101 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
               )}
 
               {btPlayerResult && !btRunning && (
-                <div className="space-y-4">
-                  {/* Summary Card */}
-                  <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
-                    <div className="flex items-start justify-between mb-6">
-                      <div>
-                        <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-1">{btPlayerResult.displayMarket}</div>
-                        <div className="text-2xl font-black text-white">{btPlayerResult.player}</div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* LEFT COLUMN: Summary & Stats */}
+                  <div className="lg:col-span-1 space-y-6">
+                    <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 relative overflow-hidden shadow-2xl">
+                      <div className="absolute top-0 right-0 p-6 opacity-10">
+                        <i className="fa-solid fa-user-gear text-6xl"></i>
                       </div>
-                      <div className="text-right">
-                        <div className="text-5xl font-black text-emerald-400 leading-none">{btPlayerResult.predictedProbability.toFixed(0)}%</div>
-                        <div className="text-[10px] text-zinc-500 uppercase mt-1">Probabilidade Próx. Jogo</div>
-                      </div>
-                    </div>
+                      
+                      <div className="relative z-10">
+                        <div className="text-[10px] text-zinc-500 uppercase font-black tracking-[0.3em] mb-2">{btPlayerResult.displayMarket}</div>
+                        <h2 className="text-3xl font-black text-white mb-8 tracking-tighter">{btPlayerResult.player}</h2>
+                        
+                        <div className="space-y-6">
+                          <div className="bg-black/40 border border-white/5 rounded-3xl p-6 text-center">
+                            <div className="text-[10px] text-zinc-500 uppercase font-black mb-2">Projeção Próximo Jogo</div>
+                            <div className="text-6xl font-black text-emerald-400 leading-none tracking-tighter">{btPlayerResult.predictedProbability.toFixed(0)}%</div>
+                          </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      {[
-                        { label: 'Jogos Analisados', value: btPlayerResult.totalGames, color: 'text-white' },
-                        { label: 'Taxa Histórica', value: `${btPlayerResult.winRate.toFixed(0)}%`, color: btPlayerResult.winRate >= 70 ? 'text-emerald-400' : btPlayerResult.winRate >= 50 ? 'text-amber-400' : 'text-rose-400' },
-                        { label: 'Greens / Reds', value: `${btPlayerResult.greens} / ${btPlayerResult.reds}`, color: 'text-white' },
-                        { label: 'Sequência Atual', value: `${btPlayerResult.currentStreak}× ${btPlayerResult.streakType}`, color: btPlayerResult.streakType === 'G' ? 'text-emerald-400' : btPlayerResult.streakType === 'R' ? 'text-rose-400' : 'text-zinc-500' },
-                      ].map((item, i) => (
-                        <div key={i} className="bg-black/40 border border-white/5 rounded-xl p-3 text-center">
-                          <div className="text-[9px] text-zinc-500 uppercase font-black mb-1">{item.label}</div>
-                          <div className={`text-lg font-black ${item.color}`}>{item.value}</div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+                              <div className="text-[9px] text-zinc-500 uppercase font-black mb-1">Win Rate</div>
+                              <div className={`text-xl font-black ${btPlayerResult.winRate >= 70 ? 'text-emerald-400' : 'text-white'}`}>{btPlayerResult.winRate.toFixed(0)}%</div>
+                            </div>
+                            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+                              <div className="text-[9px] text-zinc-500 uppercase font-black mb-1">Amostra</div>
+                              <div className="text-xl font-black text-white">{btPlayerResult.totalGames}J</div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/5">
+                            <TrendBadge trend={btPlayerResult.trend} />
+                            <ConfidenceBadge conf={btPlayerResult.confidence} />
+                          </div>
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 mb-4">
-                      <TrendBadge trend={btPlayerResult.trend} />
-                      <ConfidenceBadge conf={btPlayerResult.confidence} />
-                    </div>
-
-                    <div>
-                      <div className="text-[9px] text-zinc-500 uppercase font-black mb-2">Sequência (Mais Recente → Mais Antigo)</div>
-                      <DotStreak results={btPlayerResult.lastN} size="md" />
-                    </div>
-
-                    {/* Win rate bar */}
-                    <div className="mt-4">
-                      <div className="flex justify-between text-[9px] font-black mb-1">
-                        <span className="text-emerald-400">{btPlayerResult.greens} GREENS</span>
-                        <span className="text-rose-400">{btPlayerResult.reds} REDS</span>
                       </div>
-                      <div className="h-2 bg-zinc-900 rounded-full overflow-hidden flex">
-                        <div className="h-full bg-emerald-500 rounded-l-full" style={{ width: `${btPlayerResult.winRate}%` }} />
-                        <div className="h-full bg-rose-500 rounded-r-full" style={{ width: `${100 - btPlayerResult.winRate}%` }} />
+                    </div>
+
+                    <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-6 space-y-4">
+                      <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest px-2">Sequência Atual</div>
+                      <div className="bg-black/20 rounded-2xl p-4 flex items-center justify-between">
+                        <DotStreak results={btPlayerResult.lastN} size="md" />
+                        <span className={`text-sm font-black ${btPlayerResult.streakType === 'G' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {btPlayerResult.currentStreak}× {btPlayerResult.streakType === 'G' ? 'GREEN' : 'RED'}
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Recent Games Table */}
-                  <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden">
-                    <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
-                      <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Histórico de Jogos — {btPlayerResult.displayMarket}</span>
-                      <span className="text-[10px] font-black text-emerald-500/60">{btPlayerResult.totalGames} jogos</span>
-                    </div>
-                    <div className="divide-y divide-white/[0.03]">
-                      {btPlayerResult.recentGames.slice(0, 15).map((g, i) => (
-                        <div key={i} className={`px-5 py-3 flex items-center gap-4 hover:bg-white/[0.02] transition-all ${g.result === 'G' ? 'border-l-2 border-emerald-500' : 'border-l-2 border-rose-500'}`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${g.result === 'G' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>{g.result}</div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-white/90 truncate">{g.homePlayer} <span className="text-zinc-600">×</span> {g.awayPlayer}</div>
-                            <div className="text-[9px] text-zinc-600">{g.date}</div>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <div className="text-base font-black text-white">{g.score}</div>
-                            <div className="text-[9px] text-zinc-600">HT {g.htScore}</div>
-                          </div>
-                          <div className="text-right shrink-0 w-12">
-                            <div className={`text-sm font-black ${g.result === 'G' ? 'text-emerald-400' : 'text-zinc-600'}`}>{g.value}</div>
-                            <div className="text-[8px] text-zinc-600 uppercase">gols</div>
-                          </div>
+                  {/* RIGHT COLUMN: Detailed History */}
+                  <div className="lg:col-span-2 space-y-4">
+                    <div className="bg-white/[0.01] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                      <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                        <h3 className="text-[11px] font-black text-white/60 uppercase tracking-[0.2em]">Histórico Detalhado — {btPlayerResult.displayMarket}</h3>
+                        <div className="flex items-center gap-4">
+                           <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                             <span className="text-[9px] font-black text-zinc-500 uppercase">{btPlayerResult.greens} GREENS</span>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+                             <span className="text-[9px] font-black text-zinc-500 uppercase">{btPlayerResult.reds} REDS</span>
+                           </div>
                         </div>
-                      ))}
+                      </div>
+                      
+                      <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+                        <div className="divide-y divide-white/[0.03]">
+                          {btPlayerResult.recentGames.map((g, i) => (
+                            <div key={i} className="px-8 py-4 flex items-center gap-6 hover:bg-white/[0.03] transition-all group">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shrink-0 transition-transform group-hover:scale-110 ${g.result === 'G' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
+                                {g.result}
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1">
+                                  <span className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">{g.homePlayer}</span>
+                                  <span className="text-zinc-600 font-black text-[10px]">VS</span>
+                                  <span className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">{g.awayPlayer}</span>
+                                </div>
+                                <div className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider">{g.date}</div>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <div className="text-xl font-black text-white tracking-tighter">{g.score}</div>
+                                <div className="text-[9px] text-zinc-500 font-black">HT {g.htScore}</div>
+                              </div>
+
+                              <div className="text-right shrink-0 w-16 px-4 py-2 bg-black/40 rounded-xl border border-white/5">
+                                <div className={`text-sm font-black ${g.result === 'G' ? 'text-emerald-400' : 'text-zinc-500'}`}>{g.value}</div>
+                                <div className="text-[7px] text-zinc-600 uppercase font-black">Gols/Hit</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -503,43 +564,83 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
               )}
 
               {btLeagueResult && !btRunning && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-6">
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {[
-                      { label: 'Ativações', value: btLeagueResult.activations, color: 'text-white', sub: 'Total de sinais' },
-                      { label: 'Win Rate', value: `${btLeagueResult.winRate.toFixed(1)}%`, color: btLeagueResult.winRate >= 65 ? 'text-emerald-400' : btLeagueResult.winRate >= 50 ? 'text-amber-400' : 'text-rose-400', sub: `${btLeagueResult.greens}G / ${btLeagueResult.reds}R` },
-                      { label: 'ROI Estimado', value: `${btLeagueResult.roi > 0 ? '+' : ''}${btLeagueResult.roi.toFixed(1)}%`, color: btLeagueResult.roi > 0 ? 'text-emerald-400' : 'text-rose-400', sub: 'Odd 1.80 base' },
-                      { label: 'Conf. Média', value: `${btLeagueResult.avgConfidence.toFixed(0)}`, color: btLeagueResult.avgConfidence >= 80 ? 'text-emerald-400' : 'text-amber-400', sub: 'Score 0-100' },
+                      { label: 'Total Ativações', value: btLeagueResult.activations, color: 'text-white', icon: 'fa-bolt-lightning', sub: 'Oportunidades encontradas' },
+                      { label: 'Win Rate Global', value: `${btLeagueResult.winRate.toFixed(1)}%`, color: btLeagueResult.winRate >= 65 ? 'text-emerald-400' : 'text-rose-400', icon: 'fa-chart-pie', sub: `${btLeagueResult.greens}G / ${btLeagueResult.reds}R` },
+                      { label: 'Expectativa ROI', value: `${btLeagueResult.roi > 0 ? '+' : ''}${btLeagueResult.roi.toFixed(1)}%`, color: btLeagueResult.roi > 0 ? 'text-emerald-400' : 'text-rose-400', icon: 'fa-sack-dollar', sub: 'Base odd 1.80' },
+                      { label: 'Confiança Média', value: `${btLeagueResult.avgConfidence.toFixed(0)}%`, color: 'text-white', icon: 'fa-shield-halved', sub: 'Índice de assertividade' },
                     ].map((item, i) => (
-                      <div key={i} className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 text-center">
-                        <div className="text-[9px] text-zinc-500 uppercase font-black mb-2">{item.label}</div>
-                        <div className={`text-3xl font-black leading-none ${item.color}`}>{item.value}</div>
-                        <div className="text-[9px] text-zinc-600 mt-1">{item.sub}</div>
+                      <div key={i} className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-6 relative overflow-hidden group hover:bg-white/[0.04] transition-all">
+                        <div className="absolute -right-2 -top-2 opacity-5 group-hover:opacity-10 transition-opacity">
+                          <i className={`fa-solid ${item.icon} text-5xl`}></i>
+                        </div>
+                        <div className="text-[9px] text-zinc-500 uppercase font-black mb-3 tracking-widest">{item.label}</div>
+                        <div className={`text-3xl font-black leading-none mb-2 ${item.color}`}>{item.value}</div>
+                        <div className="text-[9px] text-zinc-600 font-bold uppercase">{item.sub}</div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-3 px-2">
-                    <TrendBadge trend={btLeagueResult.trend} />
-                    <span className="text-[10px] text-zinc-500">{btLeagueResult.league} · Estratégia: {STRATEGY_THEMES[btLeagueResult.strategy]?.label || btLeagueResult.strategy.toUpperCase()}</span>
-                  </div>
-
-                  {/* Timeline */}
-                  {btLeagueResult.timeline.length > 0 && (
-                    <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden">
-                      <div className="px-5 py-3 border-b border-white/5">
-                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Timeline de Resultados</span>
+                  {/* League Analysis Header */}
+                  <div className="bg-gradient-to-r from-violet-600/10 to-transparent border border-violet-500/20 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center border border-violet-500/30">
+                        <i className="fa-solid fa-trophy text-violet-400"></i>
                       </div>
-                      <div className="p-4 flex flex-wrap gap-2">
-                        {btLeagueResult.timeline.map((entry, i) => (
-                          <div key={i} title={`${entry.homePlayer} × ${entry.awayPlayer} — ${entry.score} — ${entry.date}`}
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center text-[9px] font-black cursor-help border transition-all hover:scale-110 ${entry.result === 'G' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-rose-500/20 border-rose-500/40 text-rose-400'}`}>
-                            {entry.result}
-                          </div>
-                        ))}
+                      <div>
+                        <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">Análise de Contexto</div>
+                        <div className="text-sm font-black text-white uppercase">{btLeagueResult.league} · {STRATEGY_THEMES[btLeagueResult.strategy]?.label || 'TODAS AS ESTRATÉGIAS'}</div>
                       </div>
                     </div>
-                  )}
+                    <TrendBadge trend={btLeagueResult.trend} />
+                  </div>
+
+                  {/* Timeline & Highlights */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-white/[0.01] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                      <div className="px-8 py-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                        <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Timeline de Ativações</span>
+                        <span className="text-[9px] font-black text-zinc-500 uppercase italic">Últimos {btLeagueResult.timeline.length} sinais detectados</span>
+                      </div>
+                      <div className="p-8">
+                        <div className="flex flex-wrap gap-3">
+                          {btLeagueResult.timeline.map((entry, i) => (
+                            <div key={i} className="group relative">
+                              <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-[10px] font-black cursor-help border transition-all hover:scale-110 hover:z-10 shadow-lg ${entry.result === 'G' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-rose-500/20 border-rose-500/40 text-rose-400'}`}>
+                                {entry.result}
+                              </div>
+                              <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 hidden group-hover:block w-48 p-3 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-[100] animate-in fade-in slide-in-from-bottom-2">
+                                <div className="text-[8px] text-zinc-500 uppercase font-black mb-1">{entry.date}</div>
+                                <div className="text-[10px] font-bold text-white mb-1">{entry.homePlayer} vs {entry.awayPlayer}</div>
+                                <div className="flex items-center justify-between pt-1 border-t border-white/5 mt-1">
+                                  <span className="text-[9px] font-black text-white">{entry.score}</span>
+                                  <span className={`text-[8px] font-black uppercase ${entry.result === 'G' ? 'text-emerald-400' : 'text-rose-400'}`}>{entry.result === 'G' ? 'GREEN' : 'RED'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 flex flex-col justify-center text-center relative overflow-hidden">
+                       <div className="absolute top-0 left-0 w-full h-1 bg-violet-500/30"></div>
+                       <i className="fa-solid fa-lightbulb text-violet-400/20 text-5xl mb-6"></i>
+                       <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-2">Veredito da Análise</h4>
+                       <p className="text-white font-bold leading-relaxed">
+                         {btLeagueResult.winRate >= 70 ? 'Esta liga apresenta padrões altamente consistentes no momento. Ideal para operações de alta confiança.' : 
+                          btLeagueResult.winRate >= 55 ? 'Performance estável, mas requer atenção às variações de odd. Opere com cautela.' : 
+                          'Alta volatilidade detectada. Sugerimos aguardar um ciclo de aquecimento antes de novas entradas.'}
+                       </p>
+                       <div className="mt-8 pt-8 border-t border-white/5">
+                         <div className="text-[9px] text-zinc-600 font-black uppercase mb-1">Expectativa de Acerto</div>
+                         <div className="text-3xl font-black text-white">{btLeagueResult.winRate.toFixed(0)}%</div>
+                       </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
