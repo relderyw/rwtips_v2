@@ -621,8 +621,6 @@ export const fetchConfronto = async (player1: string, player2: string, interval:
     }
 };
 
-
-
 export const fetchPlayers = async (query: string): Promise<string[]> => {
     if (query.length < 2) return [];
     try {
