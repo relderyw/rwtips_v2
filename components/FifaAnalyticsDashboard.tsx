@@ -7,7 +7,6 @@ import {
   PRO_MARKETS, calculateProLeagueSummary, runScenarioGameLines, runScenarioPlayerAnalysis
 } from '../services/analyzer';
 import { fetchPlayers } from '../services/api';
-import { runH2HAnalysis } from '../services/h2hAnalyzer';
 
 // =========================================================
 // CONSTANTS
@@ -40,14 +39,46 @@ const STRATEGIES = [
 // =========================================================
 // MINI COMPONENTS
 // =========================================================
-const DotStreak: React.FC<{ results: ('G' | 'R')[]; size?: 'sm' | 'md' }> = ({ results, size = 'sm' }) => (
+const MatchTooltip: React.FC<{ match: HistoryMatch; hit: number }> = ({ match, hit }) => (
+  <div className="flex flex-col gap-1.5 p-1">
+    <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-1 mb-1">
+      <span className="text-[8px] text-zinc-500 font-black uppercase">{match.league_name}</span>
+      <span className="text-[8px] text-zinc-500 font-bold">{match.data_realizacao}</span>
+    </div>
+    <div className="flex items-center justify-between gap-8">
+      <div className="flex flex-col">
+        <span className="text-[10px] font-black text-white uppercase">{match.home_player}</span>
+        <span className="text-[8px] text-zinc-500 font-bold">{match.home_team}</span>
+      </div>
+      <div className="flex flex-col items-center">
+        <span className={`text-xs font-black ${hit ? 'text-emerald-400' : 'text-rose-400'}`}>
+          {match.score_home} - {match.score_away}
+        </span>
+        <span className="text-[7px] text-zinc-600 font-bold">HT: {match.halftime_score_home}-{match.halftime_score_away}</span>
+      </div>
+      <div className="flex flex-col items-end">
+        <span className="text-[10px] font-black text-white uppercase">{match.away_player}</span>
+        <span className="text-[8px] text-zinc-500 font-bold">{match.away_team}</span>
+      </div>
+    </div>
+  </div>
+);
+
+const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; size?: 'sm' | 'md' }> = ({ results, size = 'sm' }) => (
   <div className="flex items-center gap-1">
     {results.slice(0, 10).map((r, i) => (
-      <div
-        key={i}
-        className={`rounded-full border flex items-center justify-center font-black ${size === 'md' ? 'w-6 h-6 text-[9px]' : 'w-4 h-4 text-[8px]'} ${r === 'G' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' : 'bg-rose-500/20 border-rose-500/50 text-rose-400'}`}
-      >
-        {r}
+      <div key={i} className="group relative">
+        <div
+          className={`rounded-full border flex items-center justify-center font-black cursor-help transition-all hover:scale-110 ${size === 'md' ? 'w-6 h-6 text-[9px]' : 'w-4 h-4 text-[8px]'} ${r.hit === 1 ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/40' : 'bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/40'}`}
+        >
+          {r.hit === 1 ? 'G' : 'R'}
+        </div>
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-[200] animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-zinc-950 border border-white/10 rounded-xl shadow-2xl p-3 min-w-[220px]">
+            <MatchTooltip match={r.match} hit={r.hit} />
+            <div className={`mt-2 h-0.5 w-full rounded-full ${r.hit === 1 ? 'bg-emerald-500/50' : 'bg-rose-500/50'}`} />
+          </div>
+        </div>
       </div>
     ))}
   </div>
@@ -136,9 +167,6 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
   const [scenarioPlayers, setScenarioPlayers] = useState<any[]>([]);
   const [scenarioVictories, setScenarioVictories] = useState<any[]>([]);
   const [proLeagueSelected, setProLeagueSelected] = useState('all');
-  const [h2hPlayerA, setH2hPlayerA] = useState('');
-  const [h2hPlayerB, setH2hPlayerB] = useState('');
-  const [h2hData, setH2hData] = useState<any>(null);
 
   // ─── AUTOCOMPLETE STATE ───
   const [playerSuggestions, setPlayerSuggestions] = useState<string[]>([]);
@@ -170,6 +198,16 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
     });
     return Array.from(set).sort();
   }, [history]);
+
+  const mostOver = useMemo(() => {
+    if (!proLeagueData || proLeagueData.length === 0) return null;
+    return [...proLeagueData].sort((a, b) => (b.stats['over_2.5_ft'] || 0) - (a.stats['over_2.5_ft'] || 0))[0];
+  }, [proLeagueData]);
+
+  const mostUnder = useMemo(() => {
+    if (!proLeagueData || proLeagueData.length === 0) return null;
+    return [...proLeagueData].sort((a, b) => (a.stats['over_1.5_ft'] || 0) - (b.stats['over_1.5_ft'] || 0))[0];
+  }, [proLeagueData]);
 
   // === BACKTEST RUNNERS ===
   const runLeague = useCallback(async () => {
@@ -218,15 +256,6 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
 
     setBtRunning(false);
   }, [history, btSampleSize, baseOdd, unitValue, proLeagueSelected]);
-
-  const runH2H = useCallback(async () => {
-    if (!h2hPlayerA.trim() || !h2hPlayerB.trim()) return;
-    setBtRunning(true);
-    await new Promise(r => setTimeout(r, 50));
-    const result = runH2HAnalysis(history, h2hPlayerA, h2hPlayerB, 30, baseOdd, unitValue);
-    setH2hData(result);
-    setBtRunning(false);
-  }, [history, h2hPlayerA, h2hPlayerB, baseOdd, unitValue]);
 
   useEffect(() => {
     if (btMode === 'pro' && history.length > 0) {
@@ -287,6 +316,46 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
             </div>
           </div>
 
+          {/* Highlights da Sessão */}
+          {(mostOver || mostUnder) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-700">
+              {mostOver && (
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center border border-orange-500/40">
+                      <i className="fa-solid fa-fire text-orange-500 text-xl animate-pulse"></i>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-orange-500/70 font-black uppercase tracking-widest">Liga Mais Over</div>
+                      <div className="text-lg font-black text-white uppercase">{mostOver.league}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-black text-orange-400">{mostOver.stats['over_2.5_ft']?.toFixed(0)}%</div>
+                    <div className="text-[9px] text-zinc-500 font-bold uppercase">Taxa de Over 2.5 FT</div>
+                  </div>
+                </div>
+              )}
+              {mostUnder && (
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-500/40">
+                      <i className="fa-solid fa-snowflake text-blue-400 text-xl"></i>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-blue-400/70 font-black uppercase tracking-widest">Liga Mais Under</div>
+                      <div className="text-lg font-black text-white uppercase">{mostUnder.league}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-black text-blue-400">{(100 - (mostUnder.stats['over_1.5_ft'] || 0)).toFixed(0)}%</div>
+                    <div className="text-[9px] text-zinc-500 font-bold uppercase">Taxa Under 1.5 FT</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* 2º TABELA DE LIGAS (HEATMAP) */}
           <div className="bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden">
             <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
@@ -337,7 +406,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                           <td key={mi} className={`p-4 text-center border-r border-white/5 ${bgColor}`}>
                             <div className="flex flex-col items-center gap-1.5">
                               <span className={`text-xs font-black ${textColor}`}>{val.toFixed(1)}%</span>
-                              <DotStreak results={(row.hits[market] || []).slice(0, 5).map((h: any) => h === 1 ? 'G' : 'R')} size="sm" />
+                              <DotStreak results={row.hits[market]?.slice(0, 5) || []} size="sm" />
                             </div>
                           </td>
                         );
@@ -380,8 +449,13 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-lg font-black text-emerald-400">{item.roi.toFixed(1)}%</div>
-                            <div className="text-[9px] text-zinc-500 font-bold uppercase">ROI · +{item.returnUnits.toFixed(1)}U</div>
+                            <div className={`text-lg font-black ${item.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              R$ {item.returnCash.toFixed(2)}
+                            </div>
+                            <div className="text-[9px] text-zinc-500 font-bold uppercase">{item.roi.toFixed(1)}% ROI</div>
+                            <div className="mt-2 flex justify-end">
+                              <DotStreak results={item.hits} />
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -396,10 +470,10 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                             <div className="text-xs font-black text-white uppercase">{item.market.replace('over_', '+').toUpperCase()}</div>
                           </div>
                           <div className="text-right">
-                            <div className={`text-lg font-black ${item.roi > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{item.roi.toFixed(1)}%</div>
-                            <div className="text-[9px] text-zinc-500 font-bold uppercase">ROI · {item.returnUnits.toFixed(1)}U</div>
+                            <div className={`text-lg font-black ${item.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>R$ {item.returnCash.toFixed(2)}</div>
+                            <div className="text-[9px] text-zinc-500 font-bold uppercase">{item.roi.toFixed(1)}% ROI</div>
                             <div className="mt-2 flex justify-end">
-                              <DotStreak results={item.hits.map((h: any) => h === 1 ? 'G' : 'R')} />
+                              <DotStreak results={item.hits} />
                             </div>
                           </div>
                         </div>
@@ -433,12 +507,12 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                             <TrendBadge trend={sig.momentum} />
                           </div>
                           <div className="mt-1">
-                            <DotStreak results={sig.hits.map((h: any) => h === 1 ? 'G' : 'R')} />
+                            <DotStreak results={sig.hits} />
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`text-sm font-black ${sig.returnCash > 0 ? 'text-emerald-400' : 'text-white'}`}>R$ {sig.returnCash.toFixed(2)}</div>
+                        <div className={`text-sm font-black ${sig.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>R$ {sig.returnCash.toFixed(2)}</div>
                         <div className="text-[9px] text-zinc-500 font-bold uppercase">{sig.roi.toFixed(1)}% ROI</div>
                       </div>
                     </div>
@@ -466,12 +540,14 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                             <TrendBadge trend={sig.momentum} />
                           </div>
                           <div className="mt-1">
-                            <DotStreak results={sig.hits.map((h: any) => h === 1 ? 'G' : 'R')} />
+                            <DotStreak results={sig.hits} />
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`text-sm font-black ${sig.returnUnits > 0 ? 'text-emerald-400' : 'text-white'}`}>+{sig.returnUnits.toFixed(1)}U</div>
+                        <div className={`text-sm font-black ${sig.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          R$ {sig.returnCash.toFixed(2)}
+                        </div>
                         <div className="text-[9px] text-zinc-500 font-bold uppercase">{sig.roi.toFixed(1)}% ROI</div>
                       </div>
                     </div>
@@ -479,89 +555,6 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                 </div>
               </div>
 
-              {/* Cenário 4: Confronto Direto (H2H) */}
-              <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 space-y-6 xl:col-span-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center border border-rose-500/40">
-                    <span className="text-rose-500 font-black">4º</span>
-                  </div>
-                  <h3 className="text-lg font-black text-white uppercase tracking-tighter">Confronto Direto (H2H)</h3>
-                  <div className="ml-auto text-[9px] text-zinc-500 font-bold uppercase tracking-widest bg-zinc-800/50 px-2 py-1 rounded">Módulo Legado Integrado</div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6 border-b border-white/5">
-                  <div className="space-y-1">
-                    <label className="text-[9px] text-zinc-500 font-black uppercase ml-1">Player 1</label>
-                    <input
-                      type="text"
-                      placeholder="Nome do Player A..."
-                      value={h2hPlayerA}
-                      onChange={e => setH2hPlayerA(e.target.value)}
-                      className="w-full bg-black/40 border border-zinc-800 rounded-xl px-4 py-3 text-white font-black text-xs outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] text-zinc-500 font-black uppercase ml-1">Player 2</label>
-                    <input
-                      type="text"
-                      placeholder="Nome do Player B..."
-                      value={h2hPlayerB}
-                      onChange={e => setH2hPlayerB(e.target.value)}
-                      className="w-full bg-black/40 border border-zinc-800 rounded-xl px-4 py-3 text-white font-black text-xs outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      onClick={runH2H}
-                      disabled={btRunning || !h2hPlayerA || !h2hPlayerB}
-                      className="w-full h-[46px] bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-black rounded-xl uppercase tracking-widest text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {btRunning ? 'Analisando...' : 'Analisar Confronto'}
-                    </button>
-                  </div>
-                </div>
-
-                {h2hData && (
-                  <div className="animate-in fade-in zoom-in-95 duration-500">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="px-3 py-1 rounded-full bg-zinc-800 text-[10px] font-black text-zinc-400 uppercase">
-                          {h2hData.totalGames} Encontros Encontrados
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {h2hData.results.map((res: any) => (
-                        <div key={res.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex justify-between items-center">
-                          <div className="space-y-1">
-                            <div className="text-[10px] font-black text-white uppercase">{res.label}</div>
-                            <div className="flex items-center gap-2">
-                              <TrendBadge trend={res.momentum} />
-                              <DotStreak results={res.hits.slice(0, 8).map((h: any) => h === 1 ? 'G' : 'R')} size="sm" />
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`text-sm font-black ${res.roi > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {res.roi.toFixed(1)}%
-                            </div>
-                            <div className="text-[8px] text-zinc-500 font-bold uppercase">
-                              {res.wins}G - {res.losses}R
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {!h2hData && !btRunning && (
-                  <div className="py-12 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center text-zinc-600">
-                    <i className="fa-solid fa-arrows-left-right text-3xl mb-3 opacity-20"></i>
-                    <p className="text-[10px] font-black uppercase tracking-widest">Selecione os players acima para ver o histórico de confronto</p>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>

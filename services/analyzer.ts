@@ -1218,10 +1218,13 @@ export const calculateProLeagueSummary = (history: HistoryMatch[], sampleSize: n
     const marketHits: Record<string, number[]> = {};
 
     PRO_MARKETS.forEach(market => {
-      const hits = leagueGames.map(g => evaluateMarket(g, market).hit ? 1 : 0);
-      const hitCount = hits.filter(h => h === 1).length;
+      const hits = leagueGames.map(g => ({
+        hit: evaluateMarket(g, market).hit ? 1 : 0,
+        match: g
+      }));
+      const hitCount = hits.filter(h => h.hit === 1).length;
       marketStats[market] = leagueGames.length > 0 ? (hitCount / leagueGames.length) * 100 : 0;
-      marketHits[market] = hits;
+      marketHits[market] = hits as any; // Temporary cast to avoid type errors in transition
     });
 
     return { league, stats: marketStats, hits: marketHits, gamesCount: leagueGames.length };
@@ -1261,17 +1264,17 @@ export const runScenarioGameLines = (history: HistoryMatch[], sampleSize: number
       if (pGames.length < 5) return;
 
       let greens = 0;
-      const hits: number[] = [];
+      const hits: any[] = [];
       pGames.forEach(g => {
         const hit = evaluateMarket(g, market).hit;
         if (hit) greens++;
-        hits.push(hit ? 1 : 0);
+        hits.push({ hit: hit ? 1 : 0, match: g });
       });
 
       const indicators = calculateIndicators(greens, pGames.length - greens, odd, unit);
       
-      // Momentum: Comparar os últimos 3 com o resto da amostra
-      const momentum = calculateMomentum(hits.slice(0, 3), hits);
+      const hitBits = hits.map(h => h.hit);
+      const momentum = calculateMomentum(hitBits.slice(0, 3), hitBits);
       
       results.push({
         league,
@@ -1326,7 +1329,7 @@ export const runScenarioPlayerAnalysis = (
       if (pGames.length < Math.min(5, sampleSize)) return;
 
       let greens = 0;
-      const hits: number[] = [];
+      const hits: any[] = [];
       pGames.forEach(g => {
         const isHome = normalize(g.home_player) === normalize(player);
         let hit = false;
@@ -1338,11 +1341,12 @@ export const runScenarioPlayerAnalysis = (
            hit = evaluateMarket(g, market).hit;
         }
         if (hit) greens++;
-        hits.push(hit ? 1 : 0);
+        hits.push({ hit: hit ? 1 : 0, match: g });
       });
 
       const indicators = calculateIndicators(greens, pGames.length - greens, odd, unit);
-      const momentum = calculateMomentum(hits.slice(0, 3), hits);
+      const hitBits = hits.map(h => h.hit);
+      const momentum = calculateMomentum(hitBits.slice(0, 3), hitBits);
       
       playerResults.push({
         player,
