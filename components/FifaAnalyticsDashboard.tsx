@@ -40,52 +40,55 @@ const STRATEGIES = [
 // MINI COMPONENTS
 // =========================================================
 const MatchTooltip: React.FC<{ match: HistoryMatch; hit: number }> = ({ match, hit }) => (
-  <div className="flex flex-col gap-2 p-2.5 min-w-[230px]">
-    <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+  <div className="flex flex-col gap-1.5 p-2 min-w-[210px]">
+    <div className="flex items-center justify-between border-b border-white/5 pb-1">
       <div className="flex items-center gap-2">
         <div className={`w-1 h-1 rounded-full ${hit ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
-        <span className="text-[9px] text-zinc-400 font-black uppercase tracking-tighter">{match.league_name}</span>
+        <span className="text-[8px] text-zinc-400 font-black uppercase tracking-tighter">{match.league_name}</span>
       </div>
-      <span className="text-[8px] text-zinc-600 font-bold">{match.data_realizacao}</span>
+      <span className="text-[7px] text-zinc-600 font-bold">{match.data_realizacao}</span>
     </div>
 
     <div className="grid grid-cols-3 items-center gap-2">
       <div className="flex flex-col items-center text-center">
-        <span className="text-[10px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.home_player}</span>
-        <span className="text-[7px] text-zinc-500 font-bold truncate w-full">{match.home_team}</span>
+        <span className="text-[9px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.home_player}</span>
+        <span className="text-[6px] text-zinc-600 font-bold truncate w-full">{match.home_team}</span>
       </div>
 
       <div className="flex flex-col items-center bg-white/5 rounded-lg py-1 border border-white/5">
-        <span className={`text-base font-black tracking-tighter ${hit ? 'text-emerald-400' : 'text-rose-400'}`}>
+        <span className={`text-sm font-black tracking-tighter ${hit ? 'text-emerald-400' : 'text-rose-400'}`}>
           {match.score_home} - {match.score_away}
         </span>
-        <span className="text-[7px] text-zinc-500 font-black uppercase tracking-widest">Final</span>
+        <span className="text-[6px] text-zinc-500 font-black uppercase tracking-widest">Final</span>
       </div>
 
       <div className="flex flex-col items-center text-center">
-        <span className="text-[10px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.away_player}</span>
-        <span className="text-[7px] text-zinc-500 font-bold truncate w-full">{match.away_team}</span>
+        <span className="text-[9px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.away_player}</span>
+        <span className="text-[6px] text-zinc-600 font-bold truncate w-full">{match.away_team}</span>
       </div>
     </div>
 
-    <div className="flex items-center justify-between pt-1.5 border-t border-white/5">
+    <div className="flex items-center justify-between pt-1 border-t border-white/5">
       <div className="flex flex-col">
-        <span className="text-[7px] text-zinc-500 font-black uppercase tracking-wider">HT</span>
-        <span className="text-[10px] text-zinc-300 font-black">{match.halftime_score_home} - {match.halftime_score_away}</span>
+        <span className="text-[6px] text-zinc-500 font-black uppercase tracking-wider">HT</span>
+        <span className="text-[9px] text-zinc-300 font-black">{match.halftime_score_home} - {match.halftime_score_away}</span>
       </div>
-      <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${hit ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+      <div className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest ${hit ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
         {hit ? 'Green' : 'Red'}
       </div>
     </div>
   </div>
 );
 
-const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; size?: 'sm' | 'md' }> = ({ results, size = 'sm' }) => {
+const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; size?: 'sm' | 'md', rowIndex?: number }> = ({ results, size = 'sm', rowIndex = 0 }) => {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  // Se estiver nas primeiras linhas, mostra o tooltip para baixo
+  const isTopRow = rowIndex < 2;
 
   return (
     <div className="flex items-center gap-1">
-      {results.slice(0, 10).map((r, i) => (
+      {results.slice(0, 5).map((r, i) => (
         <div
           key={i}
           className="relative"
@@ -99,13 +102,8 @@ const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; siz
           </div>
 
           {hoveredIdx === i && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 z-[500] pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="bg-zinc-950/98 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.9)] overflow-hidden relative">
-                <MatchTooltip match={r.match} hit={r.hit} />
-                <div className={`mt-0 h-1 w-full ${r.hit === 1 ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
-                {/* Arrow Pointer */}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-8 border-transparent border-t-zinc-950/98"></div>
-              </div>
+            <div className={`absolute ${isTopRow ? 'top-full mt-3' : 'bottom-full mb-3'} left-1/2 -translate-x-1/2 z-[500] bg-zinc-950/95 border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200`}>
+              <MatchTooltip match={r.match} hit={r.hit} />
             </div>
           )}
         </div>
@@ -478,7 +476,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                           <td key={mi} className={`p-4 text-center border-r border-white/5 ${bgColor}`}>
                             <div className="flex flex-col items-center gap-1.5">
                               <span className={`text-xs font-black ${textColor}`}>{val.toFixed(1)}%</span>
-                              <DotStreak results={row.hits[market]?.slice(0, 5) || []} size="sm" />
+                              <DotStreak results={row.hits[market] || []} rowIndex={i} />
                             </div>
                           </td>
                         );

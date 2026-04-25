@@ -1179,7 +1179,7 @@ export const generatePredictionSignals = (
 
 export const PRO_MARKETS = [
   'over_0.5_ht', 'over_1.5_ht', 'over_2.5_ht', 'btts_ht',
-  'over_2.5_ft', 'over_3.5_ft', 'over_4.5_ft', 'btts_ft'
+  'over_1.5_ft', 'over_2.5_ft', 'over_3.5_ft', 'over_4.5_ft', 'btts_ft'
 ];
 
 export interface BacktestIndicators {
