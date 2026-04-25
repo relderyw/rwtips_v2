@@ -1172,3 +1172,138 @@ export const generatePredictionSignals = (
     .sort((a, b) => (b.probability * 0.6 + b.confidence * 0.4) - (a.probability * 0.6 + a.confidence * 0.4))
     .slice(0, topN);
 };
+
+// ============================================================
+// === BACKTEST PRO ENGINE — NOVAS FUNÇÕES                  ===
+// ============================================================
+
+export const PRO_MARKETS = [
+  'over_0.5_ht', 'over_1.5_ht', 'over_2.5_ht', 'btts_ht',
+  'over_2.5_ft', 'over_3.5_ft', 'over_4.5_ft', 'btts_ft'
+];
+
+export interface BacktestIndicators {
+  roi: number;
+  returnUnits: number;
+  returnCash: number;
+  winRate: number;
+  greens: number;
+  reds: number;
+}
+
+export const calculateIndicators = (greens: number, reds: number, odd: number, unit: number): BacktestIndicators => {
+  const total = greens + reds;
+  if (total === 0) return { roi: 0, returnUnits: 0, returnCash: 0, winRate: 0, greens: 0, reds: 0 };
+  
+  const winRate = (greens / total) * 100;
+  const returnUnits = (greens * (odd - 1)) - reds;
+  const roi = total > 0 ? (returnUnits / total) * 100 : 0;
+  const returnCash = returnUnits * unit;
+  
+  return { roi, returnUnits, returnCash, winRate, greens, reds };
+};
+
+export const calculateProLeagueSummary = (history: HistoryMatch[], sampleSize: number) => {
+  const allGames = normalizeHistoryData(history);
+  const leagues = Array.from(new Set(allGames.map(g => getLeagueInfo(g.league_name).name)))
+    .filter(name => ALLOWED_LEAGUES.includes(name));
+  
+  return leagues.map(league => {
+    const leagueGames = allGames
+      .filter(g => getLeagueInfo(g.league_name).name === league)
+      .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+      .slice(0, sampleSize);
+    
+    const marketStats: Record<string, number> = {};
+    PRO_MARKETS.forEach(market => {
+      const hits = leagueGames.filter(g => evaluateMarket(g, market).hit).length;
+      marketStats[market] = leagueGames.length > 0 ? (hits / leagueGames.length) * 100 : 0;
+    });
+
+    return { league, stats: marketStats, gamesCount: leagueGames.length };
+  }).filter(l => l.gamesCount > 0);
+};
+
+export const runScenarioGameLines = (history: HistoryMatch[], sampleSize: number, odd: number, unit: number) => {
+  const allLeaguesSummary = calculateProLeagueSummary(history, sampleSize);
+  const marketsPool: any[] = [];
+
+  allLeaguesSummary.forEach(l => {
+    PRO_MARKETS.forEach(m => {
+      const winRate = l.stats[m];
+      const greens = Math.round((winRate / 100) * l.gamesCount);
+      const reds = l.gamesCount - greens;
+      const indicators = calculateIndicators(greens, reds, odd, unit);
+      marketsPool.push({
+        league: l.league,
+        market: m,
+        ...indicators
+      });
+    });
+  });
+
+  const sorted = [...marketsPool].sort((a, b) => b.roi - a.roi);
+  return {
+    top: sorted.slice(0, 2),
+    bottom: [...marketsPool].sort((a, b) => a.roi - b.roi).slice(0, 2)
+  };
+};
+
+export const runScenarioPlayerAnalysis = (
+  history: HistoryMatch[], 
+  leagueName: string, 
+  sampleSize: number, 
+  odd: number, 
+  unit: number,
+  type: 'goals' | 'victory'
+) => {
+  const allGames = normalizeHistoryData(history);
+  const targetLeagueInfo = getLeagueInfo(leagueName);
+  
+  const leagueGames = allGames.filter(g => getLeagueInfo(g.league_name).name === targetLeagueInfo.name);
+  const playerSet = new Set<string>();
+  leagueGames.forEach(g => {
+    playerSet.add(g.home_player);
+    playerSet.add(g.away_player);
+  });
+
+  const playerResults: any[] = [];
+  const markets = type === 'goals' 
+    ? ['over_0.5_ht', 'over_1.5_ht', 'over_1.5_ft', 'over_2.5_ft']
+    : ['home_win', 'away_win'];
+
+  playerSet.forEach(player => {
+    markets.forEach(market => {
+      // Para player, avaliamos apenas os jogos que ele participou
+      const pGames = leagueGames
+        .filter(g => normalize(g.home_player) === normalize(player) || normalize(g.away_player) === normalize(player))
+        .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+        .slice(0, sampleSize);
+
+      if (pGames.length < 3) return;
+
+      let greens = 0;
+      pGames.forEach(g => {
+        const isHome = normalize(g.home_player) === normalize(player);
+        // Ajustamos o evaluateMarket para considerar a perspectiva do player se for vitória
+        if (market === 'home_win' || market === 'away_win') {
+           const pScore = isHome ? g.score_home : g.score_away;
+           const oScore = isHome ? g.score_away : g.score_home;
+           if (pScore > oScore) greens++;
+        } else {
+           if (evaluateMarket(g, market).hit) greens++;
+        }
+      });
+
+      const indicators = calculateIndicators(greens, pGames.length - greens, odd, unit);
+      playerResults.push({
+        player,
+        market,
+        ...indicators,
+        totalGames: pGames.length
+      });
+    });
+  });
+
+  return playerResults.sort((a, b) => b.roi - a.roi).slice(0, 4);
+};
