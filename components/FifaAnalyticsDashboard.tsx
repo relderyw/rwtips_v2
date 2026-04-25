@@ -373,9 +373,12 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                         <div className="text-[10px] text-emerald-500 font-black uppercase tracking-widest pl-1">Melhores Oportunidades (ROI)</div>
                         {scenarioGameLines.top.map((item: any, idx: number) => (
                           <div key={idx} className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 flex justify-between items-center">
-                            <div>
+                            <div className="flex flex-col">
                               <div className="text-[8px] text-zinc-500 font-black uppercase mb-1">{item.league}</div>
-                              <div className="text-xs font-black text-white uppercase">{item.market.replace('over_', '+').toUpperCase()}</div>
+                              <div className="text-xs font-black text-white uppercase flex items-center gap-2">
+                                {item.market.replace('over_', '+').toUpperCase()}
+                                <TrendBadge trend={item.momentum} />
+                              </div>
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-black text-emerald-400">{item.roi.toFixed(1)}%</div>
@@ -421,9 +424,12 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                           <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
                             <i className="fa-solid fa-user-ninja text-cyan-500 text-[10px]"></i>
                           </div>
-                          <div>
-                            <div className="text-xs font-black text-white uppercase truncate max-w-[120px]">{sig.player}</div>
-                            <div className="text-[8px] text-zinc-500 font-black uppercase">{sig.market.replace('over_', '+').toUpperCase()}</div>
+                          <div className="flex flex-col">
+                            <div className="text-xs font-black text-white uppercase truncate max-w-[120px] mb-1">{sig.player}</div>
+                            <div className="text-[8px] text-zinc-500 font-black uppercase flex items-center gap-2">
+                              {sig.market.replace('over_', '+').toUpperCase()}
+                              <TrendBadge trend={sig.momentum} />
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">
@@ -448,9 +454,12 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                           <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
                             <i className="fa-solid fa-crown text-violet-500 text-[10px]"></i>
                           </div>
-                          <div>
-                            <div className="text-xs font-black text-white uppercase">{sig.player}</div>
-                            <div className="text-[8px] text-zinc-500 font-black uppercase">Vitória {(sig.winRate).toFixed(0)}%</div>
+                          <div className="flex flex-col">
+                            <div className="text-xs font-black text-white uppercase mb-1">{sig.player}</div>
+                            <div className="text-[8px] text-zinc-500 font-black uppercase flex items-center gap-2">
+                              Vitória {(sig.winRate).toFixed(0)}%
+                              <TrendBadge trend={sig.momentum} />
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">

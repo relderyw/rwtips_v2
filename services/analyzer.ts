@@ -1224,28 +1224,57 @@ export const calculateProLeagueSummary = (history: HistoryMatch[], sampleSize: n
   }).filter(l => l.gamesCount > 0);
 };
 
-export const runScenarioGameLines = (history: HistoryMatch[], sampleSize: number, odd: number, unit: number) => {
-  const allLeaguesSummary = calculateProLeagueSummary(history, sampleSize);
-  const marketsPool: any[] = [];
+export const calculateMomentum = (recentHits: number[], totalHistoryHits: number[]) => {
+  if (recentHits.length < 3) return 'stable';
+  
+  const recentRate = (recentHits.reduce((a, b) => a + b, 0) / recentHits.length) * 100;
+  const historyRate = (totalHistoryHits.reduce((a, b) => a + b, 0) / totalHistoryHits.length) * 100;
+  
+  if (recentRate > historyRate + 10) return 'heating';
+  if (recentRate < historyRate - 10) return 'cooling';
+  return 'stable';
+};
 
-  allLeaguesSummary.forEach(l => {
-    PRO_MARKETS.forEach(m => {
-      const winRate = l.stats[m];
-      const greens = Math.round((winRate / 100) * l.gamesCount);
-      const reds = l.gamesCount - greens;
-      const indicators = calculateIndicators(greens, reds, odd, unit);
-      marketsPool.push({
-        league: l.league,
-        market: m,
-        ...indicators
+export const runScenarioGameLines = (history: HistoryMatch[], sampleSize: number, odd: number, unit: number) => {
+  const allGames = normalizeHistoryData(history);
+  const results: any[] = [];
+
+  ALLOWED_LEAGUES.forEach(league => {
+    const leagueGames = allGames
+      .filter(g => getLeagueInfo(g.league_name).name === league)
+      .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime());
+
+    PRO_MARKETS.forEach(market => {
+      const pGames = leagueGames.slice(0, sampleSize);
+      if (pGames.length < 5) return;
+
+      let greens = 0;
+      const hits: number[] = [];
+      pGames.forEach(g => {
+        const hit = evaluateMarket(g, market).hit;
+        if (hit) greens++;
+        hits.push(hit ? 1 : 0);
+      });
+
+      const indicators = calculateIndicators(greens, pGames.length - greens, odd, unit);
+      
+      // Momentum: Comparar os últimos 3 com o resto da amostra
+      const momentum = calculateMomentum(hits.slice(0, 3), hits);
+      
+      results.push({
+        league,
+        market,
+        ...indicators,
+        momentum,
+        totalGames: pGames.length
       });
     });
   });
 
-  const sorted = [...marketsPool].sort((a, b) => b.roi - a.roi);
+  const sorted = results.sort((a, b) => b.roi - a.roi);
   return {
     top: sorted.slice(0, 2),
-    bottom: [...marketsPool].sort((a, b) => a.roi - b.roi).slice(0, 2)
+    bottom: sorted.slice(-2).reverse()
   };
 };
 
@@ -1274,7 +1303,6 @@ export const runScenarioPlayerAnalysis = (
 
   playerSet.forEach(player => {
     markets.forEach(market => {
-      // Para player, avaliamos apenas os jogos que ele participou
       const pGames = leagueGames
         .filter(g => normalize(g.home_player) === normalize(player) || normalize(g.away_player) === normalize(player))
         .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
@@ -1283,23 +1311,30 @@ export const runScenarioPlayerAnalysis = (
       if (pGames.length < 3) return;
 
       let greens = 0;
+      const hits: number[] = [];
       pGames.forEach(g => {
         const isHome = normalize(g.home_player) === normalize(player);
-        // Ajustamos o evaluateMarket para considerar a perspectiva do player se for vitória
+        let hit = false;
         if (market === 'home_win' || market === 'away_win') {
            const pScore = isHome ? g.score_home : g.score_away;
            const oScore = isHome ? g.score_away : g.score_home;
-           if (pScore > oScore) greens++;
+           hit = pScore > oScore;
         } else {
-           if (evaluateMarket(g, market).hit) greens++;
+           hit = evaluateMarket(g, market).hit;
         }
+        if (hit) greens++;
+        hits.push(hit ? 1 : 0);
       });
 
       const indicators = calculateIndicators(greens, pGames.length - greens, odd, unit);
+      const momentum = calculateMomentum(hits.slice(0, 3), hits);
+      
       playerResults.push({
         player,
         market,
         ...indicators,
+        momentum,
+        winRate: (greens / pGames.length) * 100,
         totalGames: pGames.length
       });
     });
