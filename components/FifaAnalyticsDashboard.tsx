@@ -352,21 +352,21 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
           {/* Highlights da Sessão */}
           {(mostOver || mostUnder || nuclearOver) && (
             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-700">
-              {/* Alerta Nuclear - Premium Glass Design */}
+              {/* Alerta Nuclear - Premium Glass Design (CYAN THEME for OVER) */}
               {nuclearOver && (
-                <div className="relative group overflow-hidden bg-gradient-to-br from-rose-950/80 via-rose-900/40 to-black/60 border border-rose-500/20 rounded-3xl p-5 flex items-center justify-between backdrop-blur-xl shadow-[0_0_40px_rgba(244,63,94,0.15)] transition-all hover:border-rose-500/40">
+                <div className="relative group overflow-hidden bg-gradient-to-br from-cyan-950/80 via-cyan-900/40 to-black/60 border border-cyan-500/20 rounded-3xl p-5 flex items-center justify-between backdrop-blur-xl shadow-[0_0_40px_rgba(6,182,212,0.15)] transition-all hover:border-cyan-500/40">
                   {/* Decorative Background Elements */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 blur-[60px] rounded-full -mr-16 -mt-16"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-rose-500/5 blur-[40px] rounded-full -ml-12 -mb-12"></div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-[60px] rounded-full -mr-16 -mt-16"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-cyan-500/5 blur-[40px] rounded-full -ml-12 -mb-12"></div>
 
                   <div className="flex items-center gap-6 relative z-10">
-                    <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-rose-700 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.4)] animate-pulse">
-                      <i className="fa-solid fa-radiation text-white text-3xl"></i>
+                    <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-cyan-700 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)] animate-pulse">
+                      <i className="fa-solid fa-bolt text-white text-3xl"></i>
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                        <div className="text-[10px] text-rose-400 font-black uppercase tracking-[0.2em]">Cenário de Extrema Urgência</div>
+                        <span className="w-2 h-2 rounded-full bg-cyan-500 animate-ping"></span>
+                        <div className="text-[10px] text-cyan-400 font-black uppercase tracking-[0.2em]">Cenário de Extrema Urgência</div>
                       </div>
                       <div className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{nuclearOver.league}</div>
                       <div className="text-[9px] text-zinc-500 font-bold uppercase mt-1 tracking-widest">Padrão Histórico de Gols Detectado</div>
@@ -375,12 +375,12 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
 
                   <div className="flex flex-col items-end relative z-10">
                     <div className="flex items-baseline gap-1">
-                      <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-rose-400 leading-none">
+                      <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-cyan-400 leading-none">
                         {nuclearOver.stats['over_3.5_ft']?.toFixed(0)}
                       </div>
-                      <div className="text-lg font-black text-rose-500">%</div>
+                      <div className="text-lg font-black text-cyan-500">%</div>
                     </div>
-                    <div className="text-[10px] bg-rose-500/10 border border-rose-500/20 px-3 py-0.5 rounded-full text-rose-400 font-black uppercase tracking-widest mt-2">
+                    <div className="text-[10px] bg-cyan-500/10 border border-cyan-500/20 px-3 py-0.5 rounded-full text-cyan-400 font-black uppercase tracking-widest mt-2">
                       Nuclear Over 3.5
                     </div>
                   </div>
@@ -389,18 +389,18 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {mostOver && (
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-2xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-500/40">
-                        <i className="fa-solid fa-droplet text-blue-400 text-xl"></i>
+                      <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-500/40">
+                        <i className="fa-solid fa-bolt text-cyan-400 text-xl"></i>
                       </div>
                       <div>
-                        <div className="text-[10px] text-blue-400/70 font-black uppercase tracking-widest">Liga Mais Over</div>
+                        <div className="text-[10px] text-cyan-400/70 font-black uppercase tracking-widest">Liga Mais Over</div>
                         <div className="text-lg font-black text-white uppercase">{mostOver.league}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-black text-blue-400">{(mostOver.stats['over_2.5_ft'] || 0).toFixed(0)}%</div>
+                      <div className="text-xl font-black text-cyan-400">{(mostOver.stats['over_2.5_ft'] || 0).toFixed(0)}%</div>
                       <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Taxa Over 2.5 FT</div>
                     </div>
                   </div>
@@ -443,8 +443,8 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                 <thead>
                   <tr className="bg-black/40">
                     <th rowSpan={2} className="p-4 text-[10px] text-zinc-500 uppercase font-black border-r border-white/5">Ligas</th>
-                    <th colSpan={4} className="p-2 text-[10px] text-cyan-500 uppercase font-black text-center border-b border-r border-white/5">1º Tempo (HT)</th>
-                    <th colSpan={4} className="p-2 text-[10px] text-amber-500 uppercase font-black text-center border-b border-white/5">Jogo Completo (FT)</th>
+                    <th colSpan={4} className="p-2 text-[10px] text-amber-500 uppercase font-black text-center border-b border-r border-white/5">1º Tempo (HT)</th>
+                    <th colSpan={4} className="p-2 text-[10px] text-cyan-500 uppercase font-black text-center border-b border-white/5"> Jogo Completo (FT)</th>
                   </tr>
                   <tr className="bg-black/20">
                     {PRO_MARKETS.map((m, i) => (
