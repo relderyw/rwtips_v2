@@ -80,14 +80,15 @@ const MatchTooltip: React.FC<{ match: HistoryMatch; hit: number }> = ({ match, h
   </div>
 );
 
-const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; size?: 'sm' | 'md', rowIndex?: number }> = ({ results, size = 'sm', rowIndex = 0 }) => {
+const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; size?: 'sm' | 'md', rowIndex?: number, align?: 'left' | 'center' | 'right' }> = ({ results, size = 'sm', rowIndex = 0, align = 'center' }) => {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   // Se estiver nas primeiras linhas, mostra o tooltip para baixo
   const isTopRow = rowIndex < 2;
+  const xPosition = align === 'left' ? 'left-0' : align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2';
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 relative">
       {results.slice(0, 5).map((r, i) => (
         <div
           key={i}
@@ -102,7 +103,7 @@ const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; siz
           </div>
 
           {hoveredIdx === i && (
-            <div className={`absolute ${isTopRow ? 'top-full mt-3' : 'bottom-full mb-3'} left-1/2 -translate-x-1/2 z-[500] bg-zinc-950/95 border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200`}>
+            <div className={`absolute ${isTopRow ? 'top-full mt-3' : 'bottom-full mb-3'} ${xPosition} z-[500] bg-zinc-950/95 border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200`}>
               <MatchTooltip match={r.match} hit={r.hit} />
             </div>
           )}
@@ -476,7 +477,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                           <td key={mi} className={`p-4 text-center border-r border-white/5 ${bgColor}`}>
                             <div className="flex flex-col items-center gap-1.5">
                               <span className={`text-xs font-black ${textColor}`}>{val.toFixed(1)}%</span>
-                              <DotStreak results={row.hits[market] || []} rowIndex={i} />
+                              <DotStreak results={row.hits[market] || []} rowIndex={i} align={mi >= 6 ? 'right' : (mi <= 2 ? 'left' : 'center')} />
                             </div>
                           </td>
                         );
