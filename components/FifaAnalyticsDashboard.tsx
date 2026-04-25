@@ -76,7 +76,7 @@ const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; siz
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-[200] animate-in fade-in zoom-in-95 duration-200">
           <div className="bg-zinc-950 border border-white/10 rounded-xl shadow-2xl p-3 min-w-[220px]">
             <MatchTooltip match={r.match} hit={r.hit} />
-            <div className={`mt-2 h-0.5 w-full rounded-full ${r.hit === 1 ? 'bg-emerald-500/50' : 'bg-rose-500/50'}`} />
+            <div className={`mt-2 h-0.5 w-full rounded-full ${r.hit === 1 ? 'bg-emerald-500/50' : 'bg-rose-500/50'}`}></div>
           </div>
         </div>
       </div>
@@ -209,6 +209,11 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
     return [...proLeagueData].sort((a, b) => (a.stats['over_1.5_ft'] || 0) - (b.stats['over_1.5_ft'] || 0))[0];
   }, [proLeagueData]);
 
+  const nuclearOver = useMemo(() => {
+    if (!proLeagueData || proLeagueData.length === 0) return null;
+    return [...proLeagueData].find(l => (l.stats['over_3.5_ft'] || 0) >= 94);
+  }, [proLeagueData]);
+
   // === BACKTEST RUNNERS ===
   const runLeague = useCallback(async () => {
     setBtRunning(true);
@@ -317,42 +322,63 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
           </div>
 
           {/* Highlights da Sessão */}
-          {(mostOver || mostUnder) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-700">
-              {mostOver && (
-                <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex items-center justify-between">
+          {(mostOver || mostUnder || nuclearOver) && (
+            <div className="space-y-4 animate-in fade-in zoom-in-95 duration-700">
+              {/* Alerta Nuclear */}
+              {nuclearOver && (
+                <div className="bg-rose-600 border border-rose-500 rounded-2xl p-4 flex items-center justify-between animate-pulse shadow-lg shadow-rose-600/20">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center border border-orange-500/40">
-                      <i className="fa-solid fa-fire text-orange-500 text-xl animate-pulse"></i>
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                      <i className="fa-solid fa-radiation text-white text-2xl"></i>
                     </div>
                     <div>
-                      <div className="text-[10px] text-orange-500/70 font-black uppercase tracking-widest">Liga Mais Over</div>
-                      <div className="text-lg font-black text-white uppercase">{mostOver.league}</div>
+                      <div className="text-[10px] text-white/70 font-black uppercase tracking-widest">Alerta Crítico: Tendência Nuclear</div>
+                      <div className="text-xl font-black text-white uppercase">{nuclearOver.league}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-black text-orange-400">{mostOver.stats['over_2.5_ft']?.toFixed(0)}%</div>
-                    <div className="text-[9px] text-zinc-500 font-bold uppercase">Taxa de Over 2.5 FT</div>
+                    <div className="text-2xl font-black text-white">{nuclearOver.stats['over_3.5_ft']?.toFixed(0)}%</div>
+                    <div className="text-[9px] text-white/70 font-bold uppercase whitespace-nowrap">Over 3.5 FT Detectado!</div>
                   </div>
                 </div>
               )}
-              {mostUnder && (
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-500/40">
-                      <i className="fa-solid fa-snowflake text-blue-400 text-xl"></i>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {mostOver && (
+                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center border border-orange-500/40">
+                        <i className="fa-solid fa-fire text-orange-500 text-xl animate-pulse"></i>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-orange-500/70 font-black uppercase tracking-widest">Liga Mais Over</div>
+                        <div className="text-lg font-black text-white uppercase">{mostOver.league}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-[10px] text-blue-400/70 font-black uppercase tracking-widest">Liga Mais Under</div>
-                      <div className="text-lg font-black text-white uppercase">{mostUnder.league}</div>
+                    <div className="text-right">
+                      <div className="text-xl font-black text-orange-400">{mostOver.stats['over_2.5_ft']?.toFixed(0)}%</div>
+                      <div className="text-[9px] text-zinc-500 font-bold uppercase">Taxa de Over 2.5 FT</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xl font-black text-blue-400">{(100 - (mostUnder.stats['over_1.5_ft'] || 0)).toFixed(0)}%</div>
-                    <div className="text-[9px] text-zinc-500 font-bold uppercase">Taxa Under 1.5 FT</div>
+                )}
+                {mostUnder && (
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-500/40">
+                        <i className="fa-solid fa-snowflake text-blue-400 text-xl"></i>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-blue-400/70 font-black uppercase tracking-widest">Liga Mais Under</div>
+                        <div className="text-lg font-black text-white uppercase">{mostUnder.league}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-black text-blue-400">{(100 - (mostUnder.stats['over_1.5_ft'] || 0)).toFixed(0)}%</div>
+                      <div className="text-[9px] text-zinc-500 font-bold uppercase">Taxa Under 1.5 FT</div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
