@@ -40,25 +40,41 @@ const STRATEGIES = [
 // MINI COMPONENTS
 // =========================================================
 const MatchTooltip: React.FC<{ match: HistoryMatch; hit: number }> = ({ match, hit }) => (
-  <div className="flex flex-col gap-1.5 p-1">
-    <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-1 mb-1">
-      <span className="text-[8px] text-zinc-500 font-black uppercase">{match.league_name}</span>
-      <span className="text-[8px] text-zinc-500 font-bold">{match.data_realizacao}</span>
-    </div>
-    <div className="flex items-center justify-between gap-8">
-      <div className="flex flex-col">
-        <span className="text-[10px] font-black text-white uppercase">{match.home_player}</span>
-        <span className="text-[8px] text-zinc-500 font-bold">{match.home_team}</span>
+  <div className="flex flex-col gap-3 p-3 min-w-[260px]">
+    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+      <div className="flex items-center gap-2">
+        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${hit ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`}></div>
+        <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tighter">{match.league_name}</span>
       </div>
-      <div className="flex flex-col items-center">
-        <span className={`text-xs font-black ${hit ? 'text-emerald-400' : 'text-rose-400'}`}>
+      <span className="text-[9px] text-zinc-600 font-bold">{match.data_realizacao}</span>
+    </div>
+
+    <div className="grid grid-cols-3 items-center gap-3">
+      <div className="flex flex-col items-center text-center">
+        <span className="text-[11px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.home_player}</span>
+        <span className="text-[8px] text-zinc-500 font-bold truncate w-full">{match.home_team}</span>
+      </div>
+
+      <div className="flex flex-col items-center bg-white/5 rounded-xl py-2 border border-white/5 shadow-inner">
+        <span className={`text-lg font-black tracking-tighter ${hit ? 'text-emerald-400' : 'text-rose-400'}`}>
           {match.score_home} - {match.score_away}
         </span>
-        <span className="text-[7px] text-zinc-600 font-bold">HT: {match.halftime_score_home}-{match.halftime_score_away}</span>
+        <span className="text-[8px] text-zinc-500 font-black uppercase tracking-widest">Final</span>
       </div>
-      <div className="flex flex-col items-end">
-        <span className="text-[10px] font-black text-white uppercase">{match.away_player}</span>
-        <span className="text-[8px] text-zinc-500 font-bold">{match.away_team}</span>
+
+      <div className="flex flex-col items-center text-center">
+        <span className="text-[11px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.away_player}</span>
+        <span className="text-[8px] text-zinc-500 font-bold truncate w-full">{match.away_team}</span>
+      </div>
+    </div>
+
+    <div className="flex items-center justify-between pt-2 border-t border-white/5">
+      <div className="flex flex-col">
+        <span className="text-[8px] text-zinc-500 font-black uppercase tracking-wider">Intervalo (HT)</span>
+        <span className="text-[11px] text-zinc-300 font-black">{match.halftime_score_home} - {match.halftime_score_away}</span>
+      </div>
+      <div className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${hit ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+        {hit ? 'Green ✅' : 'Red ❌'}
       </div>
     </div>
   </div>
@@ -73,10 +89,12 @@ const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; siz
         >
           {r.hit === 1 ? 'G' : 'R'}
         </div>
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-[200] animate-in fade-in zoom-in-95 duration-200">
-          <div className="bg-zinc-950 border border-white/10 rounded-xl shadow-2xl p-3 min-w-[220px]">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 hidden group-hover:block z-[250] pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] overflow-hidden relative">
             <MatchTooltip match={r.match} hit={r.hit} />
-            <div className={`mt-2 h-0.5 w-full rounded-full ${r.hit === 1 ? 'bg-emerald-500/50' : 'bg-rose-500/50'}`}></div>
+            <div className={`mt-0 h-1 w-full ${r.hit === 1 ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+            {/* Arrow Pointer */}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-8 border-transparent border-t-zinc-950/95"></div>
           </div>
         </div>
       </div>
