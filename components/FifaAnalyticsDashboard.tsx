@@ -522,7 +522,13 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                             <div className={`text-lg font-black ${item.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                               R$ {item.returnCash.toFixed(2)}
                             </div>
-                            <div className="text-[9px] text-zinc-500 font-bold uppercase">{item.roi.toFixed(1)}% ROI</div>
+                            <div className="flex gap-1.5 justify-end mt-1 text-[9px] font-bold uppercase">
+                              <span className={item.returnUnits > 0 ? 'text-emerald-500/70' : 'text-rose-500/70'}>
+                                {item.returnUnits > 0 ? '+' : ''}{item.returnUnits.toFixed(1)}U
+                              </span>
+                              <span className="text-zinc-600">•</span>
+                              <span className="text-zinc-500">{item.roi.toFixed(1)}% ROI</span>
+                            </div>
                             <div className="mt-2 flex justify-end">
                               <DotStreak results={item.hits} />
                             </div>
@@ -540,8 +546,16 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                             <div className="text-xs font-black text-white uppercase">{item.market.replace('over_', '+').toUpperCase()}</div>
                           </div>
                           <div className="text-right">
-                            <div className={`text-lg font-black ${item.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>R$ {item.returnCash.toFixed(2)}</div>
-                            <div className="text-[9px] text-zinc-500 font-bold uppercase">{item.roi.toFixed(1)}% ROI</div>
+                            <div className={`text-lg font-black ${item.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              R$ {item.returnCash.toFixed(2)}
+                            </div>
+                            <div className="flex gap-1.5 justify-end mt-1 text-[9px] font-bold uppercase">
+                              <span className={item.returnUnits > 0 ? 'text-emerald-500/70' : 'text-rose-500/70'}>
+                                {item.returnUnits > 0 ? '+' : ''}{item.returnUnits.toFixed(1)}U
+                              </span>
+                              <span className="text-zinc-600">•</span>
+                              <span className="text-zinc-500">{item.roi.toFixed(1)}% ROI</span>
+                            </div>
                             <div className="mt-2 flex justify-end">
                               <DotStreak results={item.hits} />
                             </div>
@@ -583,7 +597,13 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                       </div>
                       <div className="text-right">
                         <div className={`text-sm font-black ${sig.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>R$ {sig.returnCash.toFixed(2)}</div>
-                        <div className="text-[9px] text-zinc-500 font-bold uppercase">{sig.roi.toFixed(1)}% ROI</div>
+                        <div className="flex gap-1.5 justify-end mt-0.5 text-[9px] font-bold uppercase">
+                          <span className={sig.returnUnits > 0 ? 'text-emerald-500/70' : 'text-rose-500/70'}>
+                            {sig.returnUnits > 0 ? '+' : ''}{sig.returnUnits.toFixed(1)}U
+                          </span>
+                          <span className="text-zinc-600">•</span>
+                          <span className="text-zinc-500">{sig.roi.toFixed(1)}% ROI</span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -618,7 +638,13 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                         <div className={`text-sm font-black ${sig.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                           R$ {sig.returnCash.toFixed(2)}
                         </div>
-                        <div className="text-[9px] text-zinc-500 font-bold uppercase">{sig.roi.toFixed(1)}% ROI</div>
+                        <div className="flex gap-1.5 justify-end mt-0.5 text-[9px] font-bold uppercase">
+                          <span className={sig.returnUnits > 0 ? 'text-emerald-500/70' : 'text-rose-500/70'}>
+                            {sig.returnUnits > 0 ? '+' : ''}{sig.returnUnits.toFixed(1)}U
+                          </span>
+                          <span className="text-zinc-600">•</span>
+                          <span className="text-zinc-500">{sig.roi.toFixed(1)}% ROI</span>
+                        </div>
                       </div>
                     </div>
                   ))}
