@@ -80,27 +80,39 @@ const MatchTooltip: React.FC<{ match: HistoryMatch; hit: number }> = ({ match, h
   </div>
 );
 
-const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; size?: 'sm' | 'md' }> = ({ results, size = 'sm' }) => (
-  <div className="flex items-center gap-1">
-    {results.slice(0, 10).map((r, i) => (
-      <div key={i} className="group relative">
+const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; size?: 'sm' | 'md' }> = ({ results, size = 'sm' }) => {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  return (
+    <div className="flex items-center gap-1">
+      {results.slice(0, 10).map((r, i) => (
         <div
-          className={`rounded-full border flex items-center justify-center font-black cursor-help transition-all hover:scale-110 ${size === 'md' ? 'w-6 h-6 text-[9px]' : 'w-4 h-4 text-[8px]'} ${r.hit === 1 ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/40' : 'bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/40'}`}
+          key={i}
+          className="relative"
+          onMouseEnter={() => setHoveredIdx(i)}
+          onMouseLeave={() => setHoveredIdx(null)}
         >
-          {r.hit === 1 ? 'G' : 'R'}
-        </div>
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 hidden group-hover:block z-[250] pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] overflow-hidden relative">
-            <MatchTooltip match={r.match} hit={r.hit} />
-            <div className={`mt-0 h-1 w-full ${r.hit === 1 ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
-            {/* Arrow Pointer */}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-8 border-transparent border-t-zinc-950/95"></div>
+          <div
+            className={`rounded-full border flex items-center justify-center font-black cursor-help transition-all hover:scale-110 ${size === 'md' ? 'w-6 h-6 text-[9px]' : 'w-4 h-4 text-[8px]'} ${r.hit === 1 ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/40' : 'bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/40'}`}
+          >
+            {r.hit === 1 ? 'G' : 'R'}
           </div>
+
+          {hoveredIdx === i && (
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 z-[500] pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="bg-zinc-950/98 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.9)] overflow-hidden relative">
+                <MatchTooltip match={r.match} hit={r.hit} />
+                <div className={`mt-0 h-1 w-full ${r.hit === 1 ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                {/* Arrow Pointer */}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-8 border-transparent border-t-zinc-950/98"></div>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    ))}
-  </div>
-);
+      ))}
+    </div>
+  );
+};
 
 const TrendBadge: React.FC<{ trend: 'heating' | 'cooling' | 'stable' }> = ({ trend }) => {
   const map = {
@@ -342,21 +354,37 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
           {/* Highlights da Sessão */}
           {(mostOver || mostUnder || nuclearOver) && (
             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-700">
-              {/* Alerta Nuclear */}
+              {/* Alerta Nuclear - Premium Glass Design */}
               {nuclearOver && (
-                <div className="bg-rose-600 border border-rose-500 rounded-2xl p-4 flex items-center justify-between animate-pulse shadow-lg shadow-rose-600/20">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                      <i className="fa-solid fa-radiation text-white text-2xl"></i>
+                <div className="relative group overflow-hidden bg-gradient-to-br from-rose-950/80 via-rose-900/40 to-black/60 border border-rose-500/20 rounded-3xl p-5 flex items-center justify-between backdrop-blur-xl shadow-[0_0_40px_rgba(244,63,94,0.15)] transition-all hover:border-rose-500/40">
+                  {/* Decorative Background Elements */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 blur-[60px] rounded-full -mr-16 -mt-16"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-rose-500/5 blur-[40px] rounded-full -ml-12 -mb-12"></div>
+
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-rose-700 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.4)] animate-pulse">
+                      <i className="fa-solid fa-radiation text-white text-3xl"></i>
                     </div>
                     <div>
-                      <div className="text-[10px] text-white/70 font-black uppercase tracking-widest">Alerta Crítico: Tendência Nuclear</div>
-                      <div className="text-xl font-black text-white uppercase">{nuclearOver.league}</div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                        <div className="text-[10px] text-rose-400 font-black uppercase tracking-[0.2em]">Cenário de Extrema Urgência</div>
+                      </div>
+                      <div className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{nuclearOver.league}</div>
+                      <div className="text-[9px] text-zinc-500 font-bold uppercase mt-1 tracking-widest">Padrão Histórico de Gols Detectado</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-black text-white">{nuclearOver.stats['over_3.5_ft']?.toFixed(0)}%</div>
-                    <div className="text-[9px] text-white/70 font-bold uppercase whitespace-nowrap">Over 3.5 FT Detectado!</div>
+
+                  <div className="flex flex-col items-end relative z-10">
+                    <div className="flex items-baseline gap-1">
+                      <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-rose-400 leading-none">
+                        {nuclearOver.stats['over_3.5_ft']?.toFixed(0)}
+                      </div>
+                      <div className="text-lg font-black text-rose-500">%</div>
+                    </div>
+                    <div className="text-[10px] bg-rose-500/10 border border-rose-500/20 px-3 py-0.5 rounded-full text-rose-400 font-black uppercase tracking-widest mt-2">
+                      Nuclear Over 3.5
+                    </div>
                   </div>
                 </div>
               )}
