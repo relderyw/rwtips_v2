@@ -1315,7 +1315,7 @@ export const runScenarioPlayerAnalysis = (
   const playerResults: any[] = [];
   const markets = type === 'goals' 
     ? ['over_0.5_ht', 'over_1.5_ht', 'over_1.5_ft', 'over_2.5_ft']
-    : ['home_win', 'away_win'];
+    : ['victory'];
 
   playerSet.forEach(player => {
     markets.forEach(market => {
@@ -1333,11 +1333,12 @@ export const runScenarioPlayerAnalysis = (
       pGames.forEach(g => {
         const isHome = normalize(g.home_player) === normalize(player);
         let hit = false;
-        if (market === 'home_win' || market === 'away_win') {
+        if (market === 'victory') {
            const pScore = isHome ? g.score_home : g.score_away;
            const oScore = isHome ? g.score_away : g.score_home;
            hit = pScore > oScore;
         } else {
+
            hit = evaluateMarket(g, market).hit;
         }
         if (hit) greens++;
@@ -1360,5 +1361,19 @@ export const runScenarioPlayerAnalysis = (
     });
   });
 
-  return playerResults.sort((a, b) => b.roi - a.roi).slice(0, 4);
+  const uniquePlayers = new Map<string, any>();
+  playerResults.forEach(r => {
+    const existing = uniquePlayers.get(r.player);
+    if (!existing) {
+      uniquePlayers.set(r.player, r);
+    } else {
+      if (r.roi > existing.roi || (r.roi === existing.roi && r.winRate > existing.winRate)) {
+        uniquePlayers.set(r.player, r);
+      }
+    }
+  });
+
+  return Array.from(uniquePlayers.values())
+    .sort((a, b) => b.roi - a.roi)
+    .slice(0, 4);
 };
