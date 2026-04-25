@@ -1215,12 +1215,16 @@ export const calculateProLeagueSummary = (history: HistoryMatch[], sampleSize: n
       .slice(0, sampleSize);
     
     const marketStats: Record<string, number> = {};
+    const marketHits: Record<string, number[]> = {};
+
     PRO_MARKETS.forEach(market => {
-      const hits = leagueGames.filter(g => evaluateMarket(g, market).hit).length;
-      marketStats[market] = leagueGames.length > 0 ? (hits / leagueGames.length) * 100 : 0;
+      const hits = leagueGames.map(g => evaluateMarket(g, market).hit ? 1 : 0);
+      const hitCount = hits.filter(h => h === 1).length;
+      marketStats[market] = leagueGames.length > 0 ? (hitCount / leagueGames.length) * 100 : 0;
+      marketHits[market] = hits;
     });
 
-    return { league, stats: marketStats, gamesCount: leagueGames.length };
+    return { league, stats: marketStats, hits: marketHits, gamesCount: leagueGames.length };
   }).filter(l => l.gamesCount > 0);
 };
 
@@ -1230,8 +1234,16 @@ export const calculateMomentum = (recentHits: number[], totalHistoryHits: number
   const recentRate = (recentHits.reduce((a, b) => a + b, 0) / recentHits.length) * 100;
   const historyRate = (totalHistoryHits.reduce((a, b) => a + b, 0) / totalHistoryHits.length) * 100;
   
-  if (recentRate > historyRate + 10) return 'heating';
-  if (recentRate < historyRate - 10) return 'cooling';
+  // Last 2 matches are critical for "pulse"
+  const last2 = recentHits.slice(0, 2);
+  const last2Hits = last2.filter(h => h === 1).length;
+
+  if (last2Hits === 2 && recentRate >= historyRate) return 'heating';
+  if (last2Hits === 0 && recentRate <= historyRate) return 'cooling';
+  
+  if (recentRate > historyRate + 15) return 'heating';
+  if (recentRate < historyRate - 15) return 'cooling';
+  
   return 'stable';
 };
 
@@ -1266,7 +1278,8 @@ export const runScenarioGameLines = (history: HistoryMatch[], sampleSize: number
         market,
         ...indicators,
         momentum,
-        totalGames: pGames.length
+        totalGames: pGames.length,
+        hits // Slice the last N hits for the UI
       });
     });
   });
@@ -1308,7 +1321,9 @@ export const runScenarioPlayerAnalysis = (
         .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
         .slice(0, sampleSize);
 
-      if (pGames.length < 3) return;
+      // User requested only 5, 8, 10 or 15 games. 
+      // We need a minimum to be assertive.
+      if (pGames.length < Math.min(5, sampleSize)) return;
 
       let greens = 0;
       const hits: number[] = [];
@@ -1335,7 +1350,8 @@ export const runScenarioPlayerAnalysis = (
         ...indicators,
         momentum,
         winRate: (greens / pGames.length) * 100,
-        totalGames: pGames.length
+        totalGames: pGames.length,
+        hits
       });
     });
   });
