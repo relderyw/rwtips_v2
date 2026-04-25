@@ -40,41 +40,41 @@ const STRATEGIES = [
 // MINI COMPONENTS
 // =========================================================
 const MatchTooltip: React.FC<{ match: HistoryMatch; hit: number }> = ({ match, hit }) => (
-  <div className="flex flex-col gap-3 p-3 min-w-[260px]">
-    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+  <div className="flex flex-col gap-2 p-2.5 min-w-[230px]">
+    <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
       <div className="flex items-center gap-2">
-        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${hit ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`}></div>
-        <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tighter">{match.league_name}</span>
+        <div className={`w-1 h-1 rounded-full ${hit ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+        <span className="text-[9px] text-zinc-400 font-black uppercase tracking-tighter">{match.league_name}</span>
       </div>
-      <span className="text-[9px] text-zinc-600 font-bold">{match.data_realizacao}</span>
+      <span className="text-[8px] text-zinc-600 font-bold">{match.data_realizacao}</span>
     </div>
 
-    <div className="grid grid-cols-3 items-center gap-3">
+    <div className="grid grid-cols-3 items-center gap-2">
       <div className="flex flex-col items-center text-center">
-        <span className="text-[11px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.home_player}</span>
-        <span className="text-[8px] text-zinc-500 font-bold truncate w-full">{match.home_team}</span>
+        <span className="text-[10px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.home_player}</span>
+        <span className="text-[7px] text-zinc-500 font-bold truncate w-full">{match.home_team}</span>
       </div>
 
-      <div className="flex flex-col items-center bg-white/5 rounded-xl py-2 border border-white/5 shadow-inner">
-        <span className={`text-lg font-black tracking-tighter ${hit ? 'text-emerald-400' : 'text-rose-400'}`}>
+      <div className="flex flex-col items-center bg-white/5 rounded-lg py-1 border border-white/5">
+        <span className={`text-base font-black tracking-tighter ${hit ? 'text-emerald-400' : 'text-rose-400'}`}>
           {match.score_home} - {match.score_away}
         </span>
-        <span className="text-[8px] text-zinc-500 font-black uppercase tracking-widest">Final</span>
+        <span className="text-[7px] text-zinc-500 font-black uppercase tracking-widest">Final</span>
       </div>
 
       <div className="flex flex-col items-center text-center">
-        <span className="text-[11px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.away_player}</span>
-        <span className="text-[8px] text-zinc-500 font-bold truncate w-full">{match.away_team}</span>
+        <span className="text-[10px] font-black text-white uppercase leading-tight line-clamp-1 w-full">{match.away_player}</span>
+        <span className="text-[7px] text-zinc-500 font-bold truncate w-full">{match.away_team}</span>
       </div>
     </div>
 
-    <div className="flex items-center justify-between pt-2 border-t border-white/5">
+    <div className="flex items-center justify-between pt-1.5 border-t border-white/5">
       <div className="flex flex-col">
-        <span className="text-[8px] text-zinc-500 font-black uppercase tracking-wider">Intervalo (HT)</span>
-        <span className="text-[11px] text-zinc-300 font-black">{match.halftime_score_home} - {match.halftime_score_away}</span>
+        <span className="text-[7px] text-zinc-500 font-black uppercase tracking-wider">HT</span>
+        <span className="text-[10px] text-zinc-300 font-black">{match.halftime_score_home} - {match.halftime_score_away}</span>
       </div>
-      <div className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${hit ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-        {hit ? 'Green ✅' : 'Red ❌'}
+      <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${hit ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+        {hit ? 'Green' : 'Red'}
       </div>
     </div>
   </div>
@@ -391,36 +391,36 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {mostOver && (
-                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center border border-orange-500/40">
-                        <i className="fa-solid fa-fire text-orange-500 text-xl animate-pulse"></i>
+                      <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-500/40">
+                        <i className="fa-solid fa-droplet text-blue-400 text-xl"></i>
                       </div>
                       <div>
-                        <div className="text-[10px] text-orange-500/70 font-black uppercase tracking-widest">Liga Mais Over</div>
+                        <div className="text-[10px] text-blue-400/70 font-black uppercase tracking-widest">Liga Mais Over</div>
                         <div className="text-lg font-black text-white uppercase">{mostOver.league}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-black text-orange-400">{mostOver.stats['over_2.5_ft']?.toFixed(0)}%</div>
-                      <div className="text-[9px] text-zinc-500 font-bold uppercase">Taxa de Over 2.5 FT</div>
+                      <div className="text-xl font-black text-blue-400">{(mostOver.stats['over_2.5_ft'] || 0).toFixed(0)}%</div>
+                      <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Taxa Over 2.5 FT</div>
                     </div>
                   </div>
                 )}
                 {mostUnder && (
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-500/40">
-                        <i className="fa-solid fa-snowflake text-blue-400 text-xl"></i>
+                      <div className="w-12 h-12 bg-rose-500/20 rounded-xl flex items-center justify-center border border-rose-500/40">
+                        <i className="fa-solid fa-fire text-rose-400 text-xl"></i>
                       </div>
                       <div>
-                        <div className="text-[10px] text-blue-400/70 font-black uppercase tracking-widest">Liga Mais Under</div>
+                        <div className="text-[10px] text-rose-400/70 font-black uppercase tracking-widest">Liga Mais Under</div>
                         <div className="text-lg font-black text-white uppercase">{mostUnder.league}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-black text-blue-400">{(100 - (mostUnder.stats['over_1.5_ft'] || 0)).toFixed(0)}%</div>
-                      <div className="text-[9px] text-zinc-500 font-bold uppercase">Taxa Under 1.5 FT</div>
+                      <div className="text-xl font-black text-rose-400">{(100 - (mostUnder.stats['over_1.5_ft'] || 0)).toFixed(0)}%</div>
+                      <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Taxa Under 1.5 FT</div>
                     </div>
                   </div>
                 )}
@@ -445,8 +445,8 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                 <thead>
                   <tr className="bg-black/40">
                     <th rowSpan={2} className="p-4 text-[10px] text-zinc-500 uppercase font-black border-r border-white/5">Ligas</th>
-                    <th colSpan={4} className="p-2 text-[10px] text-amber-500 uppercase font-black text-center border-b border-r border-white/5">1º Tempo (HT)</th>
-                    <th colSpan={4} className="p-2 text-[10px] text-cyan-500 uppercase font-black text-center border-b border-white/5">Jogo Completo (FT)</th>
+                    <th colSpan={4} className="p-2 text-[10px] text-cyan-500 uppercase font-black text-center border-b border-r border-white/5">1º Tempo (HT)</th>
+                    <th colSpan={4} className="p-2 text-[10px] text-amber-500 uppercase font-black text-center border-b border-white/5">Jogo Completo (FT)</th>
                   </tr>
                   <tr className="bg-black/20">
                     {PRO_MARKETS.map((m, i) => (
