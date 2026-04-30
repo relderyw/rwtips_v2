@@ -46,20 +46,19 @@ export const LeagueThermometer: React.FC<LeagueThermometerProps> = ({ stats, onV
     return (
       <div className="flex flex-col gap-1.5 mb-3 group">
         <div className="flex justify-between items-center px-0.5">
-          <span className="text-[9px] font-black text-white/30 uppercase tracking-widest group-hover:text-white/50 transition-colors">
+          <span className="text-[10px] font-medium text-[#52525b] group-hover:text-[#71717a] transition-colors">
             {label}
           </span>
-          <span className="font-mono-numbers font-black text-[12px]" style={{ color: mainColor }}>
+          <span className="font-mono-numbers font-bold text-[12px]" style={{ color: mainColor }}>
             {val.toFixed(0)}%
           </span>
         </div>
-        <div className="h-2 bg-white/[0.02] rounded-full overflow-hidden border border-white/[0.03] shadow-inner">
+        <div className="h-1.5 bg-[#1c1c21] rounded-full overflow-hidden">
           <div
             className="h-full progress-bar-fill transition-all duration-1000"
             style={{
               width: `${val}%`,
               background: `linear-gradient(90deg, ${softColor}, ${mainColor})`,
-              boxShadow: `0 0 8px ${getDynamicColor(val, 0.2, isBad)}`
             }}
           ></div>
         </div>
@@ -68,7 +67,7 @@ export const LeagueThermometer: React.FC<LeagueThermometerProps> = ({ stats, onV
   };
 
   return (
-    <div className={`bg-[#0c0c0e]/80 border rounded-[2rem] p-6 transition-all duration-300 card-glow hover:border-emerald-500/20 relative overflow-hidden h-full`} style={{ borderColor: `${info.color}15` }}>
+    <div className={`bg-[#111115] border rounded-xl p-5 transition-all duration-300 hover:bg-[#16161b] relative overflow-hidden h-full`} style={{ borderColor: `${info.color}25` }}>
       <div className="flex items-center gap-4 mb-6">
         <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-black border border-white/10 p-2 shadow-2xl transition-transform hover:scale-110 shrink-0">
           {info.image ? (
@@ -78,9 +77,9 @@ export const LeagueThermometer: React.FC<LeagueThermometerProps> = ({ stats, onV
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-[16px] font-black uppercase tracking-tighter truncate leading-tight mb-0.5" style={{ color: info.color }}>{info.name}</h4>
+          <h4 className="text-sm font-bold truncate leading-tight mb-0.5" style={{ color: info.color }}>{info.name}</h4>
           <div className="flex items-center gap-2">
-            <span className={`text-[8px] font-black uppercase tracking-[0.3em] ${status.color}`}>
+            <span className={`text-[10px] font-medium ${status.color}`}>
               {status.label}
             </span>
             {(stats.temperature === 'hot' || stats.temperature.includes('_pro')) && (
@@ -90,23 +89,23 @@ export const LeagueThermometer: React.FC<LeagueThermometerProps> = ({ stats, onV
         </div>
         <button
           onClick={() => onViewGames?.(stats)}
-          className="w-10 h-10 bg-white/5 border border-white/10 rounded-xl hover:bg-emerald-500 hover:text-black transition-all active:scale-95 group flex items-center justify-center"
+          className="w-8 h-8 bg-[#1c1c21] border border-[#25252a] rounded-lg hover:bg-[#25252a] transition-all flex items-center justify-center text-[#52525b] hover:text-white"
           title="Ver histórico desta liga"
         >
-          <i className="fa-solid fa-database text-xs group-hover:scale-110 transition-transform"></i>
+          <i className="fa-solid fa-database text-xs"></i>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 pt-6 border-t border-white/[0.05]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pt-4 border-t border-[#1c1c21]">
         <div className="space-y-1">
-          <h5 className="text-[10px] font-black text-indigo-400 uppercase mb-5 tracking-[0.4em] text-center italic border-b border-indigo-500/10 pb-2">DADOS HT</h5>
+          <h5 className="text-[10px] font-semibold text-[#6366f1]/70 mb-4 tracking-wider text-center border-b border-[#1c1c21] pb-2">HT</h5>
           <MetricItem label="+0.5 HT" val={stats.metrics.ht05} />
           <MetricItem label="+1.5 HT" val={stats.metrics.ht15} />
           <MetricItem label="BTTS HT" val={stats.metrics.htBtts} />
-          <MetricItem label="UNDER HT" val={stats.metrics.ht0x0} isBad />
+          <MetricItem label="Under HT" val={stats.metrics.ht0x0} isBad />
         </div>
         <div className="space-y-1">
-          <h5 className="text-[10px] font-black text-emerald-400 uppercase mb-5 tracking-[0.4em] text-center italic border-b border-emerald-500/10 pb-2">DADOS FT</h5>
+          <h5 className="text-[10px] font-semibold text-[#22c55e]/70 mb-4 tracking-wider text-center border-b border-[#1c1c21] pb-2">FT</h5>
           <MetricItem label="+1.5 FT" val={stats.metrics.ft15} />
           <MetricItem label="+2.5 FT" val={stats.metrics.ft25} />
           <MetricItem label="BTTS FT" val={stats.metrics.ftBtts} />

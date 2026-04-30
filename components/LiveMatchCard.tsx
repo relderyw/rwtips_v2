@@ -159,30 +159,21 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
     const glowColor = getDynamicColor(value, 0.4);
 
     return (
-      <div className="flex items-center gap-2.5 mb-2 last:mb-0 group/row">
-        {/* Label - Fixed width for alignment */}
+      <div className="flex items-center gap-2.5 mb-2 last:mb-0">
         <div className="w-[48px] shrink-0">
-          <span className="text-[9px] font-black text-white/50 uppercase tracking-tighter group-hover/row:text-white/80 transition-colors whitespace-nowrap">{label}</span>
+          <span className="text-[10px] font-medium text-[#52525b] whitespace-nowrap">{label}</span>
         </div>
-
-        {/* Progress Bar Container */}
-        <div className="flex-1 h-[7px] bg-black/40 rounded-full overflow-hidden border border-white/[0.04] relative shadow-inner">
+        <div className="flex-1 h-[6px] bg-[#1c1c21] rounded-full overflow-hidden">
           <div
-            className="h-full progress-bar-fill transition-all duration-1000 ease-out relative"
+            className="h-full transition-all duration-1000 ease-out"
             style={{
               width: `${value}%`,
               backgroundColor: mainColor,
-              boxShadow: `0 0 12px ${glowColor}`
             }}
-          >
-            {/* Glossy overlay effect */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-30"></div>
-          </div>
+          ></div>
         </div>
-
-        {/* % Value */}
         <div className="w-[32px] text-right shrink-0">
-          <span className="text-[11px] font-black font-mono-numbers tabular-nums translate-y-[0.5px] inline-block" style={{ color: mainColor }}>
+          <span className="text-[11px] font-semibold font-mono-numbers tabular-nums" style={{ color: mainColor }}>
             {value.toFixed(0)}%
           </span>
         </div>
@@ -233,11 +224,11 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
 
   return (
     <div
-      className={`relative bg-[#0d0d0f] rounded-2xl border flex flex-col transition-all duration-500 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01]' : 'card-glow border-white/[0.03]'}`}
+      className={`relative bg-[#111115] rounded-xl border flex flex-col transition-all duration-300 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01]' : 'hover:bg-[#16161b]'}`}
       style={{
-        borderColor: isSignaled ? `${theme.color}40` : 'rgba(255,255,255,0.03)',
-        boxShadow: isSignaled ? `0 20px 50px rgba(0,0,0,0.8), 0 0 15px ${theme.color}20` : '',
-        borderLeft: isSignaled ? `5px solid ${theme.color}` : `4px solid ${leagueInfo.color}60`,
+        borderColor: isSignaled ? `${theme.color}50` : '#25252a',
+        boxShadow: isSignaled ? `0 8px_30px rgba(0,0,0,0.6), 0 0 12px ${theme.color}15` : '',
+        borderLeft: isSignaled ? `3px solid ${theme.color}` : `3px solid ${leagueInfo.color}50`,
         overflow: 'visible'
       }}
     >
@@ -323,8 +314,8 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
       <div className="p-3 pb-2.5 flex flex-col gap-2.5 flex-1 relative z-10">
         <div className="flex items-center justify-between bg-black/40 p-3 rounded-2xl border border-white/[0.03] shadow-inner">
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[9px] font-bold text-white/40 uppercase truncate mb-1 tracking-widest">{match.homeTeamName || '–'}</p>
-            <h3 className="text-[14px] font-black text-white uppercase truncate mb-1.5">{match.homePlayer}</h3>
+            <p className="text-[10px] font-medium text-[#52525b] uppercase truncate mb-1">{match.homeTeamName || '–'}</p>
+            <h3 className="text-[14px] font-bold text-white truncate mb-1.5">{match.homePlayer}</h3>
             {p1.lastMatches && p1.lastMatches.length >= 3 ? (
               <FormDots results={p1.last5} stats={p1} />
             ) : (
@@ -349,8 +340,8 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           </div>
 
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[9px] font-bold text-white/40 uppercase truncate mb-1 tracking-widest">{match.awayTeamName || '–'}</p>
-            <h3 className="text-[14px] font-black text-white uppercase truncate mb-1.5">{match.awayPlayer}</h3>
+            <p className="text-[10px] font-medium text-[#52525b] uppercase truncate mb-1">{match.awayTeamName || '–'}</p>
+            <h3 className="text-[14px] font-bold text-white truncate mb-1.5">{match.awayPlayer}</h3>
             {p2.lastMatches && p2.lastMatches.length >= 3 ? (
               <FormDots results={p2.last5} stats={p2} />
             ) : (

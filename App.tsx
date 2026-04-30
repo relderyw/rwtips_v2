@@ -517,7 +517,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-[#030303] text-white selection:bg-emerald-500 selection:text-black`}>
+    <div className={`min-h-screen bg-[#080808] text-[#e4e4e7] selection:bg-amber-500/30 selection:text-amber-100`}>
 
       {!isLoggedIn && !isAdminView && <LoginScreen onLoginSuccess={handleLoginSuccess} />}
 
@@ -533,49 +533,49 @@ const App: React.FC = () => {
           ))}
         </div>
 
-        <header className="px-6 py-4 border-b border-white/[0.03] bg-black/95 backdrop-blur-3xl sticky top-0 z-[1000] shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+        <header className="px-6 py-3.5 border-b border-[#1c1c21] bg-[#0a0a0d]/98 backdrop-blur-3xl sticky top-0 z-[1000] shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className={`w-10 h-10 bg-gradient-to-br from-[#111] to-[#000] rounded-xl flex items-center justify-center shadow-2xl border transition-all duration-500 overflow-hidden group ${isAnySyncing ? 'border-amber-500 animate-pulse shadow-amber-500/20' : 'border-emerald-500 shadow-emerald-500/20'}`}>
+              <div className={`w-9 h-9 bg-[#111115] rounded-xl flex items-center justify-center shadow-lg border transition-all duration-500 overflow-hidden group ${isAnySyncing ? 'border-amber-500/50' : 'border-[#25252a]'}`}>
                 <img src="https://i.ibb.co/G4Y8sHMk/Chat-GPT-Image-21-de-abr-de-2025-16-14-34-1.png" alt="👑RW" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
               </div>
               <div>
-                <h1 className="text-lg font-black italic tracking-tighter text-white leading-none">👑RW  <span className="text-emerald-500"> TIPS🎮</span></h1>
-                <p className="text-[7px] font-black text-white/20 uppercase tracking-[0.3em] mt-1.5">{isAnySyncing ? 'Sincronizando...' : 'Conectado'}</p>
+                <h1 className="text-base font-bold tracking-tight text-white leading-none">👑RW <span className="text-amber-500">TIPS🎮</span></h1>
+                <p className="text-[10px] font-medium text-[#52525b] mt-1">{isAnySyncing ? 'Sincronizando...' : 'Conectado'}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-6">
               <button
                 onClick={() => setSelectedModule(null)}
-                className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 group"
+                className="px-3 py-2 bg-[#111115] border border-[#25252a] rounded-lg text-[10px] font-semibold text-[#a1a1aa] hover:text-white hover:border-[#3f3f46] transition-all flex items-center gap-2"
               >
-                <i className="fa-solid fa-layer-group text-emerald-500 group-hover:scale-110 transition-transform"></i>
+                <i className="fa-solid fa-layer-group text-amber-500 text-xs"></i>
                 Módulos
               </button>
 
-              <nav className="flex bg-white/[0.02] p-1 rounded-xl border border-white/5 shadow-inner">
+              <nav className="flex bg-[#0f0f12] p-1 rounded-xl border border-[#1c1c21]">
                 {selectedModule === 'fifa' && (
                   <>
-                    <button onClick={() => setActiveMainTab('radar')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'radar' ? 'bg-white text-black shadow-2xl scale-105' : 'text-white/30 hover:text-white/60'}`}>Radar Live</button>
-                    <button onClick={() => setActiveMainTab('results')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'results' ? 'bg-white text-black shadow-2xl scale-105' : 'text-white/30 hover:text-white/60'}`}>Resultados</button>
-                    <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'bankroll' ? 'bg-emerald-500 text-black shadow-2xl scale-105' : 'text-white/30 hover:text-emerald-500'}`}>Banca</button>
-                    <button onClick={() => setActiveMainTab('analytics')} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all duration-300 ${activeMainTab === 'analytics' ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-2xl scale-105' : 'text-white/30 hover:text-indigo-400'}`}>BACKTEST</button>
+                    <button onClick={() => setActiveMainTab('radar')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'radar' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Radar Live</button>
+                    <button onClick={() => setActiveMainTab('results')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'results' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Resultados</button>
+                    <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'bankroll' ? 'bg-[#22c55e] text-black shadow-sm' : 'text-[#52525b] hover:text-[#22c55e]'}`}>Banca</button>
+                    <button onClick={() => setActiveMainTab('analytics')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'analytics' ? 'bg-amber-500 text-black shadow-sm' : 'text-[#52525b] hover:text-amber-500'}`}>Backtest</button>
                   </>
                 )}
               </nav>
               {isLoggedIn && isAdmin && (
                 <button
                   onClick={() => setIsAdminView(true)}
-                  className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-500/20 transition-all flex items-center gap-2 group text-amber-400"
+                  className="px-3 py-2 bg-amber-500/10 border border-amber-500/25 rounded-lg text-[10px] font-semibold text-amber-500 hover:bg-amber-500/20 transition-all flex items-center gap-1.5"
                 >
-                  <i className="fa-solid fa-shield-halved group-hover:scale-110 transition-transform"></i>
+                  <i className="fa-solid fa-shield-halved text-xs"></i>
                   Admin
                 </button>
               )}
               {(isLoggedIn || isAdminView) && (
-                <button onClick={handleLogout} className="w-10 h-10 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-center hover:bg-rose-500/20 transition-all active:scale-95 group">
-                  <i className="fa-solid fa-power-off text-rose-500 text-xs group-hover:scale-110 transition-transform"></i>
+                <button onClick={handleLogout} className="w-8 h-8 bg-[#111115] border border-[#25252a] rounded-lg flex items-center justify-center hover:border-red-500/40 hover:text-red-500 transition-all">
+                  <i className="fa-solid fa-power-off text-[#52525b] text-xs"></i>
                 </button>
               )}
             </div>
@@ -595,13 +595,13 @@ const App: React.FC = () => {
                   {activeMainTab === 'radar' ? (
                     <>
                       <div className="max-w-7xl mx-auto mb-10 space-y-6">
-                        <div className="flex flex-col lg:flex-row gap-4 items-center bg-white/[0.01] p-4 rounded-[2.5rem] border border-white/[0.05] backdrop-blur-3xl shadow-2xl">
+                        <div className="flex flex-col lg:flex-row gap-3 items-center bg-[#111115] p-3 rounded-2xl border border-[#25252a]">
                           <div className="relative group flex-1 w-full">
                             <i className="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-white/10 text-base"></i>
                             <input
                               type="text"
-                              placeholder="BUSCAR JOGADOR..."
-                              className="w-full bg-white/[0.01] border border-white/[0.06] rounded-2xl py-4 pl-14 pr-6 text-sm font-bold outline-none focus:border-emerald-500/30 focus:bg-white/[0.03] transition-all placeholder:text-white/10 uppercase tracking-widest shadow-inner"
+                              placeholder="Buscar jogador..."
+                              className="w-full bg-[#0a0a0d] border border-[#25252a] rounded-xl py-3 pl-12 pr-4 text-sm font-medium outline-none focus:border-amber-500/40 transition-all placeholder:text-[#3f3f46] shadow-inner"
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -610,7 +610,7 @@ const App: React.FC = () => {
                             <select
                               value={selectedLeague}
                               onChange={(e) => setSelectedLeague(e.target.value)}
-                              className="w-full bg-black border border-white/[0.06] rounded-2xl py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] outline-none appearance-none cursor-pointer focus:border-emerald-500/30 transition-all text-white/60 shadow-lg"
+                              className="w-full bg-[#0a0a0d] border border-[#25252a] rounded-xl py-3 px-4 text-sm font-medium outline-none appearance-none cursor-pointer focus:border-amber-500/40 transition-all text-[#a1a1aa]"
                             >
                               <option value="all">🌐 TODAS AS LIGAS</option>
                               {availableLeagues.map(l => (
@@ -630,11 +630,17 @@ const App: React.FC = () => {
                               <div key={f.id} className="tooltip-trigger">
                                 <button
                                   onClick={() => setFilter(f.id)}
-                                  className={`relative px-4 py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center gap-3 border transition-all duration-500 ${isActive ? 'bg-emerald-500 text-black border-emerald-400 shadow-lg scale-105' : hasMatches ? 'bg-transparent border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)] hover:bg-emerald-500/5' : 'bg-transparent border-white/5 text-white/30 hover:text-white hover:bg-white/5'}`}
+                                  className={`relative px-3 py-2.5 rounded-xl text-[11px] font-medium flex items-center gap-2 border transition-all duration-300 ${
+                                    isActive 
+                                      ? 'bg-amber-500 text-black border-amber-400 shadow-md' 
+                                      : hasMatches 
+                                        ? 'bg-[#111115] border-amber-500/30 text-amber-500/90 hover:bg-[#16161b] hover:border-amber-500/50' 
+                                        : 'bg-[#111115] border-[#25252a] text-[#52525b] hover:text-[#a1a1aa] hover:border-[#3f3f46]'
+                                  }`}
                                 >
                                   <i className={`fa-solid ${f.icon} text-[11px]`}></i> {f.label}
                                   {hasMatches && (
-                                    <span className={`flex items-center justify-center min-w-[16px] h-[16px] px-1.5 rounded-full text-[8px] font-black border ${isActive ? 'bg-black text-emerald-500 border-emerald-400' : 'bg-emerald-500 text-black border-white/10 shadow-lg animate-pulse'}`}>
+                                    <span className={`flex items-center justify-center min-w-[16px] h-[16px] px-1.5 rounded-full text-[9px] font-bold border ${isActive ? 'bg-black/30 text-black border-black/20' : 'bg-amber-500/20 text-amber-400 border-amber-500/20'}`}>
                                       {count}
                                     </span>
                                   )}
@@ -820,28 +826,28 @@ const App: React.FC = () => {
                     </div>
                   </>
                 ) : activeMainTab === 'results' ? (
-                    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
-                      <div className="bg-white/[0.01] border border-white/[0.05] p-6 rounded-[2.5rem] backdrop-blur-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                      <div className="bg-[#111115] border border-[#25252a] p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex flex-col">
-                          <h3 className="text-xl font-black italic text-white tracking-tighter">RESULTADOS <span className="text-emerald-500">PRO</span></h3>
-                          <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em] mt-1">Histórico completo de jogos e desempenho por liga</p>
+                          <h3 className="text-base font-bold text-white">Resultados <span className="text-amber-500">Pro</span></h3>
+                          <p className="text-xs text-[#52525b] mt-0.5">Histórico completo de jogos e desempenho por liga</p>
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-center gap-2 bg-black/40 p-2 rounded-2xl border border-white/5">
+                        <div className="flex flex-wrap items-center justify-center gap-1.5 bg-[#0a0a0d] p-1.5 rounded-xl border border-[#25252a]">
                           {[5, 10, 15, 20, 30, 40].map(size => (
                             <button
                               key={size}
                               onClick={() => setResultsSampleSize(size)}
-                              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 border ${resultsSampleSize === size ? 'bg-emerald-500 text-black border-emerald-400 shadow-lg scale-105' : 'text-white/20 border-transparent hover:text-white/40 hover:bg-white/5'}`}
+                              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-300 border ${resultsSampleSize === size ? 'bg-amber-500 text-black border-amber-400 shadow-sm' : 'text-[#52525b] border-transparent hover:text-[#a1a1aa]'}`}
                             >
-                              Amostra: {size}
+                              {size} jogos
                             </button>
                           ))}
                         </div>
 
-                        <div className="flex items-center gap-3 px-6 py-3 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
-                          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
-                          <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">Database Sync Active</span>
+                        <div className="flex items-center gap-2.5 px-4 py-2 bg-[#22c55e]/5 border border-[#22c55e]/15 rounded-xl">
+                          <div className="w-1.5 h-1.5 bg-[#22c55e] rounded-full"></div>
+                          <span className="text-[11px] font-medium text-[#22c55e]/80">Sincronizado</span>
                         </div>
                       </div>
 
@@ -896,10 +902,10 @@ const App: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="space-y-12">
-                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                          <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">Histórico de Confrontos</h4>
-                          <span className="text-[9px] font-black text-emerald-500/60 uppercase">{sortedFullHistory.length} Partidas Encontradas</span>
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between border-b border-[#25252a] pb-3">
+                          <h4 className="text-sm font-semibold text-[#a1a1aa]">Histórico de Confrontos</h4>
+                          <span className="text-xs font-medium text-[#22c55e]/70">{sortedFullHistory.length} partidas</span>
                         </div>
 
                         <div className="max-h-[1500px] overflow-y-auto pr-4 custom-scroll space-y-12">
@@ -910,33 +916,33 @@ const App: React.FC = () => {
                                 return (
                                   <div
                                     key={i}
-                                    className="bg-[#0c0c0e]/80 border py-2.5 px-6 rounded-2xl grid grid-cols-[90px_1fr_auto] items-center gap-6 group hover:bg-white/[0.03] transition-all card-glow"
-                                    style={{ borderColor: `${lInfo.color}20`, borderLeft: `4px solid ${lInfo.color}` }}
+                                    className="bg-[#111115] border py-2.5 px-5 rounded-xl grid grid-cols-[90px_1fr_auto] items-center gap-4 hover:bg-[#16161b] transition-colors"
+                                    style={{ borderColor: `${lInfo.color}20`, borderLeft: `3px solid ${lInfo.color}` }}
                                   >
                                     <div className="flex flex-col gap-0.5 shrink-0">
-                                      <span className="text-[8px] font-black uppercase tracking-tighter opacity-70 truncate" style={{ color: lInfo.color }}>
+                                      <span className="text-[10px] font-medium opacity-70 truncate" style={{ color: lInfo.color }}>
                                         {lInfo.name}
                                       </span>
-                                      <span className="text-[11px] font-black tabular-nums tracking-tight" style={{ color: `${lInfo.color}EE` }}>
+                                      <span className="text-[11px] font-semibold tabular-nums" style={{ color: `${lInfo.color}CC` }}>
                                         {new Date(game.data_realizacao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                                       </span>
                                     </div>
 
                                     <div className="grid grid-cols-[1fr_20px_1fr] items-center gap-2">
-                                      <span className="text-sm font-black uppercase truncate text-right" style={{ color: `${lInfo.color}EE` }}>{game.home_player}</span>
-                                      <span className="text-[8px] italic font-black uppercase opacity-20 text-center" style={{ color: lInfo.color }}>vs</span>
-                                      <span className="text-sm font-black uppercase truncate text-left" style={{ color: `${lInfo.color}EE` }}>{game.away_player}</span>
+                                      <span className="text-sm font-semibold truncate text-right" style={{ color: `${lInfo.color}DD` }}>{game.home_player}</span>
+                                      <span className="text-[10px] italic font-medium opacity-20 text-center" style={{ color: lInfo.color }}>vs</span>
+                                      <span className="text-sm font-semibold truncate text-left" style={{ color: `${lInfo.color}DD` }}>{game.away_player}</span>
                                     </div>
 
-                                    <div className="flex items-center gap-4 shrink-0 border-l border-white/5 pl-6 justify-end">
-                                      <div className="bg-black/40 border border-white/5 px-3 py-1 rounded-lg w-[60px] text-center">
-                                        <span className="text-base font-black italic tabular-nums" style={{ color: lInfo.color, textShadow: `0 0 15px ${lInfo.color}40` }}>
+                                    <div className="flex items-center gap-3 shrink-0 border-l border-[#25252a] pl-4 justify-end">
+                                      <div className="bg-[#0a0a0d] border border-[#25252a] px-3 py-1 rounded-lg w-[60px] text-center">
+                                        <span className="text-base font-bold italic tabular-nums" style={{ color: lInfo.color }}>
                                           {game.score_home}-{game.score_away}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/[0.03] border border-white/[0.08] shadow-inner w-[80px] justify-center">
-                                        <span className="text-[7px] font-black uppercase text-white/20">HT</span>
-                                        <span className="text-[12px] font-black tabular-nums" style={{ color: lInfo.color }}>
+                                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0a0a0d] border border-[#25252a] w-[70px] justify-center">
+                                        <span className="text-[9px] font-medium text-[#52525b]">HT</span>
+                                        <span className="text-[12px] font-semibold tabular-nums" style={{ color: lInfo.color }}>
                                           {game.halftime_score_home}-{game.halftime_score_away}
                                         </span>
                                       </div>

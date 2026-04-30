@@ -15,22 +15,33 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
     :root {
-      --color-red: #ef4444;
-      --color-yellow: #f59e0b;
-      --color-green: #10b981;
+      --color-brand: #f59e0b;
+      --color-positive: #22c55e;
+      --color-negative: #ef4444;
+      --color-neutral: #71717a;
+      --color-bg: #080808;
+      --color-card: #111115;
+      --color-card-hover: #16161b;
+      --color-border: #25252a;
+      --color-border-subtle: #1c1c21;
+      --color-text-primary: #e4e4e7;
+      --color-text-secondary: #71717a;
+      --color-text-muted: #3f3f46;
     }
 
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #030303;
-      color: #ffffff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text-primary);
       margin: 0;
       letter-spacing: -0.01em;
       font-size: 14px;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .font-mono-numbers {
@@ -46,23 +57,22 @@
     }
 
     ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
+      width: 3px;
+      height: 3px;
     }
 
     ::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.02);
+      background: transparent;
       border-radius: 10px;
     }
 
     ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
       border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.15);
     }
 
     /* Scrollbar horizontal específica para listas de jogos */
