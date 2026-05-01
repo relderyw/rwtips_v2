@@ -138,42 +138,82 @@ app.get('/api/superbet-tournaments', async (req, res) => {
 // Helper para scraping da Drafted.gg
 const scrapeDraftedCup = async (url: string, leagueName: string) => {
     try {
+        console.log(`[SCRAPER] Acessando ${leagueName} → ${url}`);
         const response = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+            timeout: 10000
         });
+        
         const $ = cheerio.load(response.data);
         const matches: any[] = [];
         
-        $('.grid.grid-cols-3.items-center.w-full').each((i, el) => {
+        // Seletor principal baseado no código do usuário: cards de jogos
+        $('div.w-full.bg-foreground.rounded-lg').each((i, el) => {
             const card = $(el);
-            const players = card.find('div.uppercase, .text-3\\.5xl')
-                .map((_, d) => $(d).text().trim())
-                .get()
-                .filter(txt => txt.length > 0 && txt.toLowerCase() !== 'vs' && !txt.includes('Match'));
             
-            // Remover duplicatas consecutivas
-            const uniquePlayers = players.filter((val, i, arr) => val !== arr[i-1]);
-
-            if (uniquePlayers.length >= 2) {
-                const allText = card.text() || '';
-                const dateMatch = allText.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
-                let matchDateStr = new Date().toISOString();
-                if (dateMatch) {
-                    const [_, day, month, year, hours, mins] = dateMatch;
-                    matchDateStr = `${year}-${month}-${day}T${hours}:${mins}:00.000Z`;
+            // Jogadores (div.uppercase.text-3.5xl)
+            const playerElements = card.find('div.uppercase.text-3\\.5xl');
+            const homePlayer = playerElements.eq(0).text().trim() || "?";
+            const awayPlayer = playerElements.eq(1).text().trim() || "?";
+            
+            // Horário (div.font-nunito que contenha data/hora)
+            let matchDateStr = new Date().toISOString();
+            card.find('div.font-nunito').each((_, d) => {
+                const text = $(d).text().trim();
+                if (text.includes('/') && text.includes(':')) {
+                    const match = text.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
+                    if (match) {
+                        const [_, day, month, year, hours, mins] = match;
+                        matchDateStr = `${year}-${month}-${day}T${hours}:${mins}:00.000Z`;
+                    }
                 }
+            });
 
+            // Times/Países (opcional)
+            const countryElements = card.find('div.font-nunito');
+            const homeTeamName = countryElements.length > 1 ? countryElements.eq(1).text().trim() : "";
+            const awayTeamName = countryElements.length > 3 ? countryElements.eq(3).text().trim() : "";
+
+            if (homePlayer !== "?" && awayPlayer !== "?") {
                 matches.push({
                     id: `drafted-${leagueName.replace(/[^a-zA-Z0-9]/g, '-')}-${i}-${Date.now()}`,
-                    homePlayer: uniquePlayers[0],
-                    awayPlayer: uniquePlayers[1],
+                    homePlayer,
+                    awayPlayer,
+                    homeTeamName,
+                    awayTeamName,
                     leagueName: leagueName,
                     matchDate: matchDateStr
                 });
             }
         });
+
+        // FALLBACK: Se não achar nada no DOM, tenta ler o __NEXT_DATA__ (Payload JSON)
+        if (matches.length === 0) {
+            const nextDataScript = $('script#__NEXT_DATA__').html();
+            if (nextDataScript) {
+                try {
+                    const jsonData = JSON.parse(nextDataScript);
+                    // O caminho exato pode variar, mas geralmente está em props.pageProps
+                    const initialMatches = jsonData.props?.pageProps?.initialMatches || [];
+                    initialMatches.forEach((m: any, idx: number) => {
+                        matches.push({
+                            id: `drafted-json-${idx}-${Date.now()}`,
+                            homePlayer: m.team1?.name || m.homePlayer || '?',
+                            awayPlayer: m.team2?.name || m.awayPlayer || '?',
+                            homeTeamName: m.team1?.country || '',
+                            awayTeamName: m.team2?.country || '',
+                            leagueName: leagueName,
+                            matchDate: m.startTime || new Date().toISOString()
+                        });
+                    });
+                } catch (e) {}
+            }
+        }
+
+        console.log(`[SCRAPER] ${leagueName}: ${matches.length} jogos capturados.`);
         return matches;
-    } catch (e) {
+    } catch (e: any) {
+        console.error(`[SCRAPER] Erro ao acessar ${url}:`, e.message);
         return [];
     }
 };
