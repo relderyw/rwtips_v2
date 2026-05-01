@@ -147,14 +147,14 @@ export default defineConfig(({ mode }) => {
                 }
             },
             '/api/drafted-valkyrie': {
-                target: 'https://drafted.gg',
+                target: 'http://localhost:8080',
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api\/drafted-valkyrie/, '/valkyrie-cup/upcoming-matches')
+                secure: false
             },
             '/api/drafted-valhalla': {
-                target: 'https://drafted.gg',
+                target: 'http://localhost:8080',
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api\/drafted-valhalla/, '/valhalla-cup/upcoming-matches')
+                secure: false
             },
             '/api/statshub': {
                 target: 'https://www.statshub.com',

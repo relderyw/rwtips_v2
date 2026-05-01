@@ -64,6 +64,15 @@ app.use((req: any, res: any, next: any) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// Log de todas as requisições (Mover para o topo para debug real)
+app.use((req, res, next) => {
+    console.log(`[DEBUG] ${req.method} ${req.url}`);
+    next();
+});
+
+// Endpoint de teste rápido para conferir se o servidor atualizou
+app.get('/api/test-server', (req, res) => res.json({ status: "online", version: "v2.5-drafted-json" }));
+
 const apiAuth = (req: any, res: any, next: any) => {
     const apiKey = req.headers['x-api-key'];
     const authHeader = req.headers['authorization'] as string | undefined;
@@ -171,13 +180,13 @@ const scrapeDraftedCup = async (url: string, leagueName: string) => {
 
 // Proxy para Drafted.gg Valkyrie (Retorna JSON)
 app.get('/api/drafted-valkyrie', async (req, res) => {
-    const games = await scrapeDraftedCup('https://drafted.gg/valkyrie-cup/upcoming-matches', 'VALKYRIE CUP - 12 MIN');
+    const games = await scrapeDraftedCup('https://drafted.gg/en/valkyrie-cup/upcoming-matches', 'VALKYRIE CUP - 12 MIN');
     res.json(games);
 });
 
 // Proxy para Drafted.gg Valhalla (Retorna JSON)
 app.get('/api/drafted-valhalla', async (req, res) => {
-    const games = await scrapeDraftedCup('https://drafted.gg/valhalla-cup/upcoming-matches', 'VALHALLA CUP - 12 MIN');
+    const games = await scrapeDraftedCup('https://drafted.gg/en/valhalla-cup/upcoming-matches', 'VALHALLA CUP - 12 MIN');
     res.json(games);
 });
 
@@ -191,12 +200,6 @@ app.use((req, res, next) => {
         console.warn(`[SECURITY] Bot bloqueado: ${ua}`);
         return res.status(403).json({ error: 'Access denied for this agent' });
     }
-    next();
-});
-
-// Log de todas as requisições para debug
-app.use((req, res, next) => {
-    console.log(`[DEBUG] ${req.method} ${req.url}`);
     next();
 });
 
@@ -359,9 +362,9 @@ app.get('/api/next-games', async (req, res) => {
 // --- PROXY ENDPOINTS PARA MÓDULO FUTEBOL (STATSHUB) ---
 const STATSHUB_BASE = "https://www.statshub.com/api";
 
-app.all('/api/statshub/*', async (req, res) => {
+app.use('/api/statshub', async (req, res) => {
     try {
-        const statshubPath = req.url.replace('/api/statshub', '/api');
+        const statshubPath = req.originalUrl.replace('/api/statshub', '/api');
         console.log(`[API] Proxy StatsHub: ${req.method} ${statshubPath}`);
         
         const response = await axios({
