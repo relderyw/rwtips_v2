@@ -123,102 +123,121 @@ export const UpcomingGames: React.FC = () => {
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredGames.map((game, index) => {
-                        const info = getLeagueInfo(game.leagueName);
-                        
-                        return (
-                            <div 
-                                key={game.id || index} 
-                                className="bg-[#111115] border border-[#25252a] rounded-xl overflow-hidden hover:border-[#35353a] transition-all duration-300 flex flex-col group relative"
-                            >
-                                {/* Faixa colorida da liga */}
+                <div className="bg-[#111115] border border-[#25252a] rounded-2xl overflow-hidden flex flex-col">
+                    {/* Cabeçalho da Lista */}
+                    <div className="hidden md:flex items-center px-6 py-4 bg-[#16161b] border-b border-[#25252a] text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        <div className="w-32">Horário</div>
+                        <div className="w-48">Liga</div>
+                        <div className="flex-1 text-right pr-4">Mandante (1)</div>
+                        <div className="w-12 text-center"></div>
+                        <div className="flex-1 text-left pl-4">Visitante (2)</div>
+                        <div className="w-48 flex justify-end gap-2 pr-2">
+                            <div className="w-12 text-center">1</div>
+                            <div className="w-12 text-center">X</div>
+                            <div className="w-12 text-center">2</div>
+                        </div>
+                    </div>
+
+                    {/* Lista de Jogos */}
+                    <div className="flex flex-col divide-y divide-[#25252a]/50">
+                        {filteredGames.map((game, index) => {
+                            const info = getLeagueInfo(game.leagueName);
+                            
+                            return (
                                 <div 
-                                    className="h-1 w-full absolute top-0 left-0"
-                                    style={{ backgroundColor: info.color }}
-                                />
-                                
-                                <div className="p-4 flex-grow flex flex-col">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <div className="flex items-center gap-2">
-                                            {info.image ? (
-                                                <img src={info.image} alt={info.name} className="w-5 h-5 object-contain" />
-                                            ) : (
-                                                <i className="fa-solid fa-trophy text-slate-400 text-sm"></i>
-                                            )}
-                                            <span className="text-xs font-semibold tracking-wider text-slate-300" style={{ color: info.color }}>
-                                                {info.name}
-                                            </span>
-                                        </div>
-                                        <div className="bg-[#16161b] px-2.5 py-1 rounded-md text-[10px] font-medium text-slate-400 border border-[#25252a] flex items-center gap-1.5">
+                                    key={game.id || index} 
+                                    className="flex flex-col md:flex-row md:items-center px-4 md:px-6 py-4 hover:bg-[#16161b]/80 transition-colors group relative"
+                                >
+                                    {/* Faixa lateral colorida visível no desktop */}
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: info.color }}></div>
+
+                                    {/* Mobile: Header (Hora e Liga) */}
+                                    <div className="flex items-center justify-between mb-3 md:hidden">
+                                        <div className="bg-[#16161b] px-2.5 py-1 rounded-md text-[10px] font-medium text-slate-300 border border-[#25252a] flex items-center gap-1.5">
                                             <i className="fa-regular fa-clock text-indigo-400"></i>
                                             {formatMatchDate(game.matchDate)}
                                         </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-1.5 h-3 rounded-full" style={{ backgroundColor: info.color }}></div>
+                                            <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: info.color }}>
+                                                {info.name}
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <div className="flex-grow flex flex-col justify-center gap-3 mt-2">
-                                        <div className="flex items-center justify-between group/player">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded bg-[#16161b] border border-[#25252a] flex items-center justify-center text-[10px] text-slate-500 font-bold">
-                                                    1
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-bold text-white block truncate max-w-[140px] group-hover/player:text-indigo-400 transition-colors">
-                                                        {game.homePlayer}
-                                                    </span>
-                                                    {game.homeTeamName && (
-                                                        <span className="text-[10px] text-slate-500 truncate max-w-[140px] block">
-                                                            {game.homeTeamName}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {game.odds.home > 0 && (
-                                                <div className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">
-                                                    {game.odds.home.toFixed(2)}
-                                                </div>
+                                    {/* Desktop: Horário */}
+                                    <div className="hidden md:flex w-32 text-sm font-medium text-slate-300 items-center gap-2">
+                                        <i className="fa-regular fa-clock text-slate-500 text-xs"></i>
+                                        {formatMatchDate(game.matchDate)}
+                                    </div>
+
+                                    {/* Desktop: Liga */}
+                                    <div className="hidden md:flex w-48 items-center gap-2">
+                                        <div className="w-1.5 h-4 rounded-full shadow-sm" style={{ backgroundColor: info.color, boxShadow: `0 0 8px ${info.color}40` }}></div>
+                                        <span className="text-xs font-black uppercase tracking-wider truncate" style={{ color: info.color }}>
+                                            {info.name}
+                                        </span>
+                                    </div>
+
+                                    {/* Times */}
+                                    <div className="flex-1 flex items-center justify-between md:justify-center gap-2 md:gap-4 mb-3 md:mb-0">
+                                        <div className="flex-1 text-left md:text-right">
+                                            <span className="text-sm md:text-base font-bold text-white block truncate md:group-hover:text-indigo-400 transition-colors">
+                                                {game.homePlayer}
+                                            </span>
+                                            {game.homeTeamName && (
+                                                <span className="text-[10px] text-slate-500 truncate block">
+                                                    {game.homeTeamName}
+                                                </span>
                                             )}
                                         </div>
+                                        
+                                        <div className="flex-shrink-0 px-3 py-1 bg-black/40 border border-[#25252a] rounded-lg shadow-inner">
+                                            <span className="text-[10px] font-black text-slate-600 italic uppercase">VS</span>
+                                        </div>
 
-                                        <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#25252a] to-transparent"></div>
-
-                                        <div className="flex items-center justify-between group/player">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded bg-[#16161b] border border-[#25252a] flex items-center justify-center text-[10px] text-slate-500 font-bold">
-                                                    2
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-bold text-white block truncate max-w-[140px] group-hover/player:text-indigo-400 transition-colors">
-                                                        {game.awayPlayer}
-                                                    </span>
-                                                    {game.awayTeamName && (
-                                                        <span className="text-[10px] text-slate-500 truncate max-w-[140px] block">
-                                                            {game.awayTeamName}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {game.odds.away > 0 && (
-                                                <div className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">
-                                                    {game.odds.away.toFixed(2)}
-                                                </div>
+                                        <div className="flex-1 text-right md:text-left">
+                                            <span className="text-sm md:text-base font-bold text-white block truncate md:group-hover:text-indigo-400 transition-colors">
+                                                {game.awayPlayer}
+                                            </span>
+                                            {game.awayTeamName && (
+                                                <span className="text-[10px] text-slate-500 truncate block">
+                                                    {game.awayTeamName}
+                                                </span>
                                             )}
+                                        </div>
+                                    </div>
+
+                                    {/* Odds */}
+                                    <div className="flex items-center justify-center md:justify-end gap-2 md:w-48 mt-2 md:mt-0">
+                                        {/* Home Odd */}
+                                        <div className="flex flex-col items-center justify-center w-16 md:w-12 h-10 bg-[#16161b] md:bg-transparent border border-[#25252a] md:border-transparent rounded-lg md:rounded-none md:hover:bg-[#25252a]/50 transition-colors cursor-default">
+                                            <span className="text-[9px] font-bold text-slate-500 md:hidden mb-0.5">Casa (1)</span>
+                                            <span className={`text-xs md:text-sm font-bold ${game.odds.home > 0 ? 'text-emerald-400' : 'text-slate-600'}`}>
+                                                {game.odds.home > 0 ? game.odds.home.toFixed(2) : '-'}
+                                            </span>
+                                        </div>
+
+                                        {/* Draw Odd */}
+                                        <div className="flex flex-col items-center justify-center w-16 md:w-12 h-10 bg-[#16161b] md:bg-transparent border border-[#25252a] md:border-transparent rounded-lg md:rounded-none md:hover:bg-[#25252a]/50 transition-colors cursor-default">
+                                            <span className="text-[9px] font-bold text-slate-500 md:hidden mb-0.5">Empate (X)</span>
+                                            <span className={`text-xs md:text-sm font-bold ${game.odds.draw > 0 ? 'text-slate-300' : 'text-slate-600'}`}>
+                                                {game.odds.draw > 0 ? game.odds.draw.toFixed(2) : '-'}
+                                            </span>
+                                        </div>
+
+                                        {/* Away Odd */}
+                                        <div className="flex flex-col items-center justify-center w-16 md:w-12 h-10 bg-[#16161b] md:bg-transparent border border-[#25252a] md:border-transparent rounded-lg md:rounded-none md:hover:bg-[#25252a]/50 transition-colors cursor-default">
+                                            <span className="text-[9px] font-bold text-slate-500 md:hidden mb-0.5">Visit. (2)</span>
+                                            <span className={`text-xs md:text-sm font-bold ${game.odds.away > 0 ? 'text-indigo-400' : 'text-slate-600'}`}>
+                                                {game.odds.away > 0 ? game.odds.away.toFixed(2) : '-'}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-                                
-                                {/* Empate Odd */}
-                                {game.odds.draw > 0 && (
-                                    <div className="px-4 py-2 bg-[#16161b] border-t border-[#25252a] flex justify-between items-center text-xs">
-                                        <span className="text-slate-500">Empate (X)</span>
-                                        <span className="font-semibold text-slate-300 bg-[#25252a] px-2 py-0.5 rounded">
-                                            {game.odds.draw.toFixed(2)}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
             )}
         </div>

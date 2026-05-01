@@ -744,7 +744,7 @@ export const fetchUpcomingGames = async (): Promise<UpcomingMatch[]> => {
                     homeTeamName: homeTeam,
                     awayTeamName: awayTeam,
                     leagueName,
-                    matchDate: evt.matchDate || evt.utcDate || new Date().toISOString(),
+                    matchDate: evt.utcDate || evt.matchDate || new Date().toISOString(),
                     odds
                 };
             })
