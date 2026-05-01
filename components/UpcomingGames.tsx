@@ -128,14 +128,9 @@ export const UpcomingGames: React.FC = () => {
                     <div className="hidden md:flex items-center px-6 py-4 bg-[#16161b] border-b border-[#25252a] text-xs font-bold text-slate-500 uppercase tracking-widest">
                         <div className="w-32">Horário</div>
                         <div className="w-48">Liga</div>
-                        <div className="flex-1 text-right pr-4">Mandante (1)</div>
+                        <div className="flex-1 text-right pr-4">Mandante</div>
                         <div className="w-12 text-center"></div>
-                        <div className="flex-1 text-left pl-4">Visitante (2)</div>
-                        <div className="w-48 flex justify-end gap-2 pr-2">
-                            <div className="w-12 text-center">1</div>
-                            <div className="w-12 text-center">X</div>
-                            <div className="w-12 text-center">2</div>
-                        </div>
+                        <div className="flex-1 text-left pl-4">Visitante</div>
                     </div>
 
                     {/* Lista de Jogos */}
@@ -205,33 +200,6 @@ export const UpcomingGames: React.FC = () => {
                                                     {game.awayTeamName}
                                                 </span>
                                             )}
-                                        </div>
-                                    </div>
-
-                                    {/* Odds */}
-                                    <div className="flex items-center justify-center md:justify-end gap-2 md:w-48 mt-2 md:mt-0">
-                                        {/* Home Odd */}
-                                        <div className="flex flex-col items-center justify-center w-16 md:w-12 h-10 bg-[#16161b] md:bg-transparent border border-[#25252a] md:border-transparent rounded-lg md:rounded-none md:hover:bg-[#25252a]/50 transition-colors cursor-default">
-                                            <span className="text-[9px] font-bold text-slate-500 md:hidden mb-0.5">Casa (1)</span>
-                                            <span className={`text-xs md:text-sm font-bold ${game.odds.home > 0 ? 'text-emerald-400' : 'text-slate-600'}`}>
-                                                {game.odds.home > 0 ? game.odds.home.toFixed(2) : '-'}
-                                            </span>
-                                        </div>
-
-                                        {/* Draw Odd */}
-                                        <div className="flex flex-col items-center justify-center w-16 md:w-12 h-10 bg-[#16161b] md:bg-transparent border border-[#25252a] md:border-transparent rounded-lg md:rounded-none md:hover:bg-[#25252a]/50 transition-colors cursor-default">
-                                            <span className="text-[9px] font-bold text-slate-500 md:hidden mb-0.5">Empate (X)</span>
-                                            <span className={`text-xs md:text-sm font-bold ${game.odds.draw > 0 ? 'text-slate-300' : 'text-slate-600'}`}>
-                                                {game.odds.draw > 0 ? game.odds.draw.toFixed(2) : '-'}
-                                            </span>
-                                        </div>
-
-                                        {/* Away Odd */}
-                                        <div className="flex flex-col items-center justify-center w-16 md:w-12 h-10 bg-[#16161b] md:bg-transparent border border-[#25252a] md:border-transparent rounded-lg md:rounded-none md:hover:bg-[#25252a]/50 transition-colors cursor-default">
-                                            <span className="text-[9px] font-bold text-slate-500 md:hidden mb-0.5">Visit. (2)</span>
-                                            <span className={`text-xs md:text-sm font-bold ${game.odds.away > 0 ? 'text-indigo-400' : 'text-slate-600'}`}>
-                                                {game.odds.away > 0 ? game.odds.away.toFixed(2) : '-'}
-                                            </span>
                                         </div>
                                     </div>
                                 </div>

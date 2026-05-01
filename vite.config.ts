@@ -146,6 +146,16 @@ export default defineConfig(({ mode }) => {
                     });
                 }
             },
+            '/api/drafted-valkyrie': {
+                target: 'https://drafted.gg',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/drafted-valkyrie/, '/valkyrie-cup/upcoming-matches')
+            },
+            '/api/drafted-valhalla': {
+                target: 'https://drafted.gg',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/drafted-valhalla/, '/valhalla-cup/upcoming-matches')
+            },
             '/api/statshub': {
                 target: 'https://www.statshub.com',
                 changeOrigin: true,

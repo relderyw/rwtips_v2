@@ -669,6 +669,69 @@ export const fetchPlayers = async (query: string): Promise<string[]> => {
     }
 };
 
+// === FETCH UPCOMING GAMES DA DRAFTED ===
+const fetchDraftedGames = async (url: string, leagueName: string): Promise<UpcomingMatch[]> => {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) return [];
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        const matches: UpcomingMatch[] = [];
+        const matchEls = Array.from(doc.querySelectorAll('.grid.grid-cols-3.items-center.w-full'));
+        
+        matchEls.forEach((matchEl, index) => {
+            const uppercaseDivs = Array.from(matchEl.querySelectorAll('div.uppercase'));
+            const playerDivs = uppercaseDivs.filter(d => d.className.includes('text-3.5xl') && !d.textContent?.toLowerCase().includes('vs'));
+            
+            if (playerDivs.length >= 2) {
+                const homePlayer = playerDivs[0].textContent?.trim() || 'Player 1';
+                const awayPlayer = playerDivs[1].textContent?.trim() || 'Player 2';
+                
+                // Extrair time (opcional, .font-nunito)
+                const teamDivs = Array.from(matchEl.querySelectorAll('.font-nunito'));
+                const homeTeamName = teamDivs.length >= 2 ? teamDivs[0].textContent?.trim() || '' : '';
+                const awayTeamName = teamDivs.length >= 2 ? teamDivs[teamDivs.length - 1].textContent?.trim() || '' : '';
+                
+                // Extrair Data
+                let matchDateStr = new Date().toISOString();
+                const dateDiv = matchEl.querySelector('div.flex.flex-col.items-center.font-nunito');
+                if (dateDiv) {
+                    Array.from(dateDiv.childNodes).forEach(node => {
+                        if (node.nodeType === 3) { // Text node
+                            const text = node.textContent?.trim() || '';
+                            const match = text.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
+                            if (match) {
+                                // Formatar para ISO UTC: YYYY-MM-DDTHH:mm:00.000Z
+                                const [_, day, month, year, hours, mins] = match;
+                                matchDateStr = `${year}-${month}-${day}T${hours}:${mins}:00.000Z`;
+                            }
+                        }
+                    });
+                }
+
+                matches.push({
+                    id: `drafted-${leagueName.replace(/\s+/g, '-')}-${index}-${Date.now()}`,
+                    eventId: Date.now() + index,
+                    homePlayer,
+                    awayPlayer,
+                    homeTeamName,
+                    awayTeamName,
+                    leagueName,
+                    matchDate: matchDateStr,
+                    odds: { home: 0, draw: 0, away: 0 }
+                });
+            }
+        });
+        
+        return matches;
+    } catch (err) {
+        console.error(`Drafted Upcoming Games Error (${leagueName}):`, err);
+        return [];
+    }
+};
+
 // === FETCH UPCOMING GAMES DA SUPERBET ===
 export const fetchUpcomingGames = async (): Promise<UpcomingMatch[]> => {
     try {
@@ -703,7 +766,7 @@ export const fetchUpcomingGames = async (): Promise<UpcomingMatch[]> => {
         const json = await response.json();
         const events = json.data || [];
 
-        return events
+        const superbetMatches = events
             .map((evt: any): UpcomingMatch | null => {
                 const parts = (evt.matchName || '').split('·');
                 if (parts.length !== 2) return null; // Invalid match name
@@ -711,8 +774,6 @@ export const fetchUpcomingGames = async (): Promise<UpcomingMatch[]> => {
                 const homeNameFull = (parts[0] || 'Player 1').trim();
                 const awayNameFull = (parts[1] || 'Player 2').trim();
 
-                // `extractPlayerName` exists in api.ts scope but is not exported. We can duplicate its logic or just use it since it's in the same file.
-                // Wait, it is defined at the top of the file!
                 const homePlayer = extractPlayerName(homeNameFull);
                 const awayPlayer = extractPlayerName(awayNameFull);
                 const homeTeam = homeNameFull.replace(/\(.*?\)/g, '').trim();
@@ -724,18 +785,6 @@ export const fetchUpcomingGames = async (): Promise<UpcomingMatch[]> => {
                 const durationInfo = tData && tData.duration ? ` (${tData.duration})` : '';
                 const leagueName = leagueNameRaw + durationInfo;
 
-                // Extract Odds
-                let odds = { home: 0, draw: 0, away: 0 };
-                if (Array.isArray(evt.odds)) {
-                    evt.odds.forEach((odd: any) => {
-                        if (odd.marketName === "Resultado Final (1X2)" || odd.marketId === 100001) {
-                            if (odd.name === "1") odds.home = odd.price;
-                            else if (odd.name === "X") odds.draw = odd.price;
-                            else if (odd.name === "2") odds.away = odd.price;
-                        }
-                    });
-                }
-
                 return {
                     id: evt.uuid || String(evt.eventId),
                     eventId: evt.eventId,
@@ -745,15 +794,24 @@ export const fetchUpcomingGames = async (): Promise<UpcomingMatch[]> => {
                     awayTeamName: awayTeam,
                     leagueName,
                     matchDate: evt.utcDate || evt.matchDate || new Date().toISOString(),
-                    odds
+                    odds: { home: 0, draw: 0, away: 0 } // User disabled odds
                 };
             })
             .filter((match: UpcomingMatch | null): match is UpcomingMatch => {
                 if (!match) return false;
                 const name = match.leagueName.toUpperCase();
                 return allowedKeywords.some(keyword => name.includes(keyword));
-            })
-            .sort((a: UpcomingMatch, b: UpcomingMatch) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
+            });
+
+        // Buscas na Drafted.gg simultaneamente
+        const [draftedValkyrie, draftedValhalla] = await Promise.all([
+            fetchDraftedGames('/api/drafted-valkyrie', 'VALKYRIE CUP - 12 MIN'),
+            fetchDraftedGames('/api/drafted-valhalla', 'VALHALLA CUP - 12 MIN')
+        ]);
+
+        const allMatches = [...superbetMatches, ...draftedValkyrie, ...draftedValhalla];
+
+        return allMatches.sort((a: UpcomingMatch, b: UpcomingMatch) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
 
     } catch (error) {
         console.error("Superbet Upcoming Games Error:", error);
