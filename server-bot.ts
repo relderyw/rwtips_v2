@@ -126,32 +126,59 @@ app.get('/api/superbet-tournaments', async (req, res) => {
     }
 });
 
-// Proxy para Drafted.gg Valkyrie
-app.get('/api/drafted-valkyrie', async (req, res) => {
+// Helper para scraping da Drafted.gg
+const scrapeDraftedCup = async (url: string, leagueName: string) => {
     try {
-        const response = await axios.get('https://drafted.gg/valkyrie-cup/upcoming-matches', {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        const response = await axios.get(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+        });
+        const $ = cheerio.load(response.data);
+        const matches: any[] = [];
+        
+        $('.grid.grid-cols-3.items-center.w-full').each((i, el) => {
+            const card = $(el);
+            const players = card.find('div.uppercase, .text-3\\.5xl')
+                .map((_, d) => $(d).text().trim())
+                .get()
+                .filter(txt => txt.length > 0 && txt.toLowerCase() !== 'vs' && !txt.includes('Match'));
+            
+            // Remover duplicatas consecutivas
+            const uniquePlayers = players.filter((val, i, arr) => val !== arr[i-1]);
+
+            if (uniquePlayers.length >= 2) {
+                const allText = card.text() || '';
+                const dateMatch = allText.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
+                let matchDateStr = new Date().toISOString();
+                if (dateMatch) {
+                    const [_, day, month, year, hours, mins] = dateMatch;
+                    matchDateStr = `${year}-${month}-${day}T${hours}:${mins}:00.000Z`;
+                }
+
+                matches.push({
+                    id: `drafted-${leagueName.replace(/[^a-zA-Z0-9]/g, '-')}-${i}-${Date.now()}`,
+                    homePlayer: uniquePlayers[0],
+                    awayPlayer: uniquePlayers[1],
+                    leagueName: leagueName,
+                    matchDate: matchDateStr
+                });
             }
         });
-        res.send(response.data);
-    } catch (error: any) {
-        res.status(error.response?.status || 500).send(error.message);
+        return matches;
+    } catch (e) {
+        return [];
     }
+};
+
+// Proxy para Drafted.gg Valkyrie (Retorna JSON)
+app.get('/api/drafted-valkyrie', async (req, res) => {
+    const games = await scrapeDraftedCup('https://drafted.gg/valkyrie-cup/upcoming-matches', 'VALKYRIE CUP - 12 MIN');
+    res.json(games);
 });
 
-// Proxy para Drafted.gg Valhalla
+// Proxy para Drafted.gg Valhalla (Retorna JSON)
 app.get('/api/drafted-valhalla', async (req, res) => {
-    try {
-        const response = await axios.get('https://drafted.gg/valhalla-cup/upcoming-matches', {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            }
-        });
-        res.send(response.data);
-    } catch (error: any) {
-        res.status(error.response?.status || 500).send(error.message);
-    }
+    const games = await scrapeDraftedCup('https://drafted.gg/valhalla-cup/upcoming-matches', 'VALHALLA CUP - 12 MIN');
+    res.json(games);
 });
 
 app.use(apiAuth);
