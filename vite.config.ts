@@ -146,16 +146,6 @@ export default defineConfig(({ mode }) => {
                     });
                 }
             },
-            '/api/drafted-valkyrie': {
-                target: 'http://localhost:8080',
-                changeOrigin: true,
-                secure: false
-            },
-            '/api/drafted-valhalla': {
-                target: 'http://localhost:8080',
-                changeOrigin: true,
-                secure: false
-            },
             '/api/drafted-proxy': {
                 target: 'https://drafted.gg',
                 changeOrigin: true,

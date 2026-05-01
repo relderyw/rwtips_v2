@@ -56,24 +56,17 @@ export const UpcomingGames: React.FC = () => {
         const loadGames = async () => {
             setLoading(true);
             try {
-                // 1. Tenta carregar via API (inclui Drafted.gg se o servidor estiver rodando)
-                const apiGames = await fetchUpcomingGames();
+                // Carrega jogos da Superbet
+                const superbetGames = await fetchUpcomingGames();
                 
-                // 2. Verifica se o Drafted.gg veio na API; se não, tenta scraping local (fallback para localhost)
-                const hasDrafted = apiGames.some(g => 
-                    g.leagueName.includes('VALKYRIE') || g.leagueName.includes('VALHALLA')
-                );
+                // Carrega jogos do Drafted.gg diretamente via scraping
+                const draftedValkyrie = await scrapeDraftedCup('/api/drafted-proxy/en/valkyrie-cup/upcoming-matches', 'VALKYRIE CUP - 12 MIN').catch(() => []);
+                const draftedValhalla = await scrapeDraftedCup('/api/drafted-proxy/en/valhalla-cup/upcoming-matches', 'VALHALLA CUP - 12 MIN').catch(() => []);
 
-                let finalGames = apiGames;
-
-                if (!hasDrafted) {
-                    const draftedValkyrie = await scrapeDraftedCup('/api/drafted-proxy/en/valkyrie-cup/upcoming-matches', 'VALKYRIE CUP - 12 MIN').catch(() => []);
-                    const draftedValhalla = await scrapeDraftedCup('/api/drafted-proxy/en/valhalla-cup/upcoming-matches', 'VALHALLA CUP - 12 MIN').catch(() => []);
-                    finalGames = [...apiGames, ...draftedValkyrie, ...draftedValhalla];
-                }
+                const allGames = [...superbetGames, ...draftedValkyrie, ...draftedValhalla];
                 
                 if (isMounted) {
-                    setGames(finalGames);
+                    setGames(allGames);
                     setRefreshTime(new Date());
                 }
             } catch (err) {
