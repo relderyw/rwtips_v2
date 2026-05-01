@@ -14,7 +14,7 @@ import { NBADashboard } from './components/NBA/NBADashboard';
 import { ModuleSelector } from './components/ModuleSelector';
 import LiveModule from './components/LIVE/LiveModule';
 import { FifaAnalyticsDashboard } from './components/FifaAnalyticsDashboard';
-
+import { UpcomingGames } from './components/UpcomingGames';
 
 interface GoalNotification {
   id: string;
@@ -101,7 +101,7 @@ const App: React.FC = () => {
   });
   const [isDevMode, setIsDevMode] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
-  const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'bankroll' | 'analytics' | 'nba'>('radar');
+  const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'upcoming' | 'bankroll' | 'analytics' | 'nba'>('radar');
   const [selectedModule, setSelectedModule] = useState<'fifa' | 'futebol' | 'basquete' | null>(null);
   const [history, setHistory] = useState<HistoryMatch[]>([]);
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
@@ -559,6 +559,7 @@ const App: React.FC = () => {
                   <>
                     <button onClick={() => setActiveMainTab('radar')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'radar' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Radar Live</button>
                     <button onClick={() => setActiveMainTab('results')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'results' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Resultados</button>
+                    <button onClick={() => setActiveMainTab('upcoming')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'upcoming' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Próximos Jogos</button>
                     <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'bankroll' ? 'bg-[#22c55e] text-black shadow-sm' : 'text-[#52525b] hover:text-[#22c55e]'}`}>Banca</button>
                     <button onClick={() => setActiveMainTab('analytics')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'analytics' ? 'bg-amber-500 text-black shadow-sm' : 'text-[#52525b] hover:text-amber-500'}`}>Backtest</button>
                   </>
@@ -1003,6 +1004,8 @@ const App: React.FC = () => {
                         </div>
                       </div>
                     </div>
+                  ) : activeMainTab === 'upcoming' ? (
+                    <UpcomingGames />
                   ) : activeMainTab === 'bankroll' ? (
                     <BankrollManager userEmail={auth.currentUser?.email || ''} />
                   ) : activeMainTab === 'analytics' ? (

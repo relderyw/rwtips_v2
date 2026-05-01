@@ -1,5 +1,5 @@
 
-import { HistoryMatch, LiveEvent } from '../types';
+import { HistoryMatch, LiveEvent, UpcomingMatch } from '../types';
 import { normalizeHistoryData } from './analyzer';
 
 const HISTORY_API_BASE = "/api/history";
@@ -665,6 +665,98 @@ export const fetchPlayers = async (query: string): Promise<string[]> => {
         return [];
     } catch (err) {
         console.error("Erro ao buscar jogadores:", err);
+        return [];
+    }
+};
+
+// === FETCH UPCOMING GAMES DA SUPERBET ===
+export const fetchUpcomingGames = async (): Promise<UpcomingMatch[]> => {
+    try {
+        console.log("📡 Buscando próximos jogos (Prematch)...");
+        
+        const now = new Date();
+        const future = new Date(now.getTime() + (48 * 60 * 60 * 1000)); // 48 hours ahead
+        
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const formatSuperbetDate = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}+${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+        
+        const startDate = formatSuperbetDate(now);
+        const endDate = formatSuperbetDate(future);
+
+        // Fetch tournaments (to get valid tournament IDs and map names if necessary)
+        const tournamentsMap = await getSuperbetTournaments();
+        
+        // Allowed keywords for esports football
+        const allowedKeywords = ['VALHALLA', 'VALKYRIE', 'VALKIRYE', 'ADRIATIC', 'CLA', 'BATTLE', 'VOLTA', 'H2H', 'EAL', 'CYBER LIVE ARENA', 'GG LEAGUE', 'GT'];
+
+        // Optionally, we could filter tournaments here, but we can also just fetch all pre-match for sportId 75
+        // Let's fetch the events directly. The API supports fetching by sportId=75 without tournamentIds.
+        const url = `/api/superbet-live?currentStatus=active&offerState=prematch&startDate=${startDate}&endDate=${endDate}&sportId=75`;
+        
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+
+        if (!response.ok) {
+            console.warn(`Superbet Upcoming API Error: ${response.status}`);
+            return [];
+        }
+
+        const json = await response.json();
+        const events = json.data || [];
+
+        return events
+            .map((evt: any): UpcomingMatch | null => {
+                const parts = (evt.matchName || '').split('·');
+                if (parts.length !== 2) return null; // Invalid match name
+                
+                const homeNameFull = (parts[0] || 'Player 1').trim();
+                const awayNameFull = (parts[1] || 'Player 2').trim();
+
+                // `extractPlayerName` exists in api.ts scope but is not exported. We can duplicate its logic or just use it since it's in the same file.
+                // Wait, it is defined at the top of the file!
+                const homePlayer = extractPlayerName(homeNameFull);
+                const awayPlayer = extractPlayerName(awayNameFull);
+                const homeTeam = homeNameFull.replace(/\(.*?\)/g, '').trim();
+                const awayTeam = awayNameFull.replace(/\(.*?\)/g, '').trim();
+
+                const tournamentId = Number(evt.tournamentId);
+                const tData = tournamentsMap[tournamentId];
+                const leagueNameRaw = tData ? tData.name : (evt.tournamentName || `Liga ${tournamentId}`);
+                const durationInfo = tData && tData.duration ? ` (${tData.duration})` : '';
+                const leagueName = leagueNameRaw + durationInfo;
+
+                // Extract Odds
+                let odds = { home: 0, draw: 0, away: 0 };
+                if (Array.isArray(evt.odds)) {
+                    evt.odds.forEach((odd: any) => {
+                        if (odd.marketName === "Resultado Final (1X2)" || odd.marketId === 100001) {
+                            if (odd.name === "1") odds.home = odd.price;
+                            else if (odd.name === "X") odds.draw = odd.price;
+                            else if (odd.name === "2") odds.away = odd.price;
+                        }
+                    });
+                }
+
+                return {
+                    id: evt.uuid || String(evt.eventId),
+                    eventId: evt.eventId,
+                    homePlayer,
+                    awayPlayer,
+                    homeTeamName: homeTeam,
+                    awayTeamName: awayTeam,
+                    leagueName,
+                    matchDate: evt.matchDate || evt.utcDate || new Date().toISOString(),
+                    odds
+                };
+            })
+            .filter((match: UpcomingMatch | null): match is UpcomingMatch => {
+                if (!match) return false;
+                const name = match.leagueName.toUpperCase();
+                return allowedKeywords.some(keyword => name.includes(keyword));
+            })
+            .sort((a: UpcomingMatch, b: UpcomingMatch) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
+
+    } catch (error) {
+        console.error("Superbet Upcoming Games Error:", error);
         return [];
     }
 };

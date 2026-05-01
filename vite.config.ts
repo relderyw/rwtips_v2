@@ -132,6 +132,20 @@ export default defineConfig(({ mode }) => {
                     });
                 }
             },
+            '/api/superbet-tournaments': {
+                target: 'https://production-superbet-offer-br.freetls.fastly.net',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/superbet-tournaments/, '/v2/pt-BR/sport/75/tournaments'),
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Accept', 'application/json, text/plain, */*');
+                        proxyReq.setHeader('Origin', 'https://superbet.bet.br');
+                        proxyReq.setHeader('Referer', 'https://superbet.bet.br/');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+                    });
+                }
+            },
             '/api/statshub': {
                 target: 'https://www.statshub.com',
                 changeOrigin: true,

@@ -53,6 +53,22 @@ export interface LiveEvent {
   bet365EventId?: string;
 }
 
+export interface UpcomingMatch {
+  id: string;
+  eventId: number;
+  homePlayer: string;
+  awayPlayer: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  leagueName: string;
+  matchDate: string;
+  odds: {
+    home: number;
+    draw: number;
+    away: number;
+  };
+}
+
 // === Altenar API Types ===
 export interface AltenarCompetitor {
     id: number;
