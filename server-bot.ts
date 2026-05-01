@@ -90,6 +90,70 @@ const apiAuth = (req: any, res: any, next: any) => {
 
 
 
+
+// --- PROXY ENDPOINTS PÚBLICOS PARA O FRONTEND ---
+
+// Proxy para Superbet Live API
+app.get('/api/superbet-live', async (req, res) => {
+    try {
+        const response = await axios.get('https://production-superbet-offer-br.freetls.fastly.net/v2/pt-BR/events/by-date', {
+            params: req.query,
+            headers: {
+                'Accept': 'application/json',
+                'Origin': 'https://superbet.bet.br',
+                'Referer': 'https://superbet.bet.br/'
+            }
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        res.status(error.response?.status || 500).json({ error: error.message });
+    }
+});
+
+// Proxy para Superbet Tournaments API
+app.get('/api/superbet-tournaments', async (req, res) => {
+    try {
+        const response = await axios.get('https://production-superbet-offer-br.freetls.fastly.net/v2/pt-BR/sport/75/tournaments', {
+            headers: {
+                'Accept': 'application/json',
+                'Origin': 'https://superbet.bet.br',
+                'Referer': 'https://superbet.bet.br/'
+            }
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        res.status(error.response?.status || 500).json({ error: error.message });
+    }
+});
+
+// Proxy para Drafted.gg Valkyrie
+app.get('/api/drafted-valkyrie', async (req, res) => {
+    try {
+        const response = await axios.get('https://drafted.gg/valkyrie-cup/upcoming-matches', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+        res.send(response.data);
+    } catch (error: any) {
+        res.status(error.response?.status || 500).send(error.message);
+    }
+});
+
+// Proxy para Drafted.gg Valhalla
+app.get('/api/drafted-valhalla', async (req, res) => {
+    try {
+        const response = await axios.get('https://drafted.gg/valhalla-cup/upcoming-matches', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+        res.send(response.data);
+    } catch (error: any) {
+        res.status(error.response?.status || 500).send(error.message);
+    }
+});
+
 app.use(apiAuth);
 
 // Filtro de User-Agent (Anti-Bot Simples)
@@ -293,6 +357,7 @@ app.all('/api/statshub/*', async (req, res) => {
         res.status(error.response?.status || 500).json({ error: error.message });
     }
 });
+
 
 app.get('/api/f-matches', async (req, res) => {
     try {
