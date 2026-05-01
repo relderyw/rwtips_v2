@@ -682,38 +682,50 @@ const fetchDraftedGames = async (url: string, leagueName: string): Promise<Upcom
         const matchEls = Array.from(doc.querySelectorAll('.grid.grid-cols-3.items-center.w-full'));
         
         matchEls.forEach((matchEl, index) => {
-            const uppercaseDivs = Array.from(matchEl.querySelectorAll('div.uppercase'));
-            const playerDivs = uppercaseDivs.filter(d => d.className.includes('text-3.5xl') && !d.textContent?.toLowerCase().includes('vs'));
+            // Selecionar divs que contêm o nome do jogador (classes text-3.5xl ou uppercase)
+            // Usamos um seletor mais específico e filtramos por classe para evitar duplicados
+            const divs = Array.from(matchEl.querySelectorAll('div'));
+            const players = divs
+                .filter(d => (d.className.includes('uppercase') || d.className.includes('text-3.5xl')) && 
+                             d.textContent && 
+                             d.textContent.trim().length > 0 &&
+                             d.textContent.trim().toLowerCase() !== 'vs' && 
+                             !d.textContent.includes('Match'))
+                .map(d => d.textContent!.trim());
+
+            // Remover nomes duplicados consecutivos (caso um elemento tenha ambas as classes)
+            const uniquePlayers = players.filter((val, i, arr) => val !== arr[i-1]);
             
-            if (playerDivs.length >= 2) {
-                const homePlayer = playerDivs[0].textContent?.trim() || 'Player 1';
-                const awayPlayer = playerDivs[1].textContent?.trim() || 'Player 2';
+            if (uniquePlayers.length >= 2) {
+                const homePlayer = uniquePlayers[0];
+                const awayPlayer = uniquePlayers[1];
                 
-                // Extrair time (opcional, .font-nunito)
-                const teamDivs = Array.from(matchEl.querySelectorAll('.font-nunito'));
-                const homeTeamName = teamDivs.length >= 2 ? teamDivs[0].textContent?.trim() || '' : '';
-                const awayTeamName = teamDivs.length >= 2 ? teamDivs[teamDivs.length - 1].textContent?.trim() || '' : '';
+                // Extrair time (geralmente abaixo do nome do jogador)
+                const nunitoDivs = Array.from(matchEl.querySelectorAll('.font-nunito'));
+                // O primeiro .font-nunito costuma ser o país/time do home, o último o do away
+                const homeTeamName = nunitoDivs.length > 0 ? nunitoDivs[0].textContent?.trim() || '' : '';
+                const awayTeamName = nunitoDivs.length > 1 ? nunitoDivs[nunitoDivs.length - 1].textContent?.trim() || '' : '';
                 
-                // Extrair Data
+                // Extrair Data - Tentativa robusta
+                const allText = matchEl.textContent || '';
+                const dateMatch = allText.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
+                
                 let matchDateStr = new Date().toISOString();
-                const dateDiv = matchEl.querySelector('div.flex.flex-col.items-center.font-nunito');
-                if (dateDiv) {
-                    Array.from(dateDiv.childNodes).forEach(node => {
-                        if (node.nodeType === 3) { // Text node
-                            const text = node.textContent?.trim() || '';
-                            const match = text.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
-                            if (match) {
-                                // Formatar para ISO UTC: YYYY-MM-DDTHH:mm:00.000Z
-                                const [_, day, month, year, hours, mins] = match;
-                                matchDateStr = `${year}-${month}-${day}T${hours}:${mins}:00.000Z`;
-                            }
-                        }
-                    });
+                if (dateMatch) {
+                    const [_, day, month, year, hours, mins] = dateMatch;
+                    // Assumimos que a Drafted usa UTC ou horário local compatível
+                    matchDateStr = `${year}-${month}-${day}T${hours}:${mins}:00.000Z`;
+                } else {
+                    // Se não achar data no texto, pode ser que esteja em um atributo de imagem ou Loading
+                    // Em último caso, usamos o horário atual + offset baseado no index para não ficarem todos iguais
+                    const fallbackDate = new Date();
+                    fallbackDate.setMinutes(fallbackDate.getMinutes() + (index * 2));
+                    matchDateStr = fallbackDate.toISOString();
                 }
 
                 matches.push({
-                    id: `drafted-${leagueName.replace(/\s+/g, '-')}-${index}-${Date.now()}`,
-                    eventId: Date.now() + index,
+                    id: `drafted-${leagueName.replace(/[^a-zA-Z0-9]/g, '-')}-${index}-${Date.now()}`,
+                    eventId: 9000000 + index,
                     homePlayer,
                     awayPlayer,
                     homeTeamName,
@@ -724,6 +736,8 @@ const fetchDraftedGames = async (url: string, leagueName: string): Promise<Upcom
                 });
             }
         });
+        
+        console.log(`✅ [Drafted] ${leagueName}: ${matches.length} jogos encontrados.`);
         
         return matches;
     } catch (err) {
