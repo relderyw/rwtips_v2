@@ -146,14 +146,10 @@ export default defineConfig(({ mode }) => {
                     });
                 }
             },
-            '/api/drafted-valkyrie': {
-                target: 'http://localhost:8080',
+            '/api/drafted-proxy': {
+                target: 'https://drafted.gg',
                 changeOrigin: true,
-                secure: false
-            },
-            '/api/drafted-valhalla': {
-                target: 'http://localhost:8080',
-                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/drafted-proxy/, ''),
                 secure: false
             },
             '/api/statshub': {

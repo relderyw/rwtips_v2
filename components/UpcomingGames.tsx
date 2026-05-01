@@ -2,6 +2,50 @@ import React, { useState, useEffect } from 'react';
 import { fetchUpcomingGames } from '../services/api';
 import { UpcomingMatch } from '../types';
 import { getLeagueInfo } from '../services/analyzer';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+
+const scrapeDraftedCup = async (url: string, leagueName: string): Promise<UpcomingMatch[]> => {
+    try {
+        const response = await axios.get(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+        });
+        const $ = cheerio.load(response.data);
+        const matches: UpcomingMatch[] = [];
+        
+        $('.grid.grid-cols-3.items-center.w-full').each((i, el) => {
+            const card = $(el);
+            const players = card.find('div.uppercase, .text-3\\.5xl')
+                .map((_, d) => $(d).text().trim())
+                .get()
+                .filter(txt => txt.length > 0 && txt.toLowerCase() !== 'vs' && !txt.includes('Match'));
+            
+            const uniquePlayers = players.filter((val, i, arr) => val !== arr[i-1]);
+
+            if (uniquePlayers.length >= 2) {
+                const allText = card.text() || '';
+                const dateMatch = allText.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
+                let matchDateStr = new Date().toISOString();
+                if (dateMatch) {
+                    const [_, day, month, year, hours, mins] = dateMatch;
+                    matchDateStr = `${year}-${month}-${day}T${hours}:${mins}:00.000Z`;
+                }
+
+                matches.push({
+                    id: `drafted-${leagueName.replace(/[^a-zA-Z0-9]/g, '-')}-${i}-${Date.now()}`,
+                    homePlayer: uniquePlayers[0],
+                    awayPlayer: uniquePlayers[1],
+                    leagueName: leagueName,
+                    matchDate: matchDateStr
+                } as UpcomingMatch);
+            }
+        });
+        return matches;
+    } catch (e) {
+        console.error("Erro no scraping do Drafted:", e);
+        return [];
+    }
+};
 
 export const UpcomingGames: React.FC = () => {
     const [games, setGames] = useState<UpcomingMatch[]>([]);
@@ -14,9 +58,17 @@ export const UpcomingGames: React.FC = () => {
         const loadGames = async () => {
             setLoading(true);
             try {
-                const upcoming = await fetchUpcomingGames();
+                // Carrega jogos da Superbet
+                const superbetGames = await fetchUpcomingGames();
+                
+                // Carrega jogos do Drafted.gg diretamente no frontend
+                const draftedValkyrie = await scrapeDraftedCup('/api/drafted-proxy/en/valkyrie-cup/upcoming-matches', 'VALKYRIE CUP - 12 MIN');
+                const draftedValhalla = await scrapeDraftedCup('/api/drafted-proxy/en/valhalla-cup/upcoming-matches', 'VALHALLA CUP - 12 MIN');
+
+                const allGames = [...superbetGames, ...draftedValkyrie, ...draftedValhalla];
+                
                 if (isMounted) {
-                    setGames(upcoming);
+                    setGames(allGames);
                     setRefreshTime(new Date());
                 }
             } catch (err) {

@@ -765,11 +765,8 @@ export const fetchUpcomingGames = async (): Promise<UpcomingMatch[]> => {
                 return allowedKeywords.some(keyword => name.includes(keyword));
             });
 
-        // Buscas na Drafted.gg (via server-bot.ts scraping)
-        const draftedValkyrie = await fetchDraftedGames('/api/drafted-valkyrie', 'VALKYRIE CUP - 12 MIN').catch(() => []);
-        const draftedValhalla = await fetchDraftedGames('/api/drafted-valhalla', 'VALHALLA CUP - 12 MIN').catch(() => []);
-
-        const allMatches = [...superbetMatches, ...draftedValkyrie, ...draftedValhalla];
+        // Apenas jogos da Superbet (Drafted.gg é carregado diretamente no frontend)
+        const allMatches = [...superbetMatches];
 
         return allMatches.sort((a: UpcomingMatch, b: UpcomingMatch) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
 
