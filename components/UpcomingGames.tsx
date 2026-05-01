@@ -7,9 +7,7 @@ import * as cheerio from 'cheerio';
 
 const scrapeDraftedCup = async (url: string, leagueName: string): Promise<UpcomingMatch[]> => {
     try {
-        const response = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
-        });
+        const response = await axios.get(url);
         const $ = cheerio.load(response.data);
         const matches: UpcomingMatch[] = [];
         
@@ -58,17 +56,24 @@ export const UpcomingGames: React.FC = () => {
         const loadGames = async () => {
             setLoading(true);
             try {
-                // Carrega jogos da Superbet
-                const superbetGames = await fetchUpcomingGames();
+                // 1. Tenta carregar via API (inclui Drafted.gg se o servidor estiver rodando)
+                const apiGames = await fetchUpcomingGames();
                 
-                // Carrega jogos do Drafted.gg diretamente no frontend
-                const draftedValkyrie = await scrapeDraftedCup('/api/drafted-proxy/en/valkyrie-cup/upcoming-matches', 'VALKYRIE CUP - 12 MIN');
-                const draftedValhalla = await scrapeDraftedCup('/api/drafted-proxy/en/valhalla-cup/upcoming-matches', 'VALHALLA CUP - 12 MIN');
+                // 2. Verifica se o Drafted.gg veio na API; se não, tenta scraping local (fallback para localhost)
+                const hasDrafted = apiGames.some(g => 
+                    g.leagueName.includes('VALKYRIE') || g.leagueName.includes('VALHALLA')
+                );
 
-                const allGames = [...superbetGames, ...draftedValkyrie, ...draftedValhalla];
+                let finalGames = apiGames;
+
+                if (!hasDrafted) {
+                    const draftedValkyrie = await scrapeDraftedCup('/api/drafted-proxy/en/valkyrie-cup/upcoming-matches', 'VALKYRIE CUP - 12 MIN').catch(() => []);
+                    const draftedValhalla = await scrapeDraftedCup('/api/drafted-proxy/en/valhalla-cup/upcoming-matches', 'VALHALLA CUP - 12 MIN').catch(() => []);
+                    finalGames = [...apiGames, ...draftedValkyrie, ...draftedValhalla];
+                }
                 
                 if (isMounted) {
-                    setGames(allGames);
+                    setGames(finalGames);
                     setRefreshTime(new Date());
                 }
             } catch (err) {
