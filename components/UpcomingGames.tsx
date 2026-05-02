@@ -8,8 +8,13 @@ import * as cheerio from 'cheerio';
 const scrapeDraftedCup = async (url: string, leagueName: string): Promise<UpcomingMatch[]> => {
     try {
         const response = await axios.get(url);
-        const $ = cheerio.load(response.data);
+        const html = response.data;
+        const $ = cheerio.load(html);
         const matches: UpcomingMatch[] = [];
+        
+        // Extract real match dates from Next.js data payload
+        const isoDates = html.match(/202[4-9]-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z/g) || [];
+        const uniqueDates = Array.from(new Set(isoDates)).sort();
         
         $('.grid.grid-cols-3.items-center.w-full').each((i, el) => {
             const card = $(el);
@@ -18,16 +23,11 @@ const scrapeDraftedCup = async (url: string, leagueName: string): Promise<Upcomi
                 .get()
                 .filter(txt => txt.length > 0 && txt.toLowerCase() !== 'vs' && !txt.includes('Match'));
             
-            const uniquePlayers = players.filter((val, i, arr) => val !== arr[i-1]);
+            const uniquePlayers = players.filter((val, idx, arr) => val !== arr[idx-1]);
 
             if (uniquePlayers.length >= 2) {
-                const allText = card.text() || '';
-                const dateMatch = allText.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
-                let matchDateStr = new Date().toISOString();
-                if (dateMatch) {
-                    const [_, day, month, year, hours, mins] = dateMatch;
-                    matchDateStr = `${year}-${month}-${day}T${hours}:${mins}:00.000Z`;
-                }
+                // Use the extracted date if available, otherwise current time
+                const matchDateStr = uniqueDates[i] || new Date().toISOString();
 
                 matches.push({
                     id: `drafted-${leagueName.replace(/[^a-zA-Z0-9]/g, '-')}-${i}-${Date.now()}`,
