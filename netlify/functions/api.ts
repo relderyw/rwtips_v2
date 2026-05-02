@@ -222,6 +222,42 @@ export const handler: Handler = async (event: HandlerEvent) => {
               body: JSON.stringify({ error: 'Failed to fetch StatsHub data', details: error.message }),
           };
       }
+  } else if (event.path.includes('drafted-proxy')) {
+      // Proxy to Drafted.gg
+      console.log(`[Proxy] Forwarding to Drafted.gg: ${event.path}`);
+      const baseUrl = "https://drafted.gg";
+      
+      let draftedPath = event.path.replace(/^\/api\/drafted-proxy/, '').replace(/^\/\.netlify\/functions\/api\/drafted-proxy/, '');
+      if (!draftedPath.startsWith('/')) {
+          draftedPath = '/' + draftedPath;
+      }
+      
+      try {
+          const config: any = {
+              method: event.httpMethod,
+              url: `${baseUrl}${draftedPath}`,
+              headers: {
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
+              }
+          };
+
+          const response = await axios(config);
+          return {
+              statusCode: 200,
+              headers: {
+                  'Content-Type': 'text/html',
+                  'Access-Control-Allow-Origin': '*',
+              },
+              body: response.data,
+          };
+      } catch (error: any) {
+          console.error('[Proxy Error] Drafted:', error.message);
+          return {
+              statusCode: error.response?.status || 500,
+              body: JSON.stringify({ error: 'Failed to fetch Drafted data', details: error.message }),
+          };
+      }
   } else if (event.path.includes('history') || event.path.includes('players')) {
       // Proxy to History / Players API
       console.log(`[Proxy] Forwarding to New API: ${event.path}`);
