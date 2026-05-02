@@ -65,6 +65,9 @@ export const UpcomingGames: React.FC = () => {
 
                 const allGames = [...superbetGames, ...draftedValkyrie, ...draftedValhalla];
                 
+                // Sort games chronologically
+                allGames.sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
+                
                 if (isMounted) {
                     setGames(allGames);
                     setRefreshTime(new Date());
