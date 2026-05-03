@@ -68,8 +68,12 @@ export const UpcomingGames: React.FC = () => {
                 // Sort games chronologically
                 allGames.sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
                 
+                // Keep only future games (or games happening exactly now)
+                const now = new Date().getTime();
+                const futureGames = allGames.filter(g => new Date(g.matchDate).getTime() >= now);
+                
                 if (isMounted) {
-                    setGames(allGames);
+                    setGames(futureGames);
                     setRefreshTime(new Date());
                 }
             } catch (err) {
