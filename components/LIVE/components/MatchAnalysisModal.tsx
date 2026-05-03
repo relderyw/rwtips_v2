@@ -380,7 +380,7 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                         <div className="mb-4">
                             <div className="text-slate-300 text-sm mb-2">ESCANTEIOS</div>
                             <div className="bg-slate-800 rounded-xl p-8 text-center border border-slate-700">
-                                <div className="text-6xl font-bold text-slate-200 mb-2">
+                                <div className="text-4xl font-bold text-slate-200 mb-2">
                                     {cornersAverage.toFixed(1)}
                                 </div>
                                 <div className="text-slate-400 text-sm">ESCANTEIOS - MÉDIA</div>

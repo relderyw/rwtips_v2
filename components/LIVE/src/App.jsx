@@ -309,7 +309,7 @@ function App() {
 
         {filteredMatches.length === 0 && (
           <div className="text-center py-24 bg-zinc-900/30 rounded-3xl border border-zinc-800/50 border-dashed backdrop-blur-sm">
-            <div className="text-6xl mb-4 opacity-50">🔍</div>
+            <div className="text-4xl mb-4 opacity-50">🔍</div>
             <p className="text-2xl font-bold text-zinc-400 mb-2">Nenhum jogo encontrado</p>
             <p className="text-zinc-600">Tente ajustar seus filtros de busca</p>
           </div>

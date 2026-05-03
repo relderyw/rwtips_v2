@@ -63,7 +63,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userNa
                         <Sparkles className="w-4 h-4 text-emerald-500" />
                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Bem-vindo ao RW TIPS</span>
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter mb-4">
+                    <h1 className="text-5xl md:text-5xl font-black italic tracking-tighter mb-4">
                         SELEÇÃO DE  <span className="text-emerald-500">MERCADO</span>
                     </h1>
                     <p className="text-zinc-500 text-lg max-w-2xl mx-auto font-medium">
