@@ -67,7 +67,7 @@ export const LeagueThermometer: React.FC<LeagueThermometerProps> = ({ stats, onV
   };
 
   return (
-    <div className={`bg-[#111115] border rounded-xl p-5 transition-all duration-300 hover:bg-[#16161b] relative overflow-hidden h-full`} style={{ borderColor: `${info.color}25` }}>
+    <div className={`bg-white/[0.02] border rounded-xl p-5 transition-all duration-300 hover:bg-white/[0.02] relative overflow-hidden h-full`} style={{ borderColor: `${info.color}25` }}>
       <div className="flex items-center gap-4 mb-6">
         <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-black border border-white/10 p-2 shadow-2xl transition-transform hover:scale-110 shrink-0">
           {info.image ? (
@@ -89,7 +89,7 @@ export const LeagueThermometer: React.FC<LeagueThermometerProps> = ({ stats, onV
         </div>
         <button
           onClick={() => onViewGames?.(stats)}
-          className="w-8 h-8 bg-[#1c1c21] border border-[#25252a] rounded-lg hover:bg-[#25252a] transition-all flex items-center justify-center text-[#52525b] hover:text-white"
+          className="w-8 h-8 bg-[#1c1c21] border border-white/[0.05] rounded-lg hover:bg-[#25252a] transition-all flex items-center justify-center text-[#52525b] hover:text-white"
           title="Ver histórico desta liga"
         >
           <i className="fa-solid fa-database text-xs"></i>

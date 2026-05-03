@@ -472,7 +472,7 @@ const MatchAnalysisModal: React.FC<MatchAnalysisModalProps> = ({ match, matchDat
                     <button
                         onClick={onClose}
                         aria-label="Fechar"
-                        className="p-2 rounded hover:bg-slate-800 text-slate-300"
+                        className="p-2 rounded hover:bg-slate-800 text-slate-300 transition-all duration-300 ease-in-out"
                     >
                         <X size={18} />
                     </button>

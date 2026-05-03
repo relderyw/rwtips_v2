@@ -117,17 +117,17 @@ export const StrategyHistory: React.FC<StrategyHistoryProps> = ({ history }) => 
             </div>
 
             {/* DETAILED TABLE */}
-            <div className="bg-white/[0.01] border border-white/[0.05] rounded-[2.5rem] overflow-hidden shadow-2xl">
-                <div className="overflow-x-auto">
+            <div className="bg-white/[0.02] border border-white/[0.08] backdrop-blur-2xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/40">
+                <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-white/5">
-                                <th className="px-8 py-6 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Data / Liga</th>
-                                <th className="px-8 py-6 text-[10px] font-black text-white/20 uppercase tracking-[0.2em] text-center">Resumo de Assertividade</th>
-                                <th className="px-8 py-6 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Estratégias Válidas (Nova Lógica)</th>
+                            <tr className="bg-white/[0.03] border-b border-white/[0.05]">
+                                <th className="px-10 py-8 text-[11px] font-black text-white/40 uppercase tracking-[0.3em]">Data / Liga</th>
+                                <th className="px-10 py-8 text-[11px] font-black text-white/40 uppercase tracking-[0.3em] text-center">Assertividade Analítica</th>
+                                <th className="px-10 py-8 text-[11px] font-black text-white/40 uppercase tracking-[0.3em]">Estratégias de Alta Performance</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/[0.02]">
+                        <tbody className="divide-y divide-white/[0.03]">
                             {report.map((item: ReportItem, idx: number) => {
                                 const dayStrategies = Object.values(item.strategies);
                                 const dayTotal = dayStrategies.reduce((acc: number, s: StrategyStats) => acc + s.total, 0);
@@ -136,8 +136,8 @@ export const StrategyHistory: React.FC<StrategyHistoryProps> = ({ history }) => 
                                 const dayWinRate = dayTotal > 0 ? (dayGreen / dayTotal) * 100 : 0;
 
                                 return (
-                                    <tr key={idx} className="hover:bg-white/[0.01] transition-colors group">
-                                        <td className="px-8 py-6">
+                                    <tr key={idx} className="hover:bg-white/[0.02] transition-all duration-300 group">
+                                        <td className="px-10 py-8">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                                                     {getLeagueInfo(item.league).image ? (

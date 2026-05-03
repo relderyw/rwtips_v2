@@ -1184,7 +1184,7 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
               {editingId ? 'Editar Aposta' : 'Nova Aposta'}
             </h3>
             {editingId && (
-              <button onClick={cancelEditing} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-widest flex items-center gap-2">
+              <button onClick={cancelEditing} className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-widest flex items-center gap-2 transition-all duration-300 ease-in-out">
                 <X size={12} /> Cancelar
               </button>
             )}

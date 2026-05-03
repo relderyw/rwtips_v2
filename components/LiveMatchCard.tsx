@@ -224,7 +224,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
 
   return (
     <div
-      className={`relative bg-[#111115] rounded-xl border flex flex-col transition-all duration-300 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01]' : 'hover:bg-[#16161b]'}`}
+      className={`relative bg-white/[0.02] rounded-xl border flex flex-col transition-all duration-300 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01]' : 'hover:bg-white/[0.02]'}`}
       style={{
         borderColor: isSignaled ? `${theme.color}50` : '#25252a',
         boxShadow: isSignaled ? `0 8px_30px rgba(0,0,0,0.6), 0 0 12px ${theme.color}15` : '',
@@ -232,39 +232,50 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
         overflow: 'visible'
       }}
     >
-      {/* STRATEGY & CONFIDENCE INTEGRATED HEADER - Only shown if it meets the highlighted threshold OR we have a strategy to show without glow */}
+      {/* SIGNAL PANEL - PREMIUM HUD STYLE */}
       {potential !== 'none' && (
-        <div className={`mx-2 mt-2 p-2.5 rounded-xl border relative overflow-hidden group ${isSignaled ? 'bg-white/[0.03] border-white/10 backdrop-blur-md' : 'bg-black/20 border-white/[0.02]'}`}>
-          {/* Background Glow Effect - Only if signaled */}
-          {isSignaled && <div className="absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20" style={{ background: `radial-gradient(circle at top right, ${theme.color}, transparent)` }}></div>}
+        <div className={`mx-3 mt-3 p-3 rounded-2xl border relative overflow-hidden group ${isSignaled ? 'bg-white/[0.05] border-white/10 backdrop-blur-2xl shadow-xl' : 'bg-black/40 border-white/[0.02]'}`}>
+          {/* Animated Gradient Beam */}
+          {isSignaled && (
+            <div className="absolute inset-0 opacity-20 transition-opacity group-hover:opacity-30 pointer-events-none" 
+              style={{ background: `linear-gradient(135deg, ${theme.color} 0%, transparent 50%, ${theme.color} 100%)` }}>
+            </div>
+          )}
 
           <div className="flex items-center justify-between relative z-10">
-            <div className={`flex items-center gap-2.5 ${!isSignaled && 'opacity-60 grayscale'}`}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg border" style={{ backgroundColor: `${theme.color}20`, borderColor: `${theme.color}40` }}>
-                <i className={`fa-solid ${theme.icon} text-xs ${isSignaled ? 'animate-pulse' : ''}`} style={{ color: theme.color }}></i>
+            <div className={`flex items-center gap-3 ${!isSignaled && 'opacity-40 grayscale'}`}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-2xl border transition-transform group-hover:scale-105" 
+                style={{ backgroundColor: `${theme.color}20`, borderColor: `${theme.color}40`, boxShadow: isSignaled ? `0 0 15px ${theme.color}30` : '' }}>
+                <i className={`fa-solid ${theme.icon} text-sm ${isSignaled ? 'animate-pulse' : ''}`} style={{ color: theme.color }}></i>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-wider leading-none mb-1" style={{ color: theme.color }}>
-                  {theme.label} {!isSignaled && <span className="text-white/30 ml-1 text-[8px]">(OBSERVANDO)</span>}
-                </span>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[11px] font-black uppercase tracking-widest leading-none" style={{ color: theme.color }}>
+                    {theme.label}
+                  </span>
+                  {!isSignaled && <span className="text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-white/40 font-bold tracking-tighter">OBSERVANDO</span>}
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {reasons && reasons.map((r, i) => (
-                    <span key={i} className="text-[7px] font-bold text-white/30 uppercase tracking-tighter italic">{r}</span>
+                    <span key={i} className="text-[8px] font-bold text-white/20 uppercase tracking-widest flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-white/10"></span>
+                      {r}
+                    </span>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className={`flex flex-col items-end ${!isSignaled && 'opacity-60'}`}>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Confiança</span>
-                <span className="text-sm font-black italic tabular-nums" style={{ color: confidence && confidence >= 85 ? '#10b981' : confidence && confidence >= 75 ? '#facc15' : '#ef4444' }}>
+            <div className={`flex flex-col items-end ${!isSignaled && 'opacity-30'}`}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Confidence</span>
+                <span className="text-sm font-black tabular-nums tracking-tighter" style={{ color: confidence && confidence >= 85 ? '#10b981' : confidence && confidence >= 75 ? '#facc15' : '#ef4444' }}>
                   {confidence}%
                 </span>
               </div>
-              <div className="w-16 h-1 bg-white/5 rounded-full mt-1.5 overflow-hidden">
+              <div className="w-20 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/[0.05] p-[1px]">
                 <div
-                  className="h-full transition-all duration-1000"
+                  className="h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(255,255,255,0.2)]"
                   style={{
                     width: `${confidence}%`,
                     backgroundColor: confidence && confidence >= 85 ? '#10b981' : confidence && confidence >= 75 ? '#facc15' : '#ef4444'
@@ -325,17 +336,18 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             )}
           </div>
 
-          <div className="flex flex-col items-center mx-1 shrink-0">
-            <div className={`bg-[#050505] px-3 py-1.5 rounded-xl border border-white/10 shadow-[inset_0_2px_12px_rgba(0,0,0,0.8)] min-w-[70px] text-center transform scale-105 transition-all duration-300 ${scoreState.animating ? 'animate-score-pop border-emerald-500/50' : ''}`}>
-              <div className="flex items-center justify-center italic font-black text-2xl tabular-nums drop-shadow-xl">
-                <span className={`transition-all duration-300 ${scoreState.animating && prevScoreRef.current.home !== match.score.home ? 'text-white scale-125' : ''}`} style={{ color: leagueInfo.color }}>
+          <div className="flex flex-col items-center mx-2 shrink-0">
+            <div className={`bg-black/60 px-4 py-2 rounded-2xl border border-white/10 shadow-2xl min-w-[85px] text-center transform scale-110 transition-all duration-500 ${scoreState.animating ? 'animate-score-pop border-emerald-500/50 shadow-emerald-500/20' : ''}`}>
+              <div className="flex items-center justify-center font-black text-3xl tabular-nums tracking-tighter">
+                <span className={`transition-all duration-300 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] ${scoreState.animating && prevScoreRef.current.home !== match.score.home ? 'text-white scale-125' : ''}`} style={{ color: leagueInfo.color }}>
                   {match.score.home}
                 </span>
-                <span className="text-white/20 mx-0.5">–</span>
-                <span className={`transition-all duration-300 ${scoreState.animating && prevScoreRef.current.away !== match.score.away ? 'text-white scale-125' : ''}`} style={{ color: leagueInfo.color }}>
+                <span className="text-white/10 mx-1.5 scale-90">–</span>
+                <span className={`transition-all duration-300 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] ${scoreState.animating && prevScoreRef.current.away !== match.score.away ? 'text-white scale-125' : ''}`} style={{ color: leagueInfo.color }}>
                   {match.score.away}
                 </span>
               </div>
+              <div className="text-[8px] text-white/20 font-black uppercase tracking-[0.3em] mt-1">Live Score</div>
             </div>
           </div>
 

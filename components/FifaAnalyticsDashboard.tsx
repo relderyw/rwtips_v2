@@ -304,47 +304,57 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* ── BACKTEST PRO ENGINE ── */}
-      <div className="bg-[#111115] border border-[#25252a] border-l-2 border-l-amber-500 p-5 rounded-xl">
-        <h2 className="text-lg font-bold text-white">🏆 Backtest Pro Engine</h2>
-        <p className="text-[#71717a] text-sm mt-0.5">Simulação Real-Time & Análise de Momentum</p>
+      <div className="bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl border-l-4 border-l-amber-500 p-6 rounded-2xl shadow-2xl shadow-black/40 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
+        <div className="relative z-10">
+          <h2 className="text-xl font-black text-white flex items-center gap-3 tracking-tight uppercase">
+            <i className="fa-solid fa-trophy text-amber-500"></i>
+            Backtest Pro Engine
+          </h2>
+          <p className="text-zinc-400 text-xs mt-1.5 flex items-center gap-2 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50 animate-pulse"></span>
+            Simulação em Tempo Real & Análise de Momentum de Mercado
+          </p>
+        </div>
       </div>
 
       {/* ─── PRO MODE (EXCEL STYLE) ─── */}
       {btMode === 'pro' && (
         <div className="space-y-6">
           {/* 1º CONFIGURAÇÃO */}
-          <div className="bg-[#111115] border border-[#25252a] rounded-xl p-5">
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center border border-amber-500/25">
-                <span className="text-amber-500 font-bold text-xs">1</span>
+          <div className="bg-white/[0.03] border border-white/[0.05] backdrop-blur-xl rounded-2xl p-6 shadow-2xl shadow-black/20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-inner">
+                <span className="text-amber-500 font-black text-xs">01</span>
               </div>
-              <h3 className="text-sm font-semibold text-white">Configuração de Backtest</h3>
+              <h3 className="text-xs font-black text-white uppercase tracking-widest">Configuração do Sistema</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-              <div className="space-y-1.5">
-                <label className="text-xs text-[#71717a] font-medium pl-1">Valor da Unidade (R$)</label>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] text-zinc-500 font-black uppercase tracking-widest pl-1">Unidade (R$)</label>
                 <input type="number" value={unitValue} onChange={e => setUnitValue(Number(e.target.value))}
-                  className="w-full bg-[#0a0a0d] border border-[#25252a] rounded-lg px-3 py-2.5 text-white font-medium focus:border-amber-500/50 outline-none text-sm" />
+                  className="w-full bg-black/40 border border-white/[0.05] rounded-xl px-4 py-3 text-white font-bold focus:border-amber-500/50 outline-none text-sm transition-all focus:ring-1 focus:ring-amber-500/20" />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs text-[#71717a] font-medium pl-1">Odd Base</label>
+              <div className="space-y-2">
+                <label className="text-[10px] text-zinc-500 font-black uppercase tracking-widest pl-1">Odd de Entrada</label>
                 <input type="number" step="0.05" value={baseOdd} onChange={e => setBaseOdd(Number(e.target.value))}
-                  className="w-full bg-[#0a0a0d] border border-[#25252a] rounded-lg px-3 py-2.5 text-white font-medium focus:border-amber-500/50 outline-none text-sm" />
+                  className="w-full bg-black/40 border border-white/[0.05] rounded-xl px-4 py-3 text-white font-bold focus:border-amber-500/50 outline-none text-sm transition-all focus:ring-1 focus:ring-amber-500/20" />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs text-[#71717a] font-medium pl-1">Amostra (Jogos)</label>
-                <div className="flex gap-1.5">
-                  {[3, 5, 8, 10, 15, 20].map(n => (
+              <div className="space-y-2">
+                <label className="text-[10px] text-zinc-500 font-black uppercase tracking-widest pl-1">Amostragem</label>
+                <div className="flex gap-1.5 bg-black/40 p-1 rounded-xl border border-white/[0.05]">
+                  {[5, 10, 15, 20].map(n => (
                     <button key={n} onClick={() => setBtSampleSize(n)}
-                      className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all ${btSampleSize === n ? 'bg-amber-500 text-black' : 'bg-[#1c1c21] text-[#71717a] hover:text-white hover:bg-[#25252a]'}`}>{n}</button>
+                      className={`flex-1 py-2 rounded-lg text-[10px] font-black transition-all ${btSampleSize === n ? 'bg-amber-500 text-black shadow-lg' : 'text-zinc-500 hover:text-white'}`}>{n}J</button>
                   ))}
                 </div>
               </div>
               <div className="flex items-end">
                 <button onClick={runProBacktest} disabled={btRunning}
-                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-semibold rounded-lg text-sm transition-all flex items-center justify-center gap-2">
-                  {btRunning ? 'Processando...' : 'Atualizar Dados'}
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-black uppercase tracking-widest rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 active:scale-95">
+                  {btRunning ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-rotate"></i>}
+                  {btRunning ? 'Calculando...' : 'Atualizar'}
                 </button>
               </div>
             </div>
@@ -428,37 +438,39 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
           )}
 
           {/* 2º TABELA DE LIGAS (HEATMAP) */}
-          <div className="bg-[#111115] border border-[#25252a] rounded-xl overflow-hidden">
-            <div className="p-4 border-b border-[#25252a] flex items-center justify-between bg-[#0f0f12]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center border border-amber-500/25">
-                  <span className="text-amber-500 font-bold text-xs">2</span>
+          <div className="bg-white/[0.03] border border-white/[0.05] backdrop-blur-xl rounded-2xl overflow-hidden shadow-2xl shadow-black/20">
+            <div className="p-5 border-b border-white/[0.05] flex items-center justify-between bg-black/20">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-inner">
+                  <span className="text-amber-500 font-black text-xs">02</span>
                 </div>
-                <h3 className="text-sm font-semibold text-white">Resumo das Ligas</h3>
+                <h3 className="text-xs font-black text-white uppercase tracking-widest">Painel de Calor das Ligas</h3>
               </div>
-              <div className="text-xs text-[#52525b] font-medium">Base: Últimos {btSampleSize} Jogos</div>
+              <div className="text-[10px] text-zinc-500 font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/[0.05]">
+                Amostra: {btSampleSize} Jogos
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#0a0a0d]">
-                    <th rowSpan={2} className="p-3 text-[11px] text-[#71717a] font-medium border-r border-[#25252a]">Liga</th>
-                    <th colSpan={4} className="p-2 text-[10px] text-amber-500/80 font-semibold text-center border-b border-r border-[#25252a]">1º Tempo (HT)</th>
-                    <th colSpan={4} className="p-2 text-[10px] text-[#22c55e]/80 font-semibold text-center border-b border-[#25252a]">Jogo Completo (FT)</th>
+                  <tr className="bg-black/40">
+                    <th rowSpan={2} className="p-5 text-[10px] text-zinc-500 font-black uppercase tracking-widest border-r border-white/[0.05]">Liga</th>
+                    <th colSpan={4} className="p-3 text-[10px] text-amber-500/80 font-black uppercase tracking-widest text-center border-b border-r border-white/[0.05]">Mercados 1º Tempo (HT)</th>
+                    <th colSpan={4} className="p-3 text-[10px] text-emerald-500/80 font-black uppercase tracking-widest text-center border-b border-white/[0.05]">Mercados Jogo Completo (FT)</th>
                   </tr>
-                  <tr className="bg-[#0f0f12]">
+                  <tr className="bg-black/20">
                     {PRO_MARKETS.map((m, i) => (
-                      <th key={m} className={`p-2.5 text-[10px] text-[#52525b] font-medium text-center whitespace-nowrap border-r border-[#25252a] ${i === 3 ? 'border-r-amber-500/15' : ''}`}>
+                      <th key={m} className={`p-4 text-[9px] text-zinc-400 font-black uppercase tracking-tighter text-center whitespace-nowrap border-r border-white/[0.05] ${i === 3 ? 'border-r-amber-500/20' : ''}`}>
                         {m.replace('over_', '+').replace('_ht', '').replace('_ft', '').replace('btts', 'BTTS').toUpperCase()}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1c1c21]">
+                <tbody className="divide-y divide-white/[0.02]">
                   {proLeagueData.map((row, i) => (
-                    <tr key={i} className="hover:bg-[#16161b] transition-colors group">
-                      <td className="p-3 border-r border-[#25252a]">
+                    <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
+                      <td className="p-3 border-r border-white/[0.05]">
                         <div className="text-sm font-medium text-white group-hover:text-amber-400 transition-colors">{row.league}</div>
                         <div className="text-[10px] text-[#52525b] font-normal">{row.gamesCount} jogos</div>
                       </td>
@@ -473,7 +485,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                         else if (val > 0) { bgColor = 'bg-red-500/8'; textColor = 'text-red-400/70'; }
 
                         return (
-                          <td key={mi} className={`p-3 text-center border-r border-[#25252a] ${bgColor}`}>
+                          <td key={mi} className={`p-3 text-center border-r border-white/[0.05] ${bgColor}`}>
                             <div className="flex flex-col items-center gap-1">
                               <span className={`text-xs font-semibold font-mono-numbers ${textColor}`}>{val.toFixed(1)}%</span>
                               <DotStreak results={row.hits[market] || []} rowIndex={i} align={mi >= 6 ? 'right' : (mi <= 2 ? 'left' : 'center')} />
@@ -499,7 +511,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
               {/* Cenário 1: Linhas de Jogos */}
-              <div className="bg-[#111115] border border-[#25252a] rounded-xl p-5 space-y-4">
+              <div className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="text-sm font-semibold text-white">Cenário 1: Linhas de Jogos</h4>
                   <i className="fa-solid fa-chart-line text-amber-500/40"></i>
@@ -568,7 +580,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
               </div>
 
               {/* Cenário 2: Gols Jogador */}
-              <div className="bg-[#111115] border border-[#25252a] rounded-xl p-5 space-y-4">
+              <div className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-semibold text-white">Cenário 2: Gols Jogador</h4>
                   <select value={proLeagueSelected} onChange={e => setProLeagueSelected(e.target.value)}
@@ -611,7 +623,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
               </div>
 
               {/* Cenário 3: Vitória Jogador */}
-              <div className="bg-[#111115] border border-[#25252a] rounded-xl p-5 space-y-4">
+              <div className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-semibold text-white">Cenário 3: Vitória Jogador</h4>
                   <i className="fa-solid fa-trophy text-amber-500/40"></i>
