@@ -123,7 +123,7 @@ export const UpcomingGames: React.FC = () => {
 
     return (
         <div className="space-y-6 slide-up">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/[0.02] p-5 rounded-2xl border border-white/[0.05] shadow-2xl shadow-black/40 relative overflow-hidden">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#0a0a0c] p-6 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                 <div className="relative z-10">
                     <h2 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
@@ -151,7 +151,7 @@ export const UpcomingGames: React.FC = () => {
                     <select
                         value={selectedLeague}
                         onChange={(e) => setSelectedLeague(e.target.value)}
-                        className="w-full sm:w-auto bg-white/[0.02] border border-white/[0.05] backdrop-blur-md text-white text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-colors"
+                        className="w-full sm:w-auto bg-white/5 border border-white/10 text-white text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
                     >
                         <option value="all">Todas as Ligas ({games.length})</option>
                         {leagues.map(l => {
@@ -165,12 +165,12 @@ export const UpcomingGames: React.FC = () => {
             </div>
 
             {loading && games.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-2xl">
-                    <div className="w-12 h-12 border-4 border-[#16161b] border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+                <div className="flex flex-col items-center justify-center py-20 bg-[#0a0a0c] border border-white/10 rounded-2xl">
+                    <div className="w-12 h-12 border-4 border-white/5 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
                     <p className="text-slate-400 font-medium">Carregando eventos futuros...</p>
                 </div>
             ) : filteredGames.length === 0 ? (
-                <div className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-2xl p-10 text-center">
+                <div className="bg-[#0a0a0c] border border-white/10 rounded-2xl p-10 text-center">
                     <div className="w-16 h-16 bg-white/[0.02] rounded-full flex items-center justify-center mx-auto mb-4 border border-white/[0.05]">
                         <i className="fa-solid fa-calendar-xmark text-slate-500 text-2xl"></i>
                     </div>
@@ -180,9 +180,9 @@ export const UpcomingGames: React.FC = () => {
                     </p>
                 </div>
             ) : (
-                <div className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-2xl overflow-hidden flex flex-col">
+                <div className="bg-[#0a0a0c] border border-white/10 rounded-2xl overflow-hidden flex flex-col shadow-2xl">
                     {/* Cabeçalho da Lista */}
-                    <div className="hidden md:flex items-center px-6 py-4 bg-white/[0.02] border-b border-white/[0.05] text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    <div className="hidden md:flex items-center px-6 py-5 bg-white/[0.02] border-b border-white/10 text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
                         <div className="w-32">Horário</div>
                         <div className="w-48">Liga</div>
                         <div className="flex-1 text-right pr-4">Mandante</div>
@@ -191,7 +191,7 @@ export const UpcomingGames: React.FC = () => {
                     </div>
 
                     {/* Lista de Jogos */}
-                    <div className="flex flex-col divide-y divide-white/[0.05]/50">
+                    <div className="flex flex-col divide-y divide-white/[0.05]">
                         {filteredGames.map((game, index) => {
                             const info = getLeagueInfo(game.leagueName);
                             

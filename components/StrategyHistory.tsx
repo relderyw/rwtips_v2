@@ -116,8 +116,7 @@ export const StrategyHistory: React.FC<StrategyHistoryProps> = ({ history }) => 
                 })}
             </div>
 
-            {/* DETAILED TABLE */}
-            <div className="bg-white/[0.02] border border-white/[0.08] backdrop-blur-2xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/40">
+            <div className="bg-[#0a0a0c] border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl shadow-black/40">
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>

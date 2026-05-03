@@ -304,7 +304,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* ── BACKTEST PRO ENGINE ── */}
-      <div className="bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl border-l-4 border-l-amber-500 p-6 rounded-2xl shadow-2xl shadow-black/40 relative overflow-hidden group">
+      <div className="bg-[#0a0a0c] border border-white/10 border-l-4 border-l-amber-500 p-6 rounded-2xl shadow-2xl shadow-black/40 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
         <div className="relative z-10">
           <h2 className="text-xl font-black text-white flex items-center gap-3 tracking-tight uppercase">
@@ -322,7 +322,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
       {btMode === 'pro' && (
         <div className="space-y-6">
           {/* 1º CONFIGURAÇÃO */}
-          <div className="bg-white/[0.03] border border-white/[0.05] backdrop-blur-xl rounded-2xl p-6 shadow-2xl shadow-black/20">
+          <div className="bg-[#0a0a0c] border border-white/10 rounded-2xl p-6 shadow-2xl shadow-black/20">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-inner">
                 <span className="text-amber-500 font-black text-xs">01</span>
@@ -438,7 +438,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
           )}
 
           {/* 2º TABELA DE LIGAS (HEATMAP) */}
-          <div className="bg-white/[0.03] border border-white/[0.05] backdrop-blur-xl rounded-2xl overflow-hidden shadow-2xl shadow-black/20">
+          <div className="bg-[#0a0a0c] border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-black/20">
             <div className="p-5 border-b border-white/[0.05] flex items-center justify-between bg-black/20">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-inner">
