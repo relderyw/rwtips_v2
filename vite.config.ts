@@ -191,6 +191,20 @@ export default defineConfig(({ mode }) => {
                 target: 'http://localhost:8080',
                 changeOrigin: true,
                 secure: false
+            },
+            '/api/estrelabet': {
+                target: 'https://assets.estrelabet.bet.br',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/estrelabet/, ''),
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Accept', '*/*');
+                        proxyReq.setHeader('Origin', 'https://www.estrelabet.bet.br');
+                        proxyReq.setHeader('Referer', 'https://www.estrelabet.bet.br/');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36');
+                    });
+                }
             }
         }
       },

@@ -15,6 +15,7 @@ import { ModuleSelector } from './components/ModuleSelector';
 import LiveModule from './components/LIVE/LiveModule';
 import { FifaAnalyticsDashboard } from './components/FifaAnalyticsDashboard';
 import { UpcomingGames } from './components/UpcomingGames';
+import { RouletteDashboard } from './components/Roulette/RouletteDashboard';
 
 interface GoalNotification {
   id: string;
@@ -102,7 +103,7 @@ const App: React.FC = () => {
   const [isDevMode, setIsDevMode] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'upcoming' | 'bankroll' | 'analytics' | 'nba'>('radar');
-  const [selectedModule, setSelectedModule] = useState<'fifa' | 'futebol' | 'basquete' | null>(null);
+  const [selectedModule, setSelectedModule] = useState<'fifa' | 'futebol' | 'basquete' | 'roletas' | null>(null);
   const [history, setHistory] = useState<HistoryMatch[]>([]);
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const [filter, setFilter] = useState<string>('all');
@@ -136,7 +137,7 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [resultsSearch, setResultsSearch] = useState('');
   const [resultsLeague, setResultsLeague] = useState('all');
-  const [allowedModules, setAllowedModules] = useState<string[]>(['fifa', 'futebol', 'basquete']);
+  const [allowedModules, setAllowedModules] = useState<string[]>(['fifa', 'futebol', 'basquete', 'roletas']);
   const historyRef = useRef<HTMLDivElement>(null);
 
   const prevScores = useRef<Record<string, string>>({});
@@ -591,7 +592,9 @@ const App: React.FC = () => {
             </div>
           ) : (
             <>
-              {selectedModule === 'fifa' ? (
+              {selectedModule === 'roletas' ? (
+                 <RouletteDashboard />
+              ) : selectedModule === 'fifa' ? (
                 <>
                   {activeMainTab === 'radar' ? (
                     <>

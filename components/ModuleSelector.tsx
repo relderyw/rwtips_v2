@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Gamepad2, Trophy, Dribbble, ChevronRight, Sparkles } from 'lucide-react';
+import { Gamepad2, Trophy, Dribbble, ChevronRight, Sparkles, Disc } from 'lucide-react';
 
 interface ModuleOption {
-    id: 'fifa' | 'futebol' | 'basquete';
+    id: 'fifa' | 'futebol' | 'basquete' | 'roletas';
     title: string;
     subtitle: string;
     description: string;
@@ -35,18 +35,26 @@ const MODULES: ModuleOption[] = [
         description: 'Estatísticas avançadas da NBA, projeções de pontuação e análise de matchups.',
         icon: <Dribbble className="w-7 h-7" />,
         bgImage: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1490&auto=format&fit=crop'
+    },
+    {
+        id: 'roletas',
+        title: 'CASSINO',
+        subtitle: 'Roletas ONTIME',
+        description: 'Monitoramento em tempo real de tendências e histórico de roletas da Evolution Gaming.',
+        icon: <Disc className="w-7 h-7" />,
+        bgImage: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?q=80&w=1470&auto=format&fit=crop'
     }
 ];
 
 interface ModuleSelectorProps {
-    onSelect: (moduleId: 'fifa' | 'futebol' | 'basquete') => void;
+    onSelect: (moduleId: 'fifa' | 'futebol' | 'basquete' | 'roletas') => void;
     userName?: string;
     allowedModules?: string[];
     onAdminClick?: () => void;
     onLogout?: () => void;
 }
 
-export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userName, allowedModules = ['fifa', 'futebol', 'basquete'], onAdminClick, onLogout }) => {
+export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userName, allowedModules = ['fifa', 'futebol', 'basquete', 'roletas'], onAdminClick, onLogout }) => {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden"
             style={{ background: 'radial-gradient(ellipse at 50% -20%, #13131A 0%, #07070A 60%)' }}>
@@ -76,7 +84,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userNa
                 </header>
 
                 {/* Module Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                     {MODULES.map((module, idx) => {
                         const isAllowed = allowedModules?.includes(module.id);
                         return (
