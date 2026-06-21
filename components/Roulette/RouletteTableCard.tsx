@@ -71,14 +71,14 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
         <div className="flex gap-1.5 overflow-x-auto custom-scroll pb-1">
           {table.lastResults.map((num, i) => {
              const color = getNumberColor(num);
-             let bgClass = color === 'red' ? 'bg-red-500/10 border-red-500/40 text-red-400' 
-                           : color === 'black' ? 'bg-[#000000] border-white/20 text-white/80' 
-                           : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400';
+             let bgClass = color === 'red' ? 'bg-[#E63946] border-[#E63946] text-white shadow-[0_2px_8px_rgba(230,57,70,0.5)]' 
+                           : color === 'black' ? 'bg-[#18181B] border-[#27272A] text-white shadow-[0_2px_8px_rgba(0,0,0,0.8)]' 
+                           : 'bg-[#2A9D8F] border-[#2A9D8F] text-white shadow-[0_2px_8px_rgba(42,157,143,0.5)]';
              
              // O mais recente (índice 0) ganha uma animação e um brilho
              const isNewest = i === 0;
              if (isNewest) {
-                bgClass += ' animate-in fade-in zoom-in slide-in-from-left duration-700 ring-2 ring-offset-2 ring-offset-[#0A0A0D] ' + (color === 'red' ? 'ring-red-500/50' : color === 'black' ? 'ring-white/30' : 'ring-emerald-500/50');
+                bgClass += ' animate-in fade-in zoom-in slide-in-from-left duration-500 scale-110 z-10 ring-2 ring-offset-1 ring-offset-[#0A0A0D] ' + (color === 'red' ? 'ring-[#E63946]' : color === 'black' ? 'ring-[#8888A0]' : 'ring-[#2A9D8F]');
              }
 
              return (
