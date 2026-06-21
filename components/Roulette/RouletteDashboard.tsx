@@ -28,7 +28,7 @@ export const RouletteDashboard: React.FC = () => {
     };
 
     loadData();
-    interval = setInterval(loadData, 15000); // Polling every 15s
+    interval = setInterval(loadData, 10000); // Polling every 10s
 
     return () => {
       mounted = false;
