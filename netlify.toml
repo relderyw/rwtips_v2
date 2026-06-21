@@ -12,6 +12,13 @@
   status = 200
   force = true
 
+# Proxy for EstrelaBet API
+[[redirects]]
+  from = "/api/estrelabet/*"
+  to = "https://assets.estrelabet.bet.br/:splat"
+  status = 200
+  force = true
+
 # Redirect for API calls to the serverless function
 [[redirects]]
   from = "/api/*"
