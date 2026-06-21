@@ -96,88 +96,96 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#030303] p-6">
-            <div className="w-full max-w-md bg-[#0a0a0c] border border-white/10 rounded-[3rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,1)] flex flex-col items-center animate-in fade-in zoom-in-95 duration-500">
-                <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 flex items-center justify-center mb-8 shadow-2xl relative group overflow-hidden">
-                    <img src="https://i.ibb.co/G4Y8sHMk/Chat-GPT-Image-21-de-abr-de-2025-16-14-34-1.png" alt="RW" className="w-14 h-14 object-contain group-hover:scale-110 transition-transform" />
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6"
+            style={{ background: 'radial-gradient(ellipse at center, #0D0D12 0%, #07070A 70%)' }}>
+            <div className="w-full max-w-[400px] flex flex-col items-center animate-in fade-in zoom-in-95 duration-500">
+
+                {/* Logo */}
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-2xl overflow-hidden"
+                    style={{ background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.2)' }}>
+                    <img src="https://i.ibb.co/G4Y8sHMk/Chat-GPT-Image-21-de-abr-de-2025-16-14-34-1.png" alt="RW" className="w-11 h-11 object-contain" />
                 </div>
 
-                <h2 className="text-3xl font-black italic tracking-tighter text-white mb-2">👑RW <span className="text-emerald-500">TIPS🎮</span></h2>
-                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-6 text-center">Acesso exclusivo para membros pro</p>
+                <h1 className="text-2xl font-bold tracking-tight mb-1" style={{ color: 'var(--text-primary)' }}>
+                    RW <span style={{ color: 'var(--accent)' }}>TIPS</span>
+                </h1>
+                <p className="text-xs mb-8" style={{ color: 'var(--text-muted)', letterSpacing: '0.15em' }}>
+                    PLATAFORMA DE ANÁLISE PRO
+                </p>
 
-                {/* Toggle Membro / Admin */}
-                <div className="flex w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl p-1 mb-6">
-                    <button
-                        type="button"
-                        onClick={() => { setAdminMode(false); setError(''); }}
-                        className={`flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${!adminMode ? 'bg-emerald-500 text-black shadow-lg' : 'text-white/30 hover:text-white/60'}`}
-                    >
-                        <i className="fa-solid fa-user"></i> Membro
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => { setAdminMode(true); setError(''); }}
-                        className={`flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${adminMode ? 'bg-amber-500 text-black shadow-lg' : 'text-white/30 hover:text-white/60'}`}
-                    >
-                        <i className="fa-solid fa-shield-halved"></i> Admin
-                    </button>
+                {/* Card */}
+                <div className="w-full rounded-2xl p-8"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+
+                    {/* Toggle Membro / Admin */}
+                    <div className="flex w-full p-1 rounded-xl mb-6"
+                        style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)' }}>
+                        <button type="button" onClick={() => { setAdminMode(false); setError(''); }}
+                            className="flex-1 py-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-2"
+                            style={!adminMode
+                                ? { background: 'var(--accent)', color: '#07070A' }
+                                : { color: 'var(--text-muted)' }}>
+                            <i className="fa-solid fa-user text-[9px]"></i> Membro
+                        </button>
+                        <button type="button" onClick={() => { setAdminMode(true); setError(''); }}
+                            className="flex-1 py-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-2"
+                            style={adminMode
+                                ? { background: 'var(--accent)', color: '#07070A' }
+                                : { color: 'var(--text-muted)' }}>
+                            <i className="fa-solid fa-shield-halved text-[9px]"></i> Admin
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-medium pl-0.5" style={{ color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>E-mail</label>
+                            <input type="email" required placeholder="seu@email.com"
+                                className="w-full rounded-xl py-3.5 px-4 text-sm outline-none transition-all"
+                                style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                                onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                                onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                                value={email} onChange={(e) => setEmail(e.target.value)} />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-medium pl-0.5" style={{ color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>Senha</label>
+                            <div className="relative">
+                                <input type={showPassword ? "text" : "password"} required placeholder="••••••••"
+                                    className="w-full rounded-xl py-3.5 pl-4 pr-11 text-sm outline-none transition-all"
+                                    style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                                    value={password} onChange={(e) => setPassword(e.target.value)} />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 transition-colors"
+                                    style={{ color: 'var(--text-muted)' }}>
+                                    <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-xs`}></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="rounded-xl p-3 text-center" style={{ background: 'var(--negative-dim)', border: '1px solid rgba(248,113,113,0.2)' }}>
+                                <p className="text-xs font-medium" style={{ color: 'var(--negative)' }}>{error}</p>
+                            </div>
+                        )}
+
+                        <button disabled={loading}
+                            className="w-full py-4 rounded-xl text-sm font-semibold uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50 mt-2"
+                            style={{ background: 'var(--accent)', color: '#07070A', letterSpacing: '0.12em' }}>
+                            {loading ? 'Autenticando...' : adminMode ? 'Entrar como Admin' : 'Entrar'}
+                        </button>
+                    </form>
                 </div>
 
-                <form onSubmit={handleSubmit} className="w-full space-y-5">
-                    <div className="space-y-2">
-                        <label className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">E-mail de Usuário</label>
-                        <input
-                            type="email"
-                            required
-                            placeholder="seu@email.com"
-                            className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm outline-none focus:border-emerald-500/50 transition-all placeholder:text-white/10"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[9px] font-black text-white/30 uppercase tracking-widest ml-1">Senha de Acesso</label>
-                        <div className="relative">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                required
-                                placeholder="••••••••"
-                                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 pl-6 pr-12 text-sm outline-none focus:border-emerald-500/50 transition-all placeholder:text-white/10"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors p-2"
-                            >
-                                <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    {error && (
-                        <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-center">
-                            <p className="text-[10px] font-black text-rose-500 uppercase tracking-tight">{error}</p>
-                        </div>
-                    )}
-
-                    <button
-                        disabled={loading}
-                        className={`w-full disabled:opacity-50 text-black font-black uppercase tracking-[0.2em] py-5 rounded-2xl shadow-lg transition-all active:scale-95 text-xs ${adminMode ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20' : 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20'}`}
-                    >
-                        {loading ? 'AUTENTICANDO...' : adminMode ? '🛡️ ENTRAR COMO ADMIN' : 'ENTRAR'}
-                    </button>
-                </form>
-
-                <div className="mt-8 pt-8 border-t border-white/5 w-full flex flex-col gap-4">
-                    <p className="text-center text-[10px] font-bold text-white/10 uppercase tracking-widest">Suporte Direto</p>
-                    <div className="flex justify-center">
-                        <a href="https://t.me/assuncaoIII" target="_blank" className="w-full bg-white/[0.02] border border-white/5 py-3 rounded-xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest hover:bg-blue-500/5 hover:border-blue-500/20 transition-all">
-                            <i className="fa-brands fa-telegram text-blue-500"></i> Telegram
-                        </a>
-                    </div>
+                {/* Footer */}
+                <div className="mt-6 flex items-center gap-3 w-full justify-center">
+                    <a href="https://t.me/assuncaoIII" target="_blank"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-medium transition-all"
+                        style={{ color: 'var(--text-muted)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
+                        <i className="fa-brands fa-telegram" style={{ color: '#2AABEE' }}></i>
+                        Suporte via Telegram
+                    </a>
                 </div>
             </div>
         </div>

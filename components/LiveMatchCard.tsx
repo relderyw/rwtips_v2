@@ -9,10 +9,10 @@ const createSlug = (text: string) => {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Remove accents
-    .replace(/[^a-z0-9\s-]/g, "") // Remove special chars except spaces and hyphens
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
     .trim()
-    .replace(/\s+/g, "-"); // Replace spaces with hyphens
+    .replace(/\s+/g, "-");
 };
 
 interface LiveMatchCardProps {
@@ -26,20 +26,22 @@ interface LiveMatchCardProps {
   onTogglePin?: () => void;
 }
 
-const STRATEGY_THEMES: Record<string, { label: string, color: string, icon: string, secondary: string }> = {
-  ht_pro: { label: "HT PRO SNIPER", color: "#6366f1", secondary: "rgba(99, 102, 241, 0.15)", icon: "fa-crosshairs" },
-  ft_pro: { label: "FT PRO ENGINE", color: "#f97316", secondary: "rgba(249, 115, 22, 0.15)", icon: "fa-fire-flame-simple" },
-  btts_pro_ht: { label: "BTTS HT PRO", color: "#ec4899", secondary: "rgba(236, 72, 153, 0.15)", icon: "fa-arrows-rotate" },
-  btts_pro_ft: { label: "BTTS FT PRO", color: "#ec4899", secondary: "rgba(236, 72, 153, 0.15)", icon: "fa-arrows-rotate" },
-  casa_pro: { label: "CASA DOMINANTE", color: "#10b981", secondary: "rgba(16, 185, 129, 0.15)", icon: "fa-house-circle-check" },
-  fora_pro: { label: "FORA DOMINANTE", color: "#10b981", secondary: "rgba(16, 185, 129, 0.15)", icon: "fa-plane-arrival" },
-  casa_engine_pro: { label: "CASA ENGINE", color: "#06b6d4", secondary: "rgba(6, 182, 212, 0.15)", icon: "fa-gears" },
-  fora_engine_pro: { label: "FORA ENGINE", color: "#06b6d4", secondary: "rgba(6, 182, 212, 0.15)", icon: "fa-microchip" },
-  top_clash: { label: "ELITE CLASH", color: "#eab308", secondary: "rgba(234, 179, 8, 0.15)", icon: "fa-crown" },
-  none: { label: "", color: "transparent", secondary: "transparent", icon: "" }
+// All strategies map to accent — differentiation is by LABEL + ICON, not color
+const STRATEGY_THEMES: Record<string, { label: string; icon: string }> = {
+  ht_pro:         { label: "HT PRO SNIPER",   icon: "fa-crosshairs" },
+  ft_pro:         { label: "FT PRO ENGINE",   icon: "fa-fire-flame-simple" },
+  btts_pro_ht:    { label: "BTTS HT PRO",     icon: "fa-arrows-rotate" },
+  btts_pro_ft:    { label: "BTTS FT PRO",     icon: "fa-arrows-rotate" },
+  casa_pro:       { label: "CASA DOMINANTE",  icon: "fa-house-circle-check" },
+  fora_pro:       { label: "FORA DOMINANTE",  icon: "fa-plane-arrival" },
+  casa_engine_pro:{ label: "CASA ENGINE",     icon: "fa-gears" },
+  fora_engine_pro:{ label: "FORA ENGINE",     icon: "fa-microchip" },
+  top_clash:      { label: "ELITE CLASH",     icon: "fa-crown" },
+  none:           { label: "",                icon: "" },
 };
 
-const FormDots = ({ results, stats }: { results: string[], stats: any }) => {
+// Form dots — purely semantic (W/D/L)
+const FormDots = ({ results, stats }: { results: string[]; stats: any }) => {
   return (
     <div className="flex gap-1.5 justify-center mt-2" style={{ isolation: 'isolate' }}>
       {results.map((r, i) => {
@@ -48,11 +50,8 @@ const FormDots = ({ results, stats }: { results: string[], stats: any }) => {
 
         const isWin = r === 'W';
         const isDraw = r === 'D';
+        const dotColor = isWin ? '#34D399' : isDraw ? '#FBBF24' : '#F87171';
         const statusText = isWin ? "VITÓRIA" : isDraw ? "EMPATE" : "DERROTA";
-
-        // Cores baseadas no resultado
-        const resultColor = isWin ? '#10b981' : isDraw ? '#facc15' : '#ef4444';
-        const shadowColor = isWin ? 'rgba(16,185,129,0.5)' : isDraw ? 'rgba(250,204,21,0.5)' : 'rgba(239,68,68,0.5)';
 
         const dateObj = new Date(game.data_realizacao);
         const formattedDate = dateObj.toLocaleDateString('pt-BR');
@@ -60,50 +59,32 @@ const FormDots = ({ results, stats }: { results: string[], stats: any }) => {
 
         return (
           <div key={i} className="group/dot relative flex flex-col items-center">
-            {/* Bolinha */}
             <div
-              className="w-2.5 h-2.5 rounded-full cursor-help transition-all duration-300 hover:scale-125 shadow-lg shadow-black/60"
-              style={{ backgroundColor: resultColor }}
+              className="w-2.5 h-2.5 rounded-full cursor-help transition-transform duration-200 hover:scale-125"
+              style={{ backgroundColor: dotColor }}
             ></div>
 
-            {/* Pop-up (Tooltip) - Estilo Imagem Solicitada */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover/dot:opacity-100 transition-all duration-300 pointer-events-none z-[9999] flex flex-col items-center transform scale-90 group-hover/dot:scale-100 origin-bottom">
-              <div className="bg-[#000000] border border-white/10 p-3 rounded-xl shadow-[0_30px_70px_rgba(0,0,0,1)] min-w-[160px] text-center flex flex-col items-center">
-
-                {/* Texto Superior (Status) */}
-                <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mb-1.5">{statusText}</span>
-
-                {/* Nomes dos Jogadores do histórico */}
-                <h5 className="text-[11px] font-black text-white/90 mb-2 tracking-tight whitespace-nowrap">
-                  {game.home_player} <span className="text-white/30 mx-0.5">x</span> {game.away_player}
+            {/* Tooltip */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 opacity-0 group-hover/dot:opacity-100 transition-all duration-200 pointer-events-none z-[9999] flex flex-col items-center scale-95 group-hover/dot:scale-100 origin-bottom">
+              <div className="rounded-xl p-3 min-w-[152px] text-center flex flex-col items-center gap-1.5"
+                style={{ background: '#0D0D12', border: '1px solid #1E1E28', boxShadow: '0 20px 60px rgba(0,0,0,0.9)' }}>
+                <span className="text-[8px] font-medium uppercase tracking-wider" style={{ color: dotColor }}>{statusText}</span>
+                <h5 className="text-[10px] font-semibold whitespace-nowrap" style={{ color: '#F0F0F4' }}>
+                  {game.home_player} <span style={{ color: '#44445A' }}>×</span> {game.away_player}
                 </h5>
-
-                {/* Pill do Placar (Cor sincronizada com a bolinha) */}
-                <div
-                  className="px-5 py-1.5 rounded-full mb-2 border border-white/20 shadow-xl"
-                  style={{
-                    backgroundColor: resultColor,
-                    boxShadow: `0 4px 15px ${shadowColor}`
-                  }}
-                >
-                  <span className="text-sm font-black text-white tabular-nums tracking-tight">
-                    {game.score_home} - {game.score_away}
+                <div className="px-4 py-1 rounded-full" style={{ background: dotColor + '20', border: `1px solid ${dotColor}40` }}>
+                  <span className="text-sm font-bold tabular-nums" style={{ color: dotColor }}>
+                    {game.score_home} – {game.score_away}
                   </span>
                 </div>
-
-                {/* Data e Hora */}
-                <span className="text-[9px] font-bold text-white/50 mb-1.5 tracking-tight font-mono-numbers">
+                <span className="text-[8px] font-mono-numbers" style={{ color: '#44445A' }}>
                   {formattedDate} {formattedTime}
                 </span>
-
-                {/* Placar HT */}
-                <div className="bg-white/5 w-full py-1 rounded-lg border border-white/[0.04]">
-                  <span className="text-[10px] font-black text-white/70 uppercase tracking-wider">HT {game.halftime_score_home}-{game.halftime_score_away}</span>
+                <div className="w-full rounded-lg py-1" style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
+                  <span className="text-[9px] font-medium" style={{ color: '#8888A0' }}>HT {game.halftime_score_home}–{game.halftime_score_away}</span>
                 </div>
               </div>
-
-              {/* Seta do Pop-up (Preta) */}
-              <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[#000000] -mt-[1px]"></div>
+              <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] -mt-px" style={{ borderTopColor: '#1E1E28' }}></div>
             </div>
           </div>
         );
@@ -135,45 +116,31 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
   useEffect(() => {
     if (prevScoreRef.current.home !== match.score.home || prevScoreRef.current.away !== match.score.away) {
       setScoreState({ ...match.score, animating: true });
-      const timer = setTimeout(() => {
-        setScoreState(prev => ({ ...prev, animating: false }));
-      }, 600);
+      const timer = setTimeout(() => setScoreState(prev => ({ ...prev, animating: false })), 600);
       prevScoreRef.current = match.score;
       return () => clearTimeout(timer);
     }
   }, [match.score.home, match.score.away]);
 
   const isHT = activeTab === 'HT';
-  // A card is only "signaled" (highlighted) if it has a strategy AND confidence is 75% or higher
   const isSignaled = potential !== 'none' && (confidence ?? 0) >= 75;
-  // If we have a potential but low confidence, we still want to know the strategy but without the glow
   const theme = STRATEGY_THEMES[potential] || STRATEGY_THEMES.none;
 
-  const getDynamicColor = (value: number, opacity: number = 1) => {
-    const hue = Math.min(Math.max(value * 1.2, 0), 120);
-    return `hsla(${hue}, 80%, 45%, ${opacity})`;
-  };
-
-  const MetricRow = ({ label, value }: { label: string, value: number }) => {
-    const mainColor = getDynamicColor(value, 1);
-    const glowColor = getDynamicColor(value, 0.4);
+  // Metric bar — color based on value only (semantic)
+  const MetricRow = ({ label, value }: { label: string; value: number }) => {
+    const fillColor = value >= 70 ? '#34D399' : value >= 50 ? 'rgba(200,169,110,0.75)' : 'rgba(248,113,113,0.6)';
+    const textColor = value >= 70 ? '#34D399' : value >= 50 ? '#C8A96E' : '#F87171';
 
     return (
       <div className="flex items-center gap-2.5 mb-2 last:mb-0">
         <div className="w-[48px] shrink-0">
-          <span className="text-[10px] font-medium text-[#52525b] whitespace-nowrap">{label}</span>
+          <span className="text-[10px] font-medium" style={{ color: '#8888A0' }}>{label}</span>
         </div>
-        <div className="flex-1 h-[6px] bg-[#1c1c21] rounded-full overflow-hidden">
-          <div
-            className="h-full transition-all duration-1000 ease-out"
-            style={{
-              width: `${value}%`,
-              backgroundColor: mainColor,
-            }}
-          ></div>
+        <div className="flex-1 h-[5px] rounded-full overflow-hidden" style={{ background: '#161620' }}>
+          <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${value}%`, background: fillColor }}></div>
         </div>
         <div className="w-[32px] text-right shrink-0">
-          <span className="text-[11px] font-semibold font-mono-numbers tabular-nums" style={{ color: mainColor }}>
+          <span className="text-[11px] font-semibold font-mono-numbers tabular-nums" style={{ color: textColor }}>
             {value.toFixed(0)}%
           </span>
         </div>
@@ -196,7 +163,6 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
   let bookmakerUrl = '';
   let bookmakerName = '';
   let bookmakerLogo = '';
-  let bookmakerBgClass = '';
 
   if (isAltenarLeague) {
     bookmakerUrl = match.bet365EventId
@@ -204,181 +170,164 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
       : "https://www.estrelabet.bet.br/apostas-ao-vivo";
     bookmakerName = 'ESTRELA BET';
     bookmakerLogo = 'https://assets.staradm.com/estrelabet_favicon.ico';
-    bookmakerBgClass = 'bg-yellow-500 hover:brightness-110';
   } else {
-    // Generate Superbet URL: atletico-madrid-stenido-x-real-madrid-solya-12272134
     const homeStr = match.homeTeamName ? `${match.homeTeamName} ${match.homePlayer}` : match.homePlayer;
     const awayStr = match.awayTeamName ? `${match.awayTeamName} ${match.awayPlayer}` : match.awayPlayer;
     const matchSlug = createSlug(`${homeStr} x ${awayStr}`);
     let eventId = match.id.replace(/\D/g, '');
-    if (!eventId) eventId = 'v2'; // fallback
+    if (!eventId) eventId = 'v2';
     bookmakerUrl = `https://superbet.bet.br/odds/e-sport-futebol/${matchSlug}-${eventId}/?t=offer-live-82545&mdt=o`;
     bookmakerName = 'SUPERBET';
     bookmakerLogo = 'https://superbet.bet.br/static/img/icons/favicon.ico';
-    bookmakerBgClass = 'bg-[#ea2a2b] hover:brightness-110 text-white';
   }
-
-
-
-
 
   return (
     <div
-      className={`relative bg-white/[0.02] rounded-xl border flex flex-col transition-all duration-300 h-full min-h-[480px] ${isSignaled ? 'scale-[1.01]' : 'hover:bg-white/[0.02]'}`}
+      className={`relative flex flex-col transition-all duration-300 h-full min-h-[480px] rounded-xl overflow-visible ${isSignaled ? 'animate-accent-glow' : ''}`}
       style={{
-        borderColor: isSignaled ? `${theme.color}50` : '#25252a',
-        boxShadow: isSignaled ? `0 8px_30px rgba(0,0,0,0.6), 0 0 12px ${theme.color}15` : '',
-        borderLeft: isSignaled ? `3px solid ${theme.color}` : `3px solid ${leagueInfo.color}50`,
-        overflow: 'visible'
+        background: '#0D0D12',
+        border: `1px solid ${isSignaled ? 'rgba(200,169,110,0.3)' : '#1E1E28'}`,
+        borderLeft: `3px solid ${isSignaled ? '#C8A96E' : leagueInfo.color + '60'}`,
+        boxShadow: isSignaled ? '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(200,169,110,0.1)' : '0 4px 20px rgba(0,0,0,0.4)',
       }}
     >
-      {/* SIGNAL PANEL - PREMIUM HUD STYLE */}
+      {/* SIGNAL PANEL */}
       {potential !== 'none' && (
-        <div className={`mx-3 mt-3 p-3 rounded-2xl border relative overflow-hidden group ${isSignaled ? 'bg-white/[0.05] border-white/10 backdrop-blur-2xl shadow-xl' : 'bg-black/40 border-white/[0.02]'}`}>
-          {/* Animated Gradient Beam */}
-          {isSignaled && (
-            <div className="absolute inset-0 opacity-20 transition-opacity group-hover:opacity-30 pointer-events-none" 
-              style={{ background: `linear-gradient(135deg, ${theme.color} 0%, transparent 50%, ${theme.color} 100%)` }}>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between relative z-10">
-            <div className={`flex items-center gap-3 ${!isSignaled && 'opacity-40 grayscale'}`}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-2xl border transition-transform group-hover:scale-105" 
-                style={{ backgroundColor: `${theme.color}20`, borderColor: `${theme.color}40`, boxShadow: isSignaled ? `0 0 15px ${theme.color}30` : '' }}>
-                <i className={`fa-solid ${theme.icon} text-sm ${isSignaled ? 'animate-pulse' : ''}`} style={{ color: theme.color }}></i>
+        <div className="mx-3 mt-3 p-3 rounded-xl"
+          style={{
+            background: isSignaled ? 'rgba(200,169,110,0.06)' : '#13131A',
+            border: `1px solid ${isSignaled ? 'rgba(200,169,110,0.2)' : '#1E1E28'}`,
+          }}>
+          <div className="flex items-center justify-between">
+            <div className={`flex items-center gap-2.5 ${!isSignaled ? 'opacity-40' : ''}`}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: isSignaled ? 'rgba(200,169,110,0.12)' : '#1E1E28', border: `1px solid ${isSignaled ? 'rgba(200,169,110,0.25)' : '#1E1E28'}` }}>
+                <i className={`fa-solid ${theme.icon} text-xs`} style={{ color: isSignaled ? '#C8A96E' : '#44445A' }}></i>
               </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[11px] font-black uppercase tracking-widest leading-none" style={{ color: theme.color }}>
-                    {theme.label}
-                  </span>
-                  {!isSignaled && <span className="text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-white/40 font-bold tracking-tighter">OBSERVANDO</span>}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {reasons && reasons.map((r, i) => (
-                    <span key={i} className="text-[8px] font-bold text-white/20 uppercase tracking-widest flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-white/10"></span>
-                      {r}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className={`flex flex-col items-end ${!isSignaled && 'opacity-30'}`}>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Confidence</span>
-                <span className="text-sm font-black tabular-nums tracking-tighter" style={{ color: confidence && confidence >= 85 ? '#10b981' : confidence && confidence >= 75 ? '#facc15' : '#ef4444' }}>
-                  {confidence}%
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider block" style={{ color: isSignaled ? '#C8A96E' : '#44445A' }}>
+                  {theme.label}
+                  {!isSignaled && <span className="ml-2 text-[8px] font-normal" style={{ color: '#44445A' }}>OBSERVANDO</span>}
                 </span>
+                {reasons && reasons.length > 0 && (
+                  <span className="text-[8px]" style={{ color: '#44445A' }}>{reasons[0]}</span>
+                )}
               </div>
-              <div className="w-20 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/[0.05] p-[1px]">
-                <div
-                  className="h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(255,255,255,0.2)]"
-                  style={{
-                    width: `${confidence}%`,
-                    backgroundColor: confidence && confidence >= 85 ? '#10b981' : confidence && confidence >= 75 ? '#facc15' : '#ef4444'
-                  }}
-                ></div>
+            </div>
+
+            <div className={`flex flex-col items-end gap-1 ${!isSignaled ? 'opacity-30' : ''}`}>
+              <span className="text-sm font-bold tabular-nums font-mono-numbers"
+                style={{ color: confidence && confidence >= 85 ? '#34D399' : confidence && confidence >= 75 ? '#C8A96E' : '#F87171' }}>
+                {confidence}%
+              </span>
+              <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: '#1E1E28' }}>
+                <div className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${confidence}%`, background: confidence && confidence >= 85 ? '#34D399' : confidence && confidence >= 75 ? '#C8A96E' : '#F87171' }}></div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Header do Card */}
-      <div className="p-3.5 pb-2.5 flex items-center justify-between border-b border-white/[0.04] bg-white/[0.005] rounded-t-2xl relative z-10">
-        <div className="flex items-center gap-3.5 min-w-0 flex-1">
-          <div className="w-10 h-10 rounded-xl bg-black/40 p-2.5 border border-white/5 shrink-0 flex items-center justify-center shadow-2xl">
-            <img src={leagueInfo.image} className="w-full h-full object-contain brightness-110" alt="" />
+      {/* Card Header — League + Players */}
+      <div className="p-3.5 pb-2 flex items-center justify-between" style={{ borderBottom: '1px solid #161620' }}>
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          {/* League dot + image */}
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 p-2" style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
+            <img src={leagueInfo.image} className="w-full h-full object-contain" alt="" />
           </div>
           <div className="flex flex-col min-w-0">
-            <h4 className="text-[14px] font-black uppercase tracking-tight truncate leading-tight mb-0.5" style={{ color: leagueInfo.color }}>
-              {match.homePlayer} <span className="text-white/20 italic mx-0.5">vs</span> {match.awayPlayer}
+            {/* Players — white, no league color */}
+            <h4 className="text-[13px] font-semibold truncate leading-tight mb-0.5" style={{ color: '#F0F0F4' }}>
+              {match.homePlayer} <span style={{ color: '#44445A' }}>vs</span> {match.awayPlayer}
             </h4>
-            <span className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: `${leagueInfo.color}80` }}>
-              {leagueInfo.name}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: leagueInfo.color }}></div>
+              <span className="text-[10px] font-medium truncate" style={{ color: '#8888A0' }}>{leagueInfo.name}</span>
+            </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1.5 ml-1 shrink-0">
-          <div className="flex items-center gap-2">
 
-
-            {onTogglePin && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); onTogglePin(); }} 
-                className="w-8 h-8 rounded-xl bg-black/40 border border-white/5 flex items-center justify-center hover:bg-white/10 transition-all group/pin shadow-inner cursor-pointer" 
-                title={isPinned ? "Desfixar Confronto" : "Fixar Confronto"}
-              >
-                <i className={`fa-solid fa-star ${isPinned ? 'text-amber-400' : 'text-white/20 group-hover/pin:text-amber-400/50'}`}></i>
-              </button>
-            )}
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 shadow-inner">
-              <span className="text-[12px] font-mono-numbers font-black text-emerald-400 tracking-tighter">{match.timer.formatted}</span>
-            </div>
+        <div className="flex items-center gap-2 ml-2 shrink-0">
+          {onTogglePin && (
+            <button onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+              style={{ background: '#13131A', border: '1px solid #1E1E28' }}
+              title={isPinned ? "Desfixar" : "Fixar"}>
+              <i className={`fa-solid fa-star text-xs ${isPinned ? '' : 'opacity-30 hover:opacity-60'}`}
+                style={{ color: isPinned ? '#C8A96E' : '#F0F0F4' }}></i>
+            </button>
+          )}
+          {/* Timer */}
+          <div className="px-2.5 py-1.5 rounded-lg" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)' }}>
+            <span className="text-[11px] font-mono-numbers font-bold" style={{ color: '#34D399' }}>{match.timer.formatted}</span>
           </div>
         </div>
       </div>
 
-      <div className="p-3 pb-2.5 flex flex-col gap-2.5 flex-1 relative z-10">
-        <div className="flex items-center justify-between bg-black/40 p-3 rounded-2xl border border-white/[0.03] shadow-inner">
+      <div className="p-3 flex flex-col gap-2.5 flex-1">
+        {/* Score Section — DOMINANT element */}
+        <div className="flex items-center justify-between rounded-xl p-3" style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
+          {/* Home Player */}
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[10px] font-medium text-[#52525b] uppercase truncate mb-1">{match.homeTeamName || '–'}</p>
-            <h3 className="text-[14px] font-bold text-white truncate mb-1.5">{match.homePlayer}</h3>
+            <p className="text-[9px] font-medium uppercase truncate mb-1" style={{ color: '#44445A' }}>{match.homeTeamName || '–'}</p>
+            <h3 className="text-[13px] font-semibold truncate mb-1.5" style={{ color: '#F0F0F4' }}>{match.homePlayer}</h3>
             {p1.lastMatches && p1.lastMatches.length >= 3 ? (
               <FormDots results={p1.last5} stats={p1} />
             ) : (
-              <div className="mt-2 px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                <span className="text-[8px] font-bold text-amber-500 uppercase tracking-wider">Dados Insuficientes</span>
+              <div className="mt-2 px-2 py-1 rounded-lg inline-block" style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }}>
+                <span className="text-[7px] font-medium" style={{ color: '#FBBF24' }}>Poucos dados</span>
               </div>
             )}
           </div>
 
+          {/* Score */}
           <div className="flex flex-col items-center mx-2 shrink-0">
-            <div className={`bg-black/60 px-4 py-2 rounded-2xl border border-white/10 shadow-2xl min-w-[85px] text-center transform scale-110 transition-all duration-500 ${scoreState.animating ? 'animate-score-pop border-emerald-500/50 shadow-emerald-500/20' : ''}`}>
-              <div className="flex items-center justify-center font-black text-3xl tabular-nums tracking-tighter">
-                <span className={`transition-all duration-300 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] ${scoreState.animating && prevScoreRef.current.home !== match.score.home ? 'text-white scale-125' : ''}`} style={{ color: leagueInfo.color }}>
-                  {match.score.home}
-                </span>
-                <span className="text-white/10 mx-1.5 scale-90">–</span>
-                <span className={`transition-all duration-300 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] ${scoreState.animating && prevScoreRef.current.away !== match.score.away ? 'text-white scale-125' : ''}`} style={{ color: leagueInfo.color }}>
-                  {match.score.away}
-                </span>
+            <div className={`px-5 py-2.5 rounded-xl text-center min-w-[80px] transition-all duration-300 ${scoreState.animating ? 'animate-score-pop' : ''}`}
+              style={{
+                background: '#07070A',
+                border: `1px solid ${scoreState.animating ? 'rgba(52,211,153,0.4)' : '#1E1E28'}`,
+                boxShadow: scoreState.animating ? '0 0 20px rgba(52,211,153,0.2)' : 'none'
+              }}>
+              <div className="flex items-center justify-center gap-1.5 font-bold text-3xl tabular-nums tracking-tighter font-mono-numbers" style={{ color: '#F0F0F4' }}>
+                <span>{match.score.home}</span>
+                <span style={{ color: '#1E1E28' }}>–</span>
+                <span>{match.score.away}</span>
               </div>
-              <div className="text-[8px] text-white/20 font-black uppercase tracking-[0.3em] mt-1">Live Score</div>
+              <div className="text-[7px] font-medium uppercase tracking-widest mt-1" style={{ color: '#44445A' }}>AO VIVO</div>
             </div>
           </div>
 
+          {/* Away Player */}
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[10px] font-medium text-[#52525b] uppercase truncate mb-1">{match.awayTeamName || '–'}</p>
-            <h3 className="text-[14px] font-bold text-white truncate mb-1.5">{match.awayPlayer}</h3>
+            <p className="text-[9px] font-medium uppercase truncate mb-1" style={{ color: '#44445A' }}>{match.awayTeamName || '–'}</p>
+            <h3 className="text-[13px] font-semibold truncate mb-1.5" style={{ color: '#F0F0F4' }}>{match.awayPlayer}</h3>
             {p2.lastMatches && p2.lastMatches.length >= 3 ? (
               <FormDots results={p2.last5} stats={p2} />
             ) : (
-              <div className="mt-2 px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                <span className="text-[8px] font-bold text-amber-500 uppercase tracking-wider">Dados Insuficientes</span>
+              <div className="mt-2 px-2 py-1 rounded-lg inline-block" style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }}>
+                <span className="text-[7px] font-medium" style={{ color: '#FBBF24' }}>Poucos dados</span>
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-black/20 p-2 rounded-xl border border-white/[0.02] flex-1">
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <i className="fa-solid fa-bolt text-emerald-400 text-[10px]"></i>
-              <span className="text-[10px] font-black text-white/50 uppercase tracking-widest truncate flex items-center gap-1.5">
-                Linhas confronto <span className={syncLimit < 5 ? 'text-amber-500' : ''}>({syncLimit}J)</span>
-                {syncLimit < 5 && <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>}
-              </span>
-            </div>
-            <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 shrink-0 shadow-sm">
-              <button onClick={() => setActiveTab('HT')} className={`px-2.5 py-1 text-[9px] font-black rounded-lg transition-all ${isHT ? 'bg-white/10 text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}>HT</button>
-              <button onClick={() => setActiveTab('FT')} className={`px-2.5 py-1 text-[9px] font-black rounded-lg transition-all ${!isHT ? 'bg-white/10 text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}>FT</button>
+        {/* Metrics — Confronto */}
+        <div className="rounded-xl p-2.5" style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[9px] font-medium uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#44445A' }}>
+              <i className="fa-solid fa-bolt text-[8px]" style={{ color: '#34D399' }}></i>
+              Linhas Confronto
+              {syncLimit < 5 && <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: '#F87171' }}></span>}
+              <span className={syncLimit < 5 ? '' : ''} style={{ color: syncLimit < 5 ? '#FBBF24' : '#44445A' }}>({syncLimit}J)</span>
+            </span>
+            <div className="flex p-0.5 rounded-lg" style={{ background: '#07070A', border: '1px solid #1E1E28' }}>
+              <button onClick={() => setActiveTab('HT')} className="px-2 py-0.5 rounded-md text-[8px] font-semibold transition-all"
+                style={isHT ? { background: '#1E1E28', color: '#F0F0F4' } : { color: '#44445A' }}>HT</button>
+              <button onClick={() => setActiveTab('FT')} className="px-2 py-0.5 rounded-md text-[8px] font-semibold transition-all"
+                style={!isHT ? { background: '#1E1E28', color: '#F0F0F4' } : { color: '#44445A' }}>FT</button>
             </div>
           </div>
-
           <div className="space-y-0.5">
             {isHT ? (
               <>
@@ -398,18 +347,22 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           </div>
         </div>
 
-        <div className="bg-black/20 p-2 rounded-xl border border-white/[0.02]">
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <i className="fa-solid fa-chart-line text-emerald-400 text-[10px]"></i>
-              <span className="text-[10px] font-black text-white/50 uppercase tracking-widest truncate flex items-center gap-1.5">
-                Linhas Players <span className={syncLimit < 5 ? 'text-amber-500' : ''}>({syncLimit}J)</span>
-                {syncLimit < 5 && <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>}
-              </span>
-            </div>
-            <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 shrink-0 max-w-[130px]">
-              <button onClick={() => setActivePlayerTab('H')} className={`px-2 py-1 text-[9px] font-black rounded-lg transition-all truncate flex-1 ${activePlayerTab === 'H' ? 'bg-white/10 text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}>{match.homePlayer}</button>
-              <button onClick={() => setActivePlayerTab('A')} className={`px-2 py-1 text-[9px] font-black rounded-lg transition-all truncate flex-1 ${activePlayerTab === 'A' ? 'bg-white/10 text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}>{match.awayPlayer}</button>
+        {/* Metrics — Player Individual */}
+        <div className="rounded-xl p-2.5" style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[9px] font-medium uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#44445A' }}>
+              <i className="fa-solid fa-chart-line text-[8px]" style={{ color: '#34D399' }}></i>
+              Linhas Players
+            </span>
+            <div className="flex p-0.5 rounded-lg max-w-[140px]" style={{ background: '#07070A', border: '1px solid #1E1E28' }}>
+              <button onClick={() => setActivePlayerTab('H')} className="px-2 py-0.5 rounded-md text-[8px] font-semibold transition-all flex-1 truncate"
+                style={activePlayerTab === 'H' ? { background: '#1E1E28', color: '#F0F0F4' } : { color: '#44445A' }}>
+                {match.homePlayer}
+              </button>
+              <button onClick={() => setActivePlayerTab('A')} className="px-2 py-0.5 rounded-md text-[8px] font-semibold transition-all flex-1 truncate"
+                style={activePlayerTab === 'A' ? { background: '#1E1E28', color: '#F0F0F4' } : { color: '#44445A' }}>
+                {match.awayPlayer}
+              </button>
             </div>
           </div>
           <div className="space-y-0.5">
@@ -419,14 +372,22 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           </div>
         </div>
 
-        <div className="flex gap-3 pt-2 mt-auto">
-          <button onClick={() => onDetailClick(match)} className="flex-[0.8] bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg group">
-            ANÁLISE <i className="fa-solid fa-microchip text-[10px] text-emerald-500/60 group-hover:scale-125 transition-transform"></i>
+        {/* Actions */}
+        <div className="flex gap-2.5 pt-1 mt-auto">
+          <button onClick={() => onDetailClick(match)}
+            className="flex-[0.8] py-2.5 rounded-xl text-[9px] font-semibold uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+            style={{ background: '#13131A', border: '1px solid #1E1E28', color: '#8888A0' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(200,169,110,0.3)'; (e.currentTarget as HTMLElement).style.color = '#C8A96E'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1E1E28'; (e.currentTarget as HTMLElement).style.color = '#8888A0'; }}>
+            Análise <i className="fa-solid fa-microchip text-[9px]"></i>
           </button>
-          <a href={bookmakerUrl} target="_blank" rel="noopener noreferrer" className={`flex-1 ${bookmakerBgClass} border border-white/5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 group shadow-2xl overflow-hidden relative`}>
-            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity blur-lg"></div>
-            <img src={bookmakerLogo} className="w-4 h-4 object-contain group-hover:scale-110 transition-transform relative z-10 drop-shadow-md rounded-[4px]" alt={bookmakerName} />
-            <span className={`text-[10px] font-black uppercase relative z-10 tracking-widest ${isAltenarLeague ? 'text-black' : 'text-white'}`}>{bookmakerName}</span>
+          <a href={bookmakerUrl} target="_blank" rel="noopener noreferrer"
+            className="flex-1 py-2.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 overflow-hidden"
+            style={{ background: '#13131A', border: '1px solid #1E1E28', color: '#8888A0' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#2E2E38'; (e.currentTarget as HTMLElement).style.color = '#F0F0F4'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1E1E28'; (e.currentTarget as HTMLElement).style.color = '#8888A0'; }}>
+            <img src={bookmakerLogo} className="w-3.5 h-3.5 object-contain rounded-sm" alt={bookmakerName} />
+            <span className="text-[9px] font-semibold uppercase tracking-wider">{bookmakerName}</span>
           </a>
         </div>
       </div>

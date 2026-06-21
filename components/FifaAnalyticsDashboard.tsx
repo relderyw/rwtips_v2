@@ -115,39 +115,40 @@ const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; siz
 
 const TrendBadge: React.FC<{ trend: 'heating' | 'cooling' | 'stable' }> = ({ trend }) => {
   const map = {
-    heating: { label: 'Aquecendo 🔥', cls: 'bg-orange-500/15 border-orange-500/30 text-orange-400' },
-    cooling: { label: 'Resfriando ❄️', cls: 'bg-blue-500/15 border-blue-500/30 text-blue-400' },
-    stable: { label: 'Estável ➡️', cls: 'bg-zinc-700/50 border-zinc-600/30 text-zinc-400' },
+    heating: { label: '↑ Alta', style: { background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)', color: '#C8A96E' } },
+    cooling: { label: '↓ Baixa', style: { background: '#13131A', border: '1px solid #1E1E28', color: '#8888A0' } },
+    stable:  { label: '→ Estável', style: { background: '#13131A', border: '1px solid #1E1E28', color: '#44445A' } },
   };
   const m = map[trend];
-  return <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${m.cls}`}>{m.label}</span>;
+  return <span className="px-2 py-0.5 rounded-md text-[8px] font-medium uppercase tracking-wide" style={m.style}>{m.label}</span>;
 };
 
 const SignalBadge: React.FC<{ signal: PredictionSignal['signal'] }> = ({ signal }) => {
-  const map: Record<string, { label: string; cls: string }> = {
-    strong_buy: { label: '⚡ FORTE COMPRA', cls: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300' },
-    buy: { label: '✅ COMPRA', cls: 'bg-lime-500/20 border-lime-500/40 text-lime-300' },
-    neutral: { label: '〰️ NEUTRO', cls: 'bg-zinc-700/40 border-zinc-600/30 text-zinc-400' },
-    avoid: { label: '🚫 EVITAR', cls: 'bg-rose-500/20 border-rose-500/40 text-rose-400' },
+  const map: Record<string, { label: string; style: React.CSSProperties }> = {
+    strong_buy: { label: '↑ Forte Entrada', style: { background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.3)', color: '#34D399' } },
+    buy:        { label: '↑ Entrada',       style: { background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)', color: 'rgba(52,211,153,0.8)' } },
+    neutral:    { label: '→ Neutro',        style: { background: '#13131A', border: '1px solid #1E1E28', color: '#8888A0' } },
+    avoid:      { label: '✕ Evitar',        style: { background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', color: '#F87171' } },
   };
   const m = map[signal];
-  return <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${m.cls}`}>{m.label}</span>;
+  return <span className="px-2 py-0.5 rounded-md text-[9px] font-medium uppercase tracking-wide" style={m.style}>{m.label}</span>;
 };
 
 const ConfidenceBadge: React.FC<{ conf: 'high' | 'medium' | 'low'; score?: number }> = ({ conf, score }) => {
-  const map = {
-    high: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    low: 'bg-zinc-700/40 text-zinc-500 border-zinc-600/20',
+  const map: Record<string, React.CSSProperties> = {
+    high:   { background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', color: '#34D399' },
+    medium: { background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.2)', color: '#C8A96E' },
+    low:    { background: '#13131A', border: '1px solid #1E1E28', color: '#44445A' },
   };
+  const labels = { high: 'Alta', medium: 'Média', low: 'Baixa' };
   return (
     <div className="group relative inline-block">
-      <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase cursor-help ${map[conf]}`}>
-        {conf === 'high' ? '🔒 Alta' : conf === 'medium' ? '⚠️ Média' : '📉 Baixa'}
-        {score !== undefined && ` (${score})`}
+      <span className="px-2 py-0.5 rounded-md text-[9px] font-medium cursor-help" style={map[conf]}>
+        {labels[conf]}{score !== undefined && ` (${score})`}
       </span>
-      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block w-48 p-2 bg-zinc-900 border border-white/10 rounded-lg shadow-2xl z-[100]">
-        <p className="text-[8px] text-zinc-400 leading-tight">
+      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block w-44 p-2.5 rounded-xl shadow-2xl z-[100]"
+        style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
+        <p className="text-[8px] leading-relaxed" style={{ color: '#8888A0' }}>
           {conf === 'high' ? 'Base de dados sólida e padrões consistentes detectados.' :
             conf === 'medium' ? 'Padrões moderados, considere reduzir a stake.' :
               'Dados insuficientes ou alta volatilidade. Evite entradas.'}
@@ -304,55 +305,65 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* ── BACKTEST PRO ENGINE ── */}
-      <div className="bg-[#0a0a0c] border border-white/10 border-l-4 border-l-amber-500 p-6 rounded-2xl shadow-2xl shadow-black/40 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
-        <div className="relative z-10">
-          <h2 className="text-xl font-black text-white flex items-center gap-3 tracking-tight uppercase">
-            <i className="fa-solid fa-trophy text-amber-500"></i>
-            Backtest Pro Engine
-          </h2>
-          <p className="text-zinc-400 text-xs mt-1.5 flex items-center gap-2 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50 animate-pulse"></span>
-            Simulação em Tempo Real & Análise de Momentum de Mercado
-          </p>
+      <div className="relative overflow-hidden rounded-2xl p-6" style={{ background: '#0D0D12', borderLeft: '3px solid #C8A96E', border: '1px solid #1E1E28', borderLeftColor: '#C8A96E' }}>
+        <div className="absolute top-0 right-0 w-48 h-48 opacity-5 blur-[60px] pointer-events-none" style={{ background: '#C8A96E', borderRadius: '50%' }}></div>
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)' }}>
+            <i className="fa-solid fa-chart-mixed text-sm" style={{ color: '#C8A96E' }}></i>
+          </div>
+          <div>
+            <h2 className="text-base font-semibold" style={{ color: '#F0F0F4' }}>Backtest Pro Engine</h2>
+            <p className="text-xs flex items-center gap-2 mt-0.5" style={{ color: '#8888A0' }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#34D399' }}></span>
+              Simulação em Tempo Real & Análise de Momentum de Mercado
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* ─── PRO MODE (EXCEL STYLE) ─── */}
+      {/* ─── PRO MODE ─── */}
       {btMode === 'pro' && (
-        <div className="space-y-6">
-          {/* 1º CONFIGURAÇÃO */}
-          <div className="bg-[#0a0a0c] border border-white/10 rounded-2xl p-6 shadow-2xl shadow-black/20">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-inner">
-                <span className="text-amber-500 font-black text-xs">01</span>
+        <div className="space-y-5">
+          {/* CONFIGURAÇÃO */}
+          <div className="rounded-2xl p-5" style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)' }}>
+                <span className="text-[9px] font-bold" style={{ color: '#C8A96E' }}>01</span>
               </div>
-              <h3 className="text-xs font-black text-white uppercase tracking-widest">Configuração do Sistema</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#8888A0' }}>Configuração</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] text-zinc-500 font-black uppercase tracking-widest pl-1">Unidade (R$)</label>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-medium uppercase tracking-wider pl-0.5" style={{ color: '#8888A0' }}>Unidade (R$)</label>
                 <input type="number" value={unitValue} onChange={e => setUnitValue(Number(e.target.value))}
-                  className="w-full bg-black/40 border border-white/[0.05] rounded-xl px-4 py-3 text-white font-bold focus:border-amber-500/50 outline-none text-sm transition-all focus:ring-1 focus:ring-amber-500/20" />
+                  className="w-full rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all"
+                  style={{ background: '#13131A', border: '1px solid #1E1E28', color: '#F0F0F4' }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(200,169,110,0.4)'}
+                  onBlur={e => e.target.style.borderColor = '#1E1E28'} />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] text-zinc-500 font-black uppercase tracking-widest pl-1">Odd de Entrada</label>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-medium uppercase tracking-wider pl-0.5" style={{ color: '#8888A0' }}>Odd de Entrada</label>
                 <input type="number" step="0.05" value={baseOdd} onChange={e => setBaseOdd(Number(e.target.value))}
-                  className="w-full bg-black/40 border border-white/[0.05] rounded-xl px-4 py-3 text-white font-bold focus:border-amber-500/50 outline-none text-sm transition-all focus:ring-1 focus:ring-amber-500/20" />
+                  className="w-full rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all"
+                  style={{ background: '#13131A', border: '1px solid #1E1E28', color: '#F0F0F4' }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(200,169,110,0.4)'}
+                  onBlur={e => e.target.style.borderColor = '#1E1E28'} />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] text-zinc-500 font-black uppercase tracking-widest pl-1">Amostragem</label>
-                <div className="flex gap-1.5 bg-black/40 p-1 rounded-xl border border-white/[0.05]">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-medium uppercase tracking-wider pl-0.5" style={{ color: '#8888A0' }}>Amostragem</label>
+                <div className="flex gap-1 p-1 rounded-xl" style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
                   {[5, 10, 15, 20].map(n => (
                     <button key={n} onClick={() => setBtSampleSize(n)}
-                      className={`flex-1 py-2 rounded-lg text-[10px] font-black transition-all ${btSampleSize === n ? 'bg-amber-500 text-black shadow-lg' : 'text-zinc-500 hover:text-white'}`}>{n}J</button>
+                      className="flex-1 py-2 rounded-lg text-[9px] font-semibold transition-all"
+                      style={btSampleSize === n ? { background: '#C8A96E', color: '#07070A' } : { color: '#44445A' }}>{n}J</button>
                   ))}
                 </div>
               </div>
               <div className="flex items-end">
                 <button onClick={runProBacktest} disabled={btRunning}
-                  className="w-full py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-black uppercase tracking-widest rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 active:scale-95">
+                  className="w-full py-3 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                  style={{ background: '#C8A96E', color: '#07070A' }}>
                   {btRunning ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-rotate"></i>}
                   {btRunning ? 'Calculando...' : 'Atualizar'}
                 </button>
@@ -362,74 +373,68 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
 
           {/* Highlights da Sessão */}
           {(mostOver || mostUnder || nuclearOver) && (
-            <div className="space-y-4 animate-in fade-in zoom-in-95 duration-700">
-              {/* Alerta Nuclear - Premium Glass Design (CYAN THEME for OVER) */}
+            <div className="space-y-3 animate-in fade-in zoom-in-95 duration-500">
+              {/* Nuclear Over — sem cyan, usa accent */}
               {nuclearOver && (
-                <div className="relative group overflow-hidden bg-gradient-to-br from-cyan-950/80 via-cyan-900/40 to-black/60 border border-cyan-500/20 rounded-3xl p-5 flex items-center justify-between backdrop-blur-xl shadow-[0_0_40px_rgba(6,182,212,0.15)] transition-all hover:border-cyan-500/40">
-                  {/* Decorative Background Elements */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-[60px] rounded-full -mr-16 -mt-16"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-cyan-500/5 blur-[40px] rounded-full -ml-12 -mb-12"></div>
-
-                  <div className="flex items-center gap-6 relative z-10">
-                    <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-cyan-700 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)] animate-pulse">
-                      <i className="fa-solid fa-bolt text-white text-3xl"></i>
+                <div className="relative rounded-2xl p-5 flex items-center justify-between overflow-hidden"
+                  style={{ background: '#0D0D12', border: '1px solid rgba(200,169,110,0.25)', borderLeft: '3px solid #C8A96E' }}>
+                  <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.04] blur-[50px] pointer-events-none" style={{ background: '#C8A96E', borderRadius: '50%' }}></div>
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center animate-accent-glow"
+                      style={{ background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)' }}>
+                      <i className="fa-solid fa-bolt text-lg" style={{ color: '#C8A96E' }}></i>
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="w-2 h-2 rounded-full bg-cyan-500 animate-ping"></span>
-                        <div className="text-[10px] text-cyan-400 font-black uppercase tracking-[0.2em]">Cenário de Extrema Urgência</div>
+                        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#C8A96E' }}></span>
+                        <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#C8A96E' }}>Padrão Nuclear Detectado</span>
                       </div>
-                      <div className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{nuclearOver.league}</div>
-                      <div className="text-[9px] text-zinc-500 font-bold uppercase mt-1 tracking-widest">Padrão Histórico de Gols Detectado</div>
+                      <div className="text-lg font-semibold tracking-tight" style={{ color: '#F0F0F4' }}>{nuclearOver.league}</div>
+                      <div className="text-[9px] mt-0.5" style={{ color: '#8888A0' }}>Histórico de Gols — Over 3.5 FT</div>
                     </div>
                   </div>
-
                   <div className="flex flex-col items-end relative z-10">
-                    <div className="flex items-baseline gap-1">
-                      <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-cyan-400 leading-none">
-                        {nuclearOver.stats['over_3.5_ft']?.toFixed(0)}
-                      </div>
-                      <div className="text-lg font-black text-cyan-500">%</div>
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-4xl font-bold font-mono-numbers" style={{ color: '#C8A96E' }}>{nuclearOver.stats['over_3.5_ft']?.toFixed(0)}</span>
+                      <span className="text-lg font-semibold" style={{ color: 'rgba(200,169,110,0.6)' }}>%</span>
                     </div>
-                    <div className="text-[10px] bg-cyan-500/10 border border-cyan-500/20 px-3 py-0.5 rounded-full text-cyan-400 font-black uppercase tracking-widest mt-2">
-                      Nuclear Over 3.5
-                    </div>
+                    <span className="text-[8px] font-medium uppercase tracking-wider mt-1" style={{ color: '#44445A' }}>Over 3.5 FT</span>
                   </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {mostOver && (
-                  <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-2xl p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-500/40">
-                        <i className="fa-solid fa-bolt text-cyan-400 text-xl"></i>
+                  <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)' }}>
+                        <i className="fa-solid fa-arrow-trend-up" style={{ color: '#34D399' }}></i>
                       </div>
                       <div>
-                        <div className="text-[10px] text-cyan-400/70 font-black uppercase tracking-widest">Liga Mais Over</div>
-                        <div className="text-lg font-black text-white uppercase">{mostOver.league}</div>
+                        <div className="text-[9px] font-medium uppercase tracking-wider mb-0.5" style={{ color: '#8888A0' }}>Liga Mais Over</div>
+                        <div className="text-sm font-semibold" style={{ color: '#F0F0F4' }}>{mostOver.league}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-black text-cyan-400">{(mostOver.stats['over_2.5_ft'] || 0).toFixed(0)}%</div>
-                      <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Taxa Over 2.5 FT</div>
+                      <div className="text-xl font-bold font-mono-numbers" style={{ color: '#34D399' }}>{(mostOver.stats['over_2.5_ft'] || 0).toFixed(0)}%</div>
+                      <div className="text-[8px] font-medium uppercase" style={{ color: '#44445A' }}>Over 2.5 FT</div>
                     </div>
                   </div>
                 )}
                 {mostUnder && (
-                  <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-rose-500/20 rounded-xl flex items-center justify-center border border-rose-500/40">
-                        <i className="fa-solid fa-fire text-rose-400 text-xl"></i>
+                  <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.15)' }}>
+                        <i className="fa-solid fa-arrow-trend-down" style={{ color: '#F87171' }}></i>
                       </div>
                       <div>
-                        <div className="text-[10px] text-rose-400/70 font-black uppercase tracking-widest">Liga Mais Under</div>
-                        <div className="text-lg font-black text-white uppercase">{mostUnder.league}</div>
+                        <div className="text-[9px] font-medium uppercase tracking-wider mb-0.5" style={{ color: '#8888A0' }}>Liga Mais Under</div>
+                        <div className="text-sm font-semibold" style={{ color: '#F0F0F4' }}>{mostUnder.league}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-black text-rose-400">{(100 - (mostUnder.stats['over_1.5_ft'] || 0)).toFixed(0)}%</div>
-                      <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Taxa Under 1.5 FT</div>
+                      <div className="text-xl font-bold font-mono-numbers" style={{ color: '#F87171' }}>{(100 - (mostUnder.stats['over_1.5_ft'] || 0)).toFixed(0)}%</div>
+                      <div className="text-[8px] font-medium uppercase" style={{ color: '#44445A' }}>Under 1.5 FT</div>
                     </div>
                   </div>
                 )}
@@ -437,57 +442,61 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
             </div>
           )}
 
-          {/* 2º TABELA DE LIGAS (HEATMAP) */}
-          <div className="bg-[#0a0a0c] border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-black/20">
-            <div className="p-5 border-b border-white/[0.05] flex items-center justify-between bg-black/20">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-inner">
-                  <span className="text-amber-500 font-black text-xs">02</span>
+          {/* TABELA HEATMAP */}
+          <div className="rounded-2xl overflow-hidden" style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
+            <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid #1E1E28', background: '#13131A' }}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)' }}>
+                  <span className="text-[9px] font-bold" style={{ color: '#C8A96E' }}>02</span>
                 </div>
-                <h3 className="text-xs font-black text-white uppercase tracking-widest">Painel de Calor das Ligas</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#8888A0' }}>Painel de Calor das Ligas</h3>
               </div>
-              <div className="text-[10px] text-zinc-500 font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/[0.05]">
-                Amostra: {btSampleSize} Jogos
-              </div>
+              <span className="text-[9px] font-medium px-2.5 py-1 rounded-full" style={{ background: '#1E1E28', color: '#44445A' }}>
+                Amostra: {btSampleSize}J
+              </span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-black/40">
-                    <th rowSpan={2} className="p-5 text-[10px] text-zinc-500 font-black uppercase tracking-widest border-r border-white/[0.05]">Liga</th>
-                    <th colSpan={4} className="p-3 text-[10px] text-amber-500/80 font-black uppercase tracking-widest text-center border-b border-r border-white/[0.05]">Mercados 1º Tempo (HT)</th>
-                    <th colSpan={4} className="p-3 text-[10px] text-emerald-500/80 font-black uppercase tracking-widest text-center border-b border-white/[0.05]">Mercados Jogo Completo (FT)</th>
+                  <tr style={{ background: '#13131A' }}>
+                    <th rowSpan={2} className="p-4 text-[9px] font-medium uppercase tracking-wider" style={{ color: '#44445A', borderRight: '1px solid #1E1E28' }}>Liga</th>
+                    <th colSpan={4} className="p-2.5 text-[8px] font-medium uppercase tracking-wider text-center" style={{ color: '#C8A96E', borderBottom: '1px solid #1E1E28', borderRight: '1px solid rgba(200,169,110,0.15)' }}>1º Tempo (HT)</th>
+                    <th colSpan={4} className="p-2.5 text-[8px] font-medium uppercase tracking-wider text-center" style={{ color: '#34D399', borderBottom: '1px solid #1E1E28' }}>Jogo Completo (FT)</th>
                   </tr>
-                  <tr className="bg-black/20">
+                  <tr style={{ background: '#0D0D12' }}>
                     {PRO_MARKETS.map((m, i) => (
-                      <th key={m} className={`p-4 text-[9px] text-zinc-400 font-black uppercase tracking-tighter text-center whitespace-nowrap border-r border-white/[0.05] ${i === 3 ? 'border-r-amber-500/20' : ''}`}>
+                      <th key={m} className="p-3 text-[8px] font-medium text-center whitespace-nowrap"
+                        style={{ color: '#44445A', borderRight: `1px solid ${i === 3 ? 'rgba(200,169,110,0.15)' : '#161620'}` }}>
                         {m.replace('over_', '+').replace('_ht', '').replace('_ft', '').replace('btts', 'BTTS').toUpperCase()}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.02]">
+                <tbody>
                   {proLeagueData.map((row, i) => (
-                    <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="p-3 border-r border-white/[0.05]">
-                        <div className="text-sm font-medium text-white group-hover:text-amber-400 transition-colors">{row.league}</div>
-                        <div className="text-[10px] text-[#52525b] font-normal">{row.gamesCount} jogos</div>
+                    <tr key={i} className="transition-colors" style={{ borderTop: '1px solid #161620' }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#13131A'}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
+                      <td className="p-3" style={{ borderRight: '1px solid #1E1E28' }}>
+                        <div className="text-sm font-medium" style={{ color: '#F0F0F4' }}>{row.league}</div>
+                        <div className="text-[9px] mt-0.5" style={{ color: '#44445A' }}>{row.gamesCount} jogos</div>
                       </td>
                       {PRO_MARKETS.map((market, mi) => {
                         const val = row.stats[market] || 0;
-                        let bgColor = '';
-                        let textColor = 'text-[#52525b]';
-                        if (val >= 90) { bgColor = 'bg-[#22c55e]/25'; textColor = 'text-[#22c55e]'; }
-                        else if (val >= 80) { bgColor = 'bg-[#22c55e]/12'; textColor = 'text-[#22c55e]/80'; }
-                        else if (val >= 70) { bgColor = 'bg-amber-500/12'; textColor = 'text-amber-400'; }
-                        else if (val >= 50) { bgColor = 'bg-amber-500/8'; textColor = 'text-amber-500/70'; }
-                        else if (val > 0) { bgColor = 'bg-red-500/8'; textColor = 'text-red-400/70'; }
+                        // New semantic system — only green/red, no rainbow
+                        let cellStyle: React.CSSProperties = {};
+                        let textStyle: React.CSSProperties = { color: '#44445A' };
+                        if (val >= 85)      { cellStyle = { background: 'rgba(52,211,153,0.12)' }; textStyle = { color: '#34D399', fontWeight: 600 }; }
+                        else if (val >= 70) { cellStyle = { background: 'rgba(52,211,153,0.05)' }; textStyle = { color: 'rgba(52,211,153,0.75)' }; }
+                        else if (val >= 50) { textStyle = { color: '#8888A0' }; }
+                        else if (val > 0)   { textStyle = { color: 'rgba(248,113,113,0.7)' }; }
 
                         return (
-                          <td key={mi} className={`p-3 text-center border-r border-white/[0.05] ${bgColor}`}>
+                          <td key={mi} className="p-3 text-center"
+                            style={{ ...cellStyle, borderRight: `1px solid ${mi === 3 ? 'rgba(200,169,110,0.1)' : '#161620'}` }}>
                             <div className="flex flex-col items-center gap-1">
-                              <span className={`text-xs font-semibold font-mono-numbers ${textColor}`}>{val.toFixed(1)}%</span>
+                              <span className="text-[11px] font-mono-numbers" style={textStyle}>{val.toFixed(1)}%</span>
                               <DotStreak results={row.hits[market] || []} rowIndex={i} align={mi >= 6 ? 'right' : (mi <= 2 ? 'left' : 'center')} />
                             </div>
                           </td>
@@ -500,77 +509,71 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
             </div>
           </div>
 
-          {/* 3º CENÁRIOS DE ANÁLISE */}
-          <div className="space-y-5">
+          {/* CENÁRIOS DE ANÁLISE */}
+          <div className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center border border-amber-500/25">
-                <span className="text-amber-500 font-bold text-xs">3</span>
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)' }}>
+                <span className="text-[9px] font-bold" style={{ color: '#C8A96E' }}>03</span>
               </div>
-              <h3 className="text-sm font-semibold text-white">Cenários de Análise</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#8888A0' }}>Cenários de Análise</h3>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
               {/* Cenário 1: Linhas de Jogos */}
-              <div className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-xl p-5 space-y-4">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-sm font-semibold text-white">Cenário 1: Linhas de Jogos</h4>
-                  <i className="fa-solid fa-chart-line text-amber-500/40"></i>
+              <div className="rounded-xl p-5 space-y-4" style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold" style={{ color: '#F0F0F4' }}>Linhas de Jogos</h4>
+                  <i className="fa-solid fa-chart-line" style={{ color: '#44445A' }}></i>
                 </div>
                 {scenarioGameLines && (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     {/* Top Performers */}
-                    <div className="space-y-3">
-                      <div className="text-[10px] text-emerald-500 font-black uppercase tracking-widest pl-1">Melhores Oportunidades (ROI)</div>
+                    <div className="space-y-2">
+                      <div className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#34D399' }}>Melhores Oportunidades</div>
                       {scenarioGameLines.top.map((item: any, idx: number) => (
-                        <div key={idx} className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 flex justify-between items-center">
-                          <div className="flex flex-col">
-                            <div className="text-[8px] text-zinc-500 font-black uppercase mb-1">{item.league}</div>
-                            <div className="text-xs font-black text-white uppercase flex items-center gap-2">
+                        <div key={idx} className="rounded-xl p-3.5 flex justify-between items-center"
+                          style={{ background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.12)' }}>
+                          <div className="flex flex-col gap-1">
+                            <div className="text-[8px] font-medium uppercase" style={{ color: '#44445A' }}>{item.league}</div>
+                            <div className="text-[11px] font-semibold flex items-center gap-2" style={{ color: '#F0F0F4' }}>
                               {item.market.replace('over_', '+').toUpperCase()}
                               <TrendBadge trend={item.momentum} />
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className={`text-lg font-black ${item.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <div className="text-base font-bold font-mono-numbers" style={{ color: item.returnCash > 0 ? '#34D399' : '#F87171' }}>
                               R$ {item.returnCash.toFixed(2)}
                             </div>
-                            <div className="flex gap-1.5 justify-end mt-1 text-[9px] font-bold uppercase">
-                              <span className={item.returnUnits > 0 ? 'text-emerald-500/70' : 'text-rose-500/70'}>
+                            <div className="flex gap-1.5 justify-end mt-0.5 text-[8px] font-medium">
+                              <span style={{ color: item.returnUnits > 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)' }}>
                                 {item.returnUnits > 0 ? '+' : ''}{item.returnUnits.toFixed(1)}U
                               </span>
-                              <span className="text-zinc-600">•</span>
-                              <span className="text-zinc-500">{item.roi.toFixed(1)}% ROI</span>
+                              <span style={{ color: '#44445A' }}>·</span>
+                              <span style={{ color: '#8888A0' }}>{item.roi.toFixed(1)}% ROI</span>
                             </div>
-                            <div className="mt-2 flex justify-end">
-                              <DotStreak results={item.hits} />
-                            </div>
+                            <div className="mt-1.5 flex justify-end"><DotStreak results={item.hits} /></div>
                           </div>
                         </div>
                       ))}
                     </div>
                     {/* Bottom Performers */}
-                    <div className="space-y-3">
-                      <div className="text-[10px] text-rose-500 font-black uppercase tracking-widest pl-1">Maiores Perdas</div>
+                    <div className="space-y-2">
+                      <div className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#F87171' }}>Maiores Perdas</div>
                       {scenarioGameLines.bottom.map((item: any, idx: number) => (
-                        <div key={idx} className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-4 flex justify-between items-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all">
+                        <div key={idx} className="rounded-xl p-3.5 flex justify-between items-center opacity-50 hover:opacity-100 transition-all"
+                          style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
                           <div>
-                            <div className="text-[8px] text-zinc-500 font-black uppercase mb-1">{item.league}</div>
-                            <div className="text-xs font-black text-white uppercase">{item.market.replace('over_', '+').toUpperCase()}</div>
+                            <div className="text-[8px] font-medium uppercase mb-0.5" style={{ color: '#44445A' }}>{item.league}</div>
+                            <div className="text-[11px] font-semibold" style={{ color: '#8888A0' }}>{item.market.replace('over_', '+').toUpperCase()}</div>
                           </div>
                           <div className="text-right">
-                            <div className={`text-lg font-black ${item.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              R$ {item.returnCash.toFixed(2)}
+                            <div className="text-base font-bold font-mono-numbers" style={{ color: '#F87171' }}>R$ {item.returnCash.toFixed(2)}</div>
+                            <div className="flex gap-1.5 justify-end mt-0.5 text-[8px] font-medium">
+                              <span style={{ color: 'rgba(248,113,113,0.6)' }}>{item.returnUnits.toFixed(1)}U</span>
+                              <span style={{ color: '#44445A' }}>·</span>
+                              <span style={{ color: '#44445A' }}>{item.roi.toFixed(1)}% ROI</span>
                             </div>
-                            <div className="flex gap-1.5 justify-end mt-1 text-[9px] font-bold uppercase">
-                              <span className={item.returnUnits > 0 ? 'text-emerald-500/70' : 'text-rose-500/70'}>
-                                {item.returnUnits > 0 ? '+' : ''}{item.returnUnits.toFixed(1)}U
-                              </span>
-                              <span className="text-zinc-600">•</span>
-                              <span className="text-zinc-500">{item.roi.toFixed(1)}% ROI</span>
-                            </div>
-                            <div className="mt-2 flex justify-end">
-                              <DotStreak results={item.hits} />
-                            </div>
+                            <div className="mt-1.5 flex justify-end"><DotStreak results={item.hits} /></div>
                           </div>
                         </div>
                       ))}
@@ -580,41 +583,45 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
               </div>
 
               {/* Cenário 2: Gols Jogador */}
-              <div className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-xl p-5 space-y-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold text-white">Cenário 2: Gols Jogador</h4>
+              <div className="rounded-xl p-5 space-y-4" style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold" style={{ color: '#F0F0F4' }}>Gols por Jogador</h4>
                   <select value={proLeagueSelected} onChange={e => setProLeagueSelected(e.target.value)}
-                    className="bg-black/60 border border-zinc-700 rounded-lg px-2 py-1 text-[10px] text-white outline-none focus:border-amber-500/50">
-                    <option value="all">Filtro: Todas as Ligas</option>
+                    className="rounded-lg px-2 py-1 text-[9px] font-medium outline-none"
+                    style={{ background: '#13131A', border: '1px solid #1E1E28', color: '#8888A0' }}>
+                    <option value="all">Todas as Ligas</option>
                     {availableLeagues.map(l => <option key={l} value={l}>{l}</option>)}
                   </select>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {scenarioPlayers.map((sig, i) => (
-                    <div key={i} className={`bg-white/[0.03] border rounded-2xl p-4 flex justify-between items-center transition-all ${sig.momentum === 'heating' ? 'border-orange-500/30 bg-orange-500/[0.02] shadow-lg shadow-orange-500/5' : 'border-white/5'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${sig.momentum === 'heating' ? 'bg-orange-500/20 border-orange-500/40 text-orange-400' : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-500'}`}>
-                          <i className={`fa-solid ${sig.momentum === 'heating' ? 'fa-fire' : 'fa-user-ninja'} text-[10px]`}></i>
+                    <div key={i} className="rounded-xl p-3.5 flex justify-between items-center transition-all"
+                      style={{
+                        background: sig.momentum === 'heating' ? 'rgba(200,169,110,0.04)' : '#13131A',
+                        border: `1px solid ${sig.momentum === 'heating' ? 'rgba(200,169,110,0.15)' : '#1E1E28'}`
+                      }}>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                          style={{ background: '#1E1E28', border: '1px solid #2A2A35' }}>
+                          <i className="fa-solid fa-user text-[8px]" style={{ color: sig.momentum === 'heating' ? '#C8A96E' : '#44445A' }}></i>
                         </div>
-                        <div className="flex flex-col">
-                          <div className="text-xs font-black text-white uppercase truncate max-w-[120px] mb-1">{sig.player}</div>
-                          <div className="text-[8px] text-zinc-500 font-black uppercase flex items-center gap-2">
-                            {sig.market.replace('over_', '+').toUpperCase()}
+                        <div>
+                          <div className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: '#F0F0F4' }}>{sig.player}</div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[8px] font-medium" style={{ color: '#44445A' }}>{sig.market.replace('over_', '+').toUpperCase()}</span>
                             <TrendBadge trend={sig.momentum} />
                           </div>
-                          <div className="mt-1">
-                            <DotStreak results={sig.hits} />
-                          </div>
+                          <div className="mt-1"><DotStreak results={sig.hits} /></div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`text-sm font-black ${sig.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>R$ {sig.returnCash.toFixed(2)}</div>
-                        <div className="flex gap-1.5 justify-end mt-0.5 text-[9px] font-bold uppercase">
-                          <span className={sig.returnUnits > 0 ? 'text-emerald-500/70' : 'text-rose-500/70'}>
+                        <div className="text-sm font-bold font-mono-numbers" style={{ color: sig.returnCash > 0 ? '#34D399' : '#F87171' }}>R$ {sig.returnCash.toFixed(2)}</div>
+                        <div className="flex gap-1.5 justify-end mt-0.5 text-[8px] font-medium">
+                          <span style={{ color: sig.returnUnits > 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)' }}>
                             {sig.returnUnits > 0 ? '+' : ''}{sig.returnUnits.toFixed(1)}U
                           </span>
-                          <span className="text-zinc-600">•</span>
-                          <span className="text-zinc-500">{sig.roi.toFixed(1)}% ROI</span>
+                          <span style={{ color: '#44445A' }}>·</span>
+                          <span style={{ color: '#8888A0' }}>{sig.roi.toFixed(1)}%</span>
                         </div>
                       </div>
                     </div>
@@ -623,46 +630,46 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
               </div>
 
               {/* Cenário 3: Vitória Jogador */}
-              <div className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-md rounded-xl p-5 space-y-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold text-white">Cenário 3: Vitória Jogador</h4>
-                  <i className="fa-solid fa-trophy text-amber-500/40"></i>
+              <div className="rounded-xl p-5 space-y-4" style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold" style={{ color: '#F0F0F4' }}>Vitória por Jogador</h4>
+                  <i className="fa-solid fa-crown" style={{ color: '#44445A' }}></i>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {scenarioVictories.map((sig, i) => (
-                    <div key={i} className={`bg-white/[0.03] border rounded-2xl p-4 flex justify-between items-center transition-all ${sig.momentum === 'heating' ? 'border-amber-500/30 bg-amber-500/[0.02] shadow-lg shadow-amber-500/5' : 'border-white/5'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${sig.momentum === 'heating' ? 'bg-amber-500/20 border-amber-500/40 text-amber-500' : 'bg-violet-500/10 border-violet-500/20 text-violet-500'}`}>
-                          <i className="fa-solid fa-crown text-[10px]"></i>
+                    <div key={i} className="rounded-xl p-3.5 flex justify-between items-center transition-all"
+                      style={{
+                        background: sig.momentum === 'heating' ? 'rgba(200,169,110,0.04)' : '#13131A',
+                        border: `1px solid ${sig.momentum === 'heating' ? 'rgba(200,169,110,0.15)' : '#1E1E28'}`
+                      }}>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                          style={{ background: '#1E1E28', border: '1px solid #2A2A35' }}>
+                          <i className="fa-solid fa-crown text-[8px]" style={{ color: sig.momentum === 'heating' ? '#C8A96E' : '#44445A' }}></i>
                         </div>
-                        <div className="flex flex-col">
-                          <div className="text-xs font-black text-white uppercase mb-1">{sig.player}</div>
-                          <div className="text-[8px] text-zinc-500 font-black uppercase flex items-center gap-2">
-                            Vitória {(sig.winRate).toFixed(0)}%
+                        <div>
+                          <div className="text-[11px] font-semibold" style={{ color: '#F0F0F4' }}>{sig.player}</div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[8px] font-medium" style={{ color: '#44445A' }}>Vitória {(sig.winRate).toFixed(0)}%</span>
                             <TrendBadge trend={sig.momentum} />
                           </div>
-                          <div className="mt-1">
-                            <DotStreak results={sig.hits} />
-                          </div>
+                          <div className="mt-1"><DotStreak results={sig.hits} /></div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`text-sm font-black ${sig.returnCash > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          R$ {sig.returnCash.toFixed(2)}
-                        </div>
-                        <div className="flex gap-1.5 justify-end mt-0.5 text-[9px] font-bold uppercase">
-                          <span className={sig.returnUnits > 0 ? 'text-emerald-500/70' : 'text-rose-500/70'}>
+                        <div className="text-sm font-bold font-mono-numbers" style={{ color: sig.returnCash > 0 ? '#34D399' : '#F87171' }}>R$ {sig.returnCash.toFixed(2)}</div>
+                        <div className="flex gap-1.5 justify-end mt-0.5 text-[8px] font-medium">
+                          <span style={{ color: sig.returnUnits > 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)' }}>
                             {sig.returnUnits > 0 ? '+' : ''}{sig.returnUnits.toFixed(1)}U
                           </span>
-                          <span className="text-zinc-600">•</span>
-                          <span className="text-zinc-500">{sig.roi.toFixed(1)}% ROI</span>
+                          <span style={{ color: '#44445A' }}>·</span>
+                          <span style={{ color: '#8888A0' }}>{sig.roi.toFixed(1)}%</span>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-
             </div>
           </div>
         </div>

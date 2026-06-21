@@ -15,29 +15,59 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=JetBrains+Mono:wght@400;700&display=swap');
 
+    /* ── EDITORIAL DARK DESIGN SYSTEM ─────────────────────── */
     :root {
-      --color-brand: #f59e0b;
-      --color-positive: #22c55e;
-      --color-negative: #ef4444;
-      --color-neutral: #71717a;
-      --color-bg: #080808;
-      --color-card: #111115;
-      --color-card-hover: #16161b;
-      --color-border: #25252a;
-      --color-border-subtle: #1c1c21;
-      --color-text-primary: #e4e4e7;
-      --color-text-secondary: #71717a;
-      --color-text-muted: #3f3f46;
+      /* Surfaces */
+      --bg:            #07070A;
+      --surface:       #0D0D12;
+      --surface-raised:#13131A;
+      --surface-hover: #17171F;
+
+      /* Borders */
+      --border:        #1E1E28;
+      --border-subtle: #161620;
+
+      /* Typography */
+      --text-primary:  #F0F0F4;
+      --text-secondary:#8888A0;
+      --text-muted:    #44445A;
+
+      /* Semantic — use ONLY when the data itself is positive/negative */
+      --positive:      #34D399;
+      --positive-dim:  rgba(52, 211, 153, 0.12);
+      --negative:      #F87171;
+      --negative-dim:  rgba(248, 113, 113, 0.12);
+      --warning:       #FBBF24;
+      --warning-dim:   rgba(251, 191, 36, 0.12);
+
+      /* Accent — ONE decorative color for UI elements */
+      --accent:        #C8A96E;
+      --accent-dim:    rgba(200, 169, 110, 0.12);
+      --accent-border: rgba(200, 169, 110, 0.25);
+
+      /* Legacy aliases (para não quebrar código existente) */
+      --color-brand:        var(--accent);
+      --color-positive:     var(--positive);
+      --color-negative:     var(--negative);
+      --color-neutral:      var(--text-muted);
+      --color-bg:           var(--bg);
+      --color-card:         var(--surface);
+      --color-card-hover:   var(--surface-hover);
+      --color-border:       var(--border);
+      --color-border-subtle:var(--border-subtle);
+      --color-text-primary: var(--text-primary);
+      --color-text-secondary:var(--text-secondary);
+      --color-text-muted:   var(--text-muted);
     }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: var(--color-bg);
-      color: var(--color-text-primary);
+      background-color: var(--bg);
+      color: var(--text-primary);
       margin: 0;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.015em;
       font-size: 14px;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
@@ -46,131 +76,100 @@
 
     .font-mono-numbers {
       font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.02em;
     }
 
-    .card-glow {
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-    }
+    /* ── UTILITY CLASSES ────────────────────────────────────── */
+    .text-positive  { color: var(--positive) !important; }
+    .text-negative  { color: var(--negative) !important; }
+    .text-accent    { color: var(--accent) !important; }
+    .text-secondary { color: var(--text-secondary) !important; }
+    .text-muted     { color: var(--text-muted) !important; }
 
-    .card-glow:hover {
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 0 1px rgba(255, 255, 255, 0.2);
-    }
+    .bg-positive-dim { background-color: var(--positive-dim) !important; }
+    .bg-negative-dim { background-color: var(--negative-dim) !important; }
+    .bg-accent-dim   { background-color: var(--accent-dim) !important; }
 
-    ::-webkit-scrollbar {
-      width: 3px;
-      height: 3px;
-    }
+    .border-accent   { border-color: var(--accent-border) !important; }
 
-    ::-webkit-scrollbar-track {
-      background: transparent;
-      border-radius: 10px;
-    }
+    /* ── SCROLLBARS ──────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 3px; height: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
 
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-    }
+    .custom-scrollbar::-webkit-scrollbar { height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius:10px; margin:0 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius:10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    /* Scrollbar horizontal específica para listas de jogos */
-    .custom-scrollbar::-webkit-scrollbar {
-      height: 5px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      margin: 0 10px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
+    /* ── ANIMATIONS ──────────────────────────────────────────── */
     @keyframes score-pop {
-      0% {
-        transform: scale(1.1);
-      }
-
-      50% {
-        transform: scale(1.4);
-        filter: brightness(1.5);
-      }
-
-      100% {
-        transform: scale(1.1);
-      }
+      0%   { transform: scale(1.05); }
+      50%  { transform: scale(1.25); filter: brightness(1.4); }
+      100% { transform: scale(1.05); }
     }
-
-    .animate-score-pop {
-      animation: score-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+    .animate-score-pop { animation: score-pop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
 
     @keyframes goal-pulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-      }
-
-      70% {
-        box-shadow: 0 0 0 15px rgba(16, 185, 129, 0);
-      }
-
-      100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-      }
+      0%   { box-shadow: 0 0 0 0 rgba(52,211,153,0.6); }
+      70%  { box-shadow: 0 0 0 12px rgba(52,211,153,0); }
+      100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
     }
-
-    .animate-goal-pulse {
-      animation: goal-pulse 2s infinite;
-    }
+    .animate-goal-pulse { animation: goal-pulse 2s infinite; }
 
     @keyframes spin-slow {
-      from {
-        transform: rotate(0deg);
-      }
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    .animate-spin-slow { animation: spin-slow 8s linear infinite; }
 
-      to {
-        transform: rotate(360deg);
-      }
+    @keyframes accent-glow-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(200,169,110,0); }
+      50%       { box-shadow: 0 0 20px 4px rgba(200,169,110,0.15); }
+    }
+    .animate-accent-glow { animation: accent-glow-pulse 3s ease-in-out infinite; }
+
+    /* ── SIGNAL CARD (estratégia ativa) ─────────────────────── */
+    .card-signaled {
+      border-left: 3px solid var(--accent) !important;
+      box-shadow: 0 0 0 1px var(--accent-border), 0 12px 40px rgba(0,0,0,0.7);
+    }
+    .card-neutral {
+      border-left: 3px solid var(--border) !important;
     }
 
-    .animate-spin-slow {
-      animation: spin-slow 8s linear infinite;
-    }
+    /* ── HEATMAP TABLE CELLS ────────────────────────────────── */
+    .heat-high  { background: var(--positive-dim); color: var(--positive); }
+    .heat-mid   { background: rgba(52,211,153,0.06); color: rgba(52,211,153,0.75); }
+    .heat-low   { color: var(--text-secondary); }
+    .heat-none  { color: var(--negative); opacity: 0.6; }
 
-    /* Estratégias Tooltips */
-    .tooltip-trigger {
-      position: relative;
-    }
+    /* ── METRIC BAR ──────────────────────────────────────────── */
+    .metric-bar-bg { background: var(--border-subtle); }
+    .metric-bar-fill-high { background: var(--positive); }
+    .metric-bar-fill-mid  { background: rgba(200,169,110,0.7); }
+    .metric-bar-fill-low  { background: rgba(248,113,113,0.6); }
 
+    /* ── TOOLTIPS ─────────────────────────────────────────────── */
+    .tooltip-trigger { position: relative; }
     .tooltip-content {
       position: absolute;
       top: calc(100% + 12px);
       left: 50%;
-      transform: translateX(-50%) translateY(10px);
+      transform: translateX(-50%) translateY(8px);
       opacity: 0;
       visibility: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
       z-index: 5000;
       pointer-events: none;
-      width: 250px;
+      width: 240px;
     }
-
     .tooltip-trigger:hover .tooltip-content {
       opacity: 1;
       visibility: visible;
       transform: translateX(-50%) translateY(0);
     }
-
-    /* Seta do Tooltip */
     .tooltip-content::after {
       content: '';
       position: absolute;
@@ -179,8 +178,16 @@
       transform: translateX(-50%);
       border-width: 6px;
       border-style: solid;
-      border-color: transparent transparent rgba(10, 10, 12, 0.95) transparent;
+      border-color: transparent transparent rgba(13,13,18,0.98) transparent;
     }
+
+    /* ── CARD BASE ───────────────────────────────────────────── */
+    .card-base {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+    }
+    .card-base:hover { background: var(--surface-hover); }
   </style>
   <script type="importmap">
 {
