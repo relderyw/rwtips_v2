@@ -29,17 +29,16 @@ export const getNumberColor = (numStr: string): 'red' | 'black' | 'green' => {
 
 /**
  * Gera a URL da imagem de um jogo com base no padrão da Estrelabet.
- * Ex: alias 'rol_brazilianrol' → https://www.estrelabet.bet.br/uploads/games/EST/pt_ptrol_brazilianrol/pt_ptrol_brazilianrol.png
+ * Usa o proxy local para evitar CORS.
+ * Ex: alias 'rol_crystal_roulette' → /api/estrelabet/uploads/games/EST/pt_ptrol_crystal_roulette/pt_ptrol_crystal_roulette.png
  */
 export const getGameImageUrl = (alias: string): string =>
-  `https://www.estrelabet.bet.br/uploads/games/EST/pt_pt${alias}/pt_pt${alias}.png`;
+  `/api/estrelabet/uploads/games/EST/pt_pt${alias}/pt_pt${alias}.png`;
 
 // IDs de roletas conhecidas que existem na Evolution mas não aparecem
-// no endpoint de lobby da Estrelabet (ex: Roleta Brasileira).
+// no endpoint de lobby da Estrelabet.
 // Podem ser adicionadas manualmente aqui para busca via endpoint alternativo.
-const EXTRA_ROULETTE_IDS: { id: string; name: string; alias: string }[] = [
-  { id: 'rol_brazilianrol', name: 'Roleta Brasileira', alias: 'rol_brazilianrol' },
-];
+const EXTRA_ROULETTE_IDS: { id: string; name: string; alias: string }[] = [];
 
 export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
   try {

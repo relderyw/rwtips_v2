@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { RouletteTable, getNumberColor } from '../../services/rouletteApi';
 
 interface Props {
@@ -42,6 +43,7 @@ function NumberBall({
    History Modal
 ───────────────────────────────────────────────────────────── */
 function HistoryModal({ table, onClose }: { table: RouletteTable; onClose: () => void }) {
+  const [imgError, setImgError] = useState(false);
   const results = table.lastResults;
 
   const stats = useMemo(() => {
@@ -63,14 +65,23 @@ function HistoryModal({ table, onClose }: { table: RouletteTable; onClose: () =>
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 5);
   }, [results]);
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center p-4"
-      style={{ backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.75)' }}
+      className="fixed z-[9999] flex items-center justify-center p-4"
+      style={{
+        inset: 0,
+        backdropFilter: 'blur(12px)',
+        background: 'rgba(0,0,0,0.75)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 shadow-2xl"
+        className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-3xl border border-white/10 shadow-2xl"
         style={{ background: 'linear-gradient(145deg, #111118 0%, #0a0a0f 100%)' }}
         onClick={e => e.stopPropagation()}
       >
@@ -79,8 +90,12 @@ function HistoryModal({ table, onClose }: { table: RouletteTable; onClose: () =>
 
         {/* Header */}
         <div className="flex items-center gap-4 p-6 pb-4 border-b border-white/[0.06]">
-          <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0">
-            <img src={table.image} alt={table.name} className="w-full h-full object-cover" />
+          <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 flex items-center justify-center bg-[#C8A96E]/10">
+            {table.image && !imgError ? (
+              <img src={table.image} alt={table.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
+            ) : (
+              <i className="fa-solid fa-dharmachakra text-[#C8A96E]/60 text-lg" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-bold text-white truncate">{table.name}</h3>
@@ -159,6 +174,8 @@ function HistoryModal({ table, onClose }: { table: RouletteTable; onClose: () =>
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -166,6 +183,7 @@ function HistoryModal({ table, onClose }: { table: RouletteTable; onClose: () =>
 ───────────────────────────────────────────────────────────── */
 export const RouletteTableCard: React.FC<Props> = ({ table }) => {
   const [showHistory, setShowHistory] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const stats = useMemo(() => {
     let red = 0, black = 0, green = 0;
@@ -220,8 +238,8 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
             <div className="relative shrink-0">
               <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-lg flex items-center justify-center"
                 style={{ background: 'rgba(200,169,110,0.08)' }}>
-                {table.image
-                  ? <img src={table.image} alt={table.name} className="w-full h-full object-cover" />
+                {table.image && !imgError
+                  ? <img src={table.image} alt={table.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
                   : <i className="fa-solid fa-dharmachakra text-[#C8A96E]/60 text-xl" />}
               </div>
               {/* Online dot */}
