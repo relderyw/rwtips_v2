@@ -19,6 +19,13 @@
   status = 200
   force = true
 
+# Proxy for Superbet API
+[[redirects]]
+  from = "/api/superbet-gaming/*"
+  to = "https://superbet-gaming-production.global.ssl.fastly.net/:splat"
+  status = 200
+  force = true
+
 # Redirect for API calls to the serverless function
 [[redirects]]
   from = "/api/*"
