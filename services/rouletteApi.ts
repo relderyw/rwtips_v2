@@ -27,6 +27,13 @@ export const getNumberColor = (numStr: string): 'red' | 'black' | 'green' => {
   return 'green';
 };
 
+/**
+ * Gera a URL da imagem de um jogo com base no padrão da Estrelabet.
+ * Ex: alias 'rol_brazilianrol' → https://www.estrelabet.bet.br/uploads/games/EST/pt_ptrol_brazilianrol/pt_ptrol_brazilianrol.png
+ */
+export const getGameImageUrl = (alias: string): string =>
+  `https://www.estrelabet.bet.br/uploads/games/EST/pt_pt${alias}/pt_pt${alias}.png`;
+
 // IDs de roletas conhecidas que existem na Evolution mas não aparecem
 // no endpoint de lobby da Estrelabet (ex: Roleta Brasileira).
 // Podem ser adicionadas manualmente aqui para busca via endpoint alternativo.
