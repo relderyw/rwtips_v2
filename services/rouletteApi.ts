@@ -35,7 +35,11 @@ export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    return data.filter((item: any) => item.type === 'Roulette' && item.lastResults && item.lastResults.length > 0);
+    return data.filter((item: any) =>
+      item.type?.toLowerCase() === 'roulette' &&
+      item.lastResults &&
+      item.lastResults.length > 0
+    );
   } catch (error) {
     console.error('Error fetching roulettes:', error);
     return [];
