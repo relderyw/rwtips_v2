@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { RouletteTable, getNumberColor } from '../../services/rouletteApi';
+import { analyzeRouletteTable, StrategyOpportunity } from './utils/rouletteStrategies';
 
 interface Props {
   table: RouletteTable;
@@ -179,6 +180,46 @@ function HistoryModal({ table, onClose }: { table: RouletteTable; onClose: () =>
 }
 
 /* ────────────────────────────────────────────────────────────
+   Strategy Opportunity Component
+───────────────────────────────────────────────────────────── */
+function StrategyOpportunityCard({ opportunity }: { opportunity: StrategyOpportunity }) {
+  const typeColors = {
+    color: 'from-red-500/20 to-red-900/20 border-red-500/30',
+    terminal: 'from-purple-500/20 to-purple-900/20 border-purple-500/30',
+    column: 'from-blue-500/20 to-blue-900/20 border-blue-500/30',
+    dozen: 'from-amber-500/20 to-amber-900/20 border-amber-500/30'
+  };
+  
+  const typeIcons = {
+    color: 'fa-palette',
+    terminal: 'fa-hashtag',
+    column: 'fa-columns',
+    dozen: 'fa-th-large'
+  };
+
+  return (
+    <div className={`rounded-xl p-3 border bg-gradient-to-br ${typeColors[opportunity.type]}`}>
+      <div className="flex items-start justify-between gap-2 mb-1.5">
+        <div className="flex items-center gap-2">
+          <i className={`fa-solid ${typeIcons[opportunity.type]} text-[10px] text-white/70`} />
+          <span className="text-[11px] font-bold text-white leading-tight">{opportunity.name}</span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <div className="text-[9px] font-black text-emerald-400">{opportunity.confidence}%</div>
+          <div className="text-[9px] font-black text-[#C8A96E]">{opportunity.streak}×</div>
+        </div>
+      </div>
+      <p className="text-[9px] text-white/60 leading-relaxed">{opportunity.description}</p>
+      <div className="mt-2 flex flex-wrap gap-1">
+        {opportunity.history.map((num, i) => (
+          <NumberBall key={`opp-${i}`} num={num} size="sm" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
    Main Card
 ───────────────────────────────────────────────────────────── */
 export const RouletteTableCard: React.FC<Props> = ({ table }) => {
@@ -200,6 +241,8 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
       green: total ? (green / total) * 100 : 0,
     };
   }, [table.lastResults]);
+
+  const analysis = useMemo(() => analyzeRouletteTable(table), [table]);
 
   const latestNum = table.lastResults[0];
   const latestColor = latestNum ? getNumberColor(latestNum) : null;
@@ -325,6 +368,26 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
               </div>
             )}
           </div>
+
+          {/* Strategies section */}
+          {analysis.opportunities.length > 0 && (
+            <div
+              className="rounded-2xl p-3 space-y-2.5"
+              style={{ background: 'rgba(200, 169, 110, 0.05)', border: '1px solid rgba(200, 169, 110, 0.15)' }}
+            >
+              <div className="flex items-center gap-2">
+                <i className="fa-solid fa-bullseye text-[9px] text-[#C8A96E]" />
+                <span className="text-[8px] uppercase tracking-[0.22em] font-bold text-[#C8A96E]/80">
+                  Oportunidades Detectadas ({analysis.opportunities.length})
+                </span>
+              </div>
+              <div className="space-y-2">
+                {analysis.opportunities.slice(0, 2).map((opp, i) => (
+                  <StrategyOpportunityCard key={`opp-${i}`} opportunity={opp} />
+                ))}
+              </div>
+            </div>
+          )}
 
         </div>
       </div>

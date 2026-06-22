@@ -28,12 +28,52 @@ export const getNumberColor = (numStr: string): 'red' | 'black' | 'green' => {
 };
 
 /**
- * Gera a URL da imagem de um jogo com base no padrão da Estrelabet.
- * Usa o proxy local para evitar CORS.
- * Ex: alias 'rol_crystal_roulette' → /api/estrelabet/uploads/games/EST/pt_ptrol_crystal_roulette/pt_ptrol_crystal_roulette.png
+ * Converte uma URL absoluta da CDN de gaming para uma URL relativa via proxy,
+ * evitando CORS. Suporta tanto prod-cdn-gaming quanto outros domínios.
  */
-export const getGameImageUrl = (alias: string): string =>
-  `/api/estrelabet/uploads/games/EST/pt_pt${alias}/pt_pt${alias}.png`;
+const toCdnProxyUrl = (url: string): string => {
+  if (!url) return '';
+  // Já é relativa (proxy já aplicado)
+  if (url.startsWith('/')) return url;
+  try {
+    const parsed = new URL(url);
+    // CDN principal da Superbet Gaming
+    if (parsed.hostname.includes('prod-cdn-gaming') || parsed.hostname.includes('fastly.net')) {
+      return `/api/gaming-cdn${parsed.pathname}${parsed.search}`;
+    }
+    // Estrelabet assets
+    if (parsed.hostname.includes('estrelabet') || parsed.hostname.includes('assets.')) {
+      return `/api/estrelabet${parsed.pathname}${parsed.search}`;
+    }
+  } catch (_) { /* ignore */ }
+  return url;
+};
+
+/**
+ * Extrai a URL de imagem de um objeto de jogo da API.
+ * Tenta múltiplos campos comuns antes de usar fallback.
+ */
+export const extractImageUrl = (r: any): string => {
+  // Tenta campos diretos de imagem na resposta da API
+  const raw =
+    r.thumbnails?.thumbnail ||
+    r.thumbnails?.['150x188'] ||
+    r.thumbnails?.medium ||
+    r.thumbnails?.small ||
+    r.thumbnail ||
+    r.images?.thumbnail ||
+    r.images?.medium ||
+    r.imageUrl ||
+    r.image ||
+    r.gameThumbnail ||
+    r.logo ||
+    '';
+
+  if (raw) return toCdnProxyUrl(raw);
+
+  // Fallback: URL conhecida do estilo Estrelabet
+  return `/api/estrelabet/uploads/games/EST/pt_pt${r.id}/pt_pt${r.id}.png`;
+};
 
 // IDs de roletas conhecidas que existem na Evolution mas não aparecem
 // no endpoint de lobby da Estrelabet.
@@ -61,7 +101,7 @@ export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
         id: r.id,
         name: r.name,
         type: 'Roulette',
-        image: getGameImageUrl(r.id), // Pode falhar se o ID não bater com o padrão da Evolution, mas mostrará o ícone fallback
+        image: extractImageUrl(r),
         provider: r.provider || 'Evolution',
         dealerName: null,
         language: 'pt',
@@ -85,7 +125,7 @@ export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
           id: extra.id,
           name: extra.name,
           type: 'Roulette',
-          image: getGameImageUrl(extra.alias),
+          image: `/api/estrelabet/uploads/games/EST/pt_pt${extra.alias}/pt_pt${extra.alias}.png`,
           provider: 'Evolution',
           dealerName: null,
           language: 'pt',
