@@ -36,17 +36,38 @@ const EXTRA_ROULETTE_IDS: { id: string; name: string; alias: string }[] = [
 
 export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
   try {
-    const timestamp = new Date().getTime();
-    const response = await fetch(`/api/estrelabet/dynamic-lobby/current-state.json?t=${timestamp}`);
+    const response = await fetch(`/api/superbet-gaming/provider-socket/public/api/br/v2/state`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data: any[] = await response.json();
 
-    // Filtra todas as roletas — incluindo as que têm lastResults vazio (ex: Double Ball)
-    const roulettes = data.filter((item: any) =>
-      item.type?.toLowerCase() === 'roulette'
+    // Filtra apenas roletas da Superbet
+    const roulettesData = data.filter((item: any) =>
+      item.gameType?.toLowerCase() === 'roulette'
     );
+
+    const roulettes: RouletteTable[] = roulettesData.map(r => {
+      // Diferentes campos podem conter os resultados
+      const lr = r.lastResults || r.results || r.roundHistory || r.history || r.drawResults || [];
+
+      return {
+        id: r.id,
+        name: r.name,
+        type: 'Roulette',
+        image: getGameImageUrl(r.id), // Pode falhar se o ID não bater com o padrão da Evolution, mas mostrará o ícone fallback
+        provider: r.provider || 'Evolution',
+        dealerName: null,
+        language: 'pt',
+        minBet: r.betLimit || 0,
+        maxBet: 0,
+        seatsTotal: 0,
+        seatsTaken: r.players || 0,
+        lastResults: lr,
+        launchAlias: r.id,
+        gameCode: r.id,
+      };
+    });
 
     // Descobre quais IDs extras já estão presentes na resposta da API
     const presentIds = new Set(roulettes.map((r: any) => r.id));
@@ -58,7 +79,7 @@ export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
           id: extra.id,
           name: extra.name,
           type: 'Roulette',
-          image: '',
+          image: getGameImageUrl(extra.alias),
           provider: 'Evolution',
           dealerName: null,
           language: 'pt',
@@ -66,15 +87,13 @@ export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
           maxBet: 0,
           seatsTotal: 0,
           seatsTaken: 0,
-          lastResults: [], // sem dados ainda
+          lastResults: [],
           launchAlias: extra.alias,
           gameCode: extra.alias,
         } as RouletteTable);
       }
     }
 
-    // Mantém mesas sem resultados mas sinaliza-as como "sem dados"
-    // O card exibirá um estado adequado quando lastResults estiver vazio
     return roulettes;
   } catch (error) {
     console.error('Error fetching roulettes:', error);
