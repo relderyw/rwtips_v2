@@ -218,8 +218,11 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
           <div className="flex items-center gap-3">
             {/* Image */}
             <div className="relative shrink-0">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-lg">
-                <img src={table.image} alt={table.name} className="w-full h-full object-cover" />
+              <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-lg flex items-center justify-center"
+                style={{ background: 'rgba(200,169,110,0.08)' }}>
+                {table.image
+                  ? <img src={table.image} alt={table.name} className="w-full h-full object-cover" />
+                  : <i className="fa-solid fa-dharmachakra text-[#C8A96E]/60 text-xl" />}
               </div>
               {/* Online dot */}
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-[#0a0a0f] shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
@@ -267,33 +270,42 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
           >
             <div className="flex items-center justify-between">
               <span className="text-[8px] uppercase tracking-[0.22em] font-bold text-[#44445A]">Últimos Números</span>
-              <button
-                onClick={() => setShowHistory(true)}
-                className="flex items-center gap-1 text-[8px] font-bold text-[#C8A96E]/70 hover:text-[#C8A96E] transition-colors uppercase tracking-wider"
-              >
-                <i className="fa-solid fa-clock-rotate-left text-[7px]" />
-                Ver histórico
-              </button>
-            </div>
-
-            <div className="flex gap-1.5 overflow-x-hidden">
-              {table.lastResults.slice(0, 8).map((num, i) => (
-                <NumberBall
-                  key={`${num}-${i}`}
-                  num={num}
-                  newest={i === 0}
-                  onClick={() => setShowHistory(true)}
-                />
-              ))}
-              {table.lastResults.length > 8 && (
+              {table.lastResults.length > 0 && (
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="shrink-0 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[9px] font-bold text-[#8888A0] hover:text-white hover:bg-white/10 transition-all"
+                  className="flex items-center gap-1 text-[8px] font-bold text-[#C8A96E]/70 hover:text-[#C8A96E] transition-colors uppercase tracking-wider"
                 >
-                  +{table.lastResults.length - 8}
+                  <i className="fa-solid fa-clock-rotate-left text-[7px]" />
+                  Ver histórico
                 </button>
               )}
             </div>
+
+            {table.lastResults.length === 0 ? (
+              <div className="flex items-center gap-2 py-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-[9px] text-amber-500/70 font-medium">Aguardando dados do histórico…</span>
+              </div>
+            ) : (
+              <div className="flex gap-1.5 overflow-x-hidden">
+                {table.lastResults.slice(0, 8).map((num, i) => (
+                  <NumberBall
+                    key={`${num}-${i}`}
+                    num={num}
+                    newest={i === 0}
+                    onClick={() => setShowHistory(true)}
+                  />
+                ))}
+                {table.lastResults.length > 8 && (
+                  <button
+                    onClick={() => setShowHistory(true)}
+                    className="shrink-0 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[9px] font-bold text-[#8888A0] hover:text-white hover:bg-white/10 transition-all"
+                  >
+                    +{table.lastResults.length - 8}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
