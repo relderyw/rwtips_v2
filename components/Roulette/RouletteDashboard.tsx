@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { fetchRoulettes, RouletteTable } from '../../services/rouletteApi';
 import { RouletteTableCard } from './RouletteTableCard';
 
@@ -57,19 +57,19 @@ export const RouletteDashboard: React.FC = () => {
           <div
             className="absolute inset-0 rounded-full animate-spin"
             style={{
-              background: 'conic-gradient(from 0deg, #C8A96E, transparent 60%, #C8A96E)',
+              background: 'conic-gradient(from 0deg, #39D353, transparent 60%, #39D353)',
               padding: '2px',
             }}
           >
             <div className="w-full h-full rounded-full" style={{ background: '#0a0a0f' }} />
           </div>
           <div className="absolute inset-3 rounded-full flex items-center justify-center"
-            style={{ background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.2)' }}>
-            <i className="fa-solid fa-dharmachakra text-[#C8A96E] text-lg" />
+            style={{ background: 'rgba(57, 211, 83,0.08)', border: '1px solid rgba(57, 211, 83,0.2)' }}>
+            <i className="fa-solid fa-dharmachakra text-[#39D353] text-lg" />
           </div>
         </div>
         <div className="text-center space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[#C8A96E]/80 animate-pulse">
+          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[#39D353]/80 animate-pulse">
             Conectando ao Casino ao Vivo
           </p>
           <p className="text-[10px] text-[#44445A]">Aguardando dados da Evolution Gaming…</p>
@@ -94,13 +94,13 @@ export const RouletteDashboard: React.FC = () => {
         <div className="flex items-center gap-4 shrink-0">
           <div
             className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)' }}
+            style={{ background: 'rgba(57, 211, 83,0.12)', border: '1px solid rgba(57, 211, 83,0.25)' }}
           >
-            <i className="fa-solid fa-dharmachakra text-[#C8A96E] animate-spin-slow" />
+            <i className="fa-solid fa-dharmachakra text-[#39D353] animate-spin-slow" />
           </div>
           <div>
             <h2 className="text-lg font-black text-white tracking-tight leading-tight">
-              Roletas <span style={{ color: '#C8A96E' }}>ONTIME</span>
+              Roletas <span style={{ color: '#39D353' }}>ONTIME</span>
             </h2>
             <p className="text-[10px] text-[#55556A] font-medium">Evolution Gaming • {tables.length} mesas ao vivo</p>
           </div>
@@ -121,7 +121,7 @@ export const RouletteDashboard: React.FC = () => {
               borderRadius: '0.875rem',
               boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3)',
             }}
-            onFocus={e => (e.currentTarget.style.borderColor = 'rgba(200,169,110,0.4)')}
+            onFocus={e => (e.currentTarget.style.borderColor = 'rgba(57, 211, 83,0.4)')}
             onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)')}
           />
         </div>
@@ -147,13 +147,13 @@ export const RouletteDashboard: React.FC = () => {
               <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2.5" />
               <circle
                 cx="18" cy="18" r="14" fill="none"
-                stroke="#C8A96E" strokeWidth="2.5"
+                stroke="#39D353" strokeWidth="2.5"
                 strokeDasharray={`${(tick / 10) * 88} 88`}
                 strokeLinecap="round"
                 style={{ transition: 'stroke-dasharray 1s linear' }}
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-[#C8A96E]">{tick}</span>
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-[#39D353]">{tick}</span>
           </div>
         </div>
       </div>
@@ -161,7 +161,7 @@ export const RouletteDashboard: React.FC = () => {
       {/* ─── Stats Row ─── */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Mesas ativas', value: tables.length, icon: 'fa-table', color: '#C8A96E', glow: 'rgba(200,169,110,0.15)' },
+          { label: 'Mesas ativas', value: tables.length, icon: 'fa-table', color: '#39D353', glow: 'rgba(57, 211, 83,0.15)' },
           { label: 'Jogadores online', value: tables.reduce((s, t) => s + t.seatsTaken, 0).toLocaleString(), icon: 'fa-users', color: '#10b981', glow: 'rgba(16,185,129,0.15)' },
           { label: 'Resultados', value: tables.reduce((s, t) => s + t.lastResults.length, 0).toLocaleString(), icon: 'fa-list-ol', color: '#6366f1', glow: 'rgba(99,102,241,0.15)' },
         ].map(stat => (

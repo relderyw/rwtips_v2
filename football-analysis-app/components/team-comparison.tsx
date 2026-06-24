@@ -268,7 +268,7 @@ function TeamAnalysisCard({ team, stats, matches, teamId, label }: TeamAnalysisC
 
       {/* Percentage Result */}
       <div className="p-8 text-center border-b border-border">
-        <div className="text-6xl font-bold mb-2 text-amber-500">{stats.successRate.toFixed(1)}%</div>
+        <div className="text-6xl font-bold mb-2 text-green-500">{stats.successRate.toFixed(1)}%</div>
         <div className="text-sm text-muted-foreground mb-1">Resultado</div>
         <div className="text-xs text-muted-foreground">
           {stats.successCount} / {stats.totalMatches} acertos

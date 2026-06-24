@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+﻿import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { HistoryMatch } from '../types';
 import {
   runLeagueBacktest, runPlayerBacktest, generatePredictionSignals,
@@ -12,7 +12,7 @@ import { fetchPlayers } from '../services/api';
 // CONSTANTS
 // =========================================================
 const MARKETS = [
-  { id: 'over_0.5_ht', label: 'Over 0.5 HT', icon: 'fa-bolt', color: '#f59e0b' },
+  { id: 'over_0.5_ht', label: 'Over 0.5 HT', icon: 'fa-bolt', color: '#39D353' },
   { id: 'over_1.5_ht', label: 'Over 1.5 HT', icon: 'fa-fire', color: '#f97316' },
   { id: 'over_2.5_ht', label: 'Over 2.5 HT', icon: 'fa-fire-flame-curved', color: '#ef4444' },
   { id: 'btts_ht', label: 'BTTS HT', icon: 'fa-arrows-rotate', color: '#ec4899' },
@@ -115,7 +115,7 @@ const DotStreak: React.FC<{ results: { hit: number; match: HistoryMatch }[]; siz
 
 const TrendBadge: React.FC<{ trend: 'heating' | 'cooling' | 'stable' }> = ({ trend }) => {
   const map = {
-    heating: { label: '↑ Alta', style: { background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)', color: '#C8A96E' } },
+    heating: { label: '↑ Alta', style: { background: 'rgba(57, 211, 83,0.1)', border: '1px solid rgba(57, 211, 83,0.2)', color: '#39D353' } },
     cooling: { label: '↓ Baixa', style: { background: '#13131A', border: '1px solid #1E1E28', color: '#8888A0' } },
     stable:  { label: '→ Estável', style: { background: '#13131A', border: '1px solid #1E1E28', color: '#44445A' } },
   };
@@ -137,7 +137,7 @@ const SignalBadge: React.FC<{ signal: PredictionSignal['signal'] }> = ({ signal 
 const ConfidenceBadge: React.FC<{ conf: 'high' | 'medium' | 'low'; score?: number }> = ({ conf, score }) => {
   const map: Record<string, React.CSSProperties> = {
     high:   { background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', color: '#34D399' },
-    medium: { background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.2)', color: '#C8A96E' },
+    medium: { background: 'rgba(57, 211, 83,0.08)', border: '1px solid rgba(57, 211, 83,0.2)', color: '#39D353' },
     low:    { background: '#13131A', border: '1px solid #1E1E28', color: '#44445A' },
   };
   const labels = { high: 'Alta', medium: 'Média', low: 'Baixa' };
@@ -305,11 +305,11 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* ── BACKTEST PRO ENGINE ── */}
-      <div className="relative overflow-hidden rounded-2xl p-6" style={{ background: '#0D0D12', borderLeft: '3px solid #C8A96E', border: '1px solid #1E1E28', borderLeftColor: '#C8A96E' }}>
-        <div className="absolute top-0 right-0 w-48 h-48 opacity-5 blur-[60px] pointer-events-none" style={{ background: '#C8A96E', borderRadius: '50%' }}></div>
+      <div className="relative overflow-hidden rounded-2xl p-6" style={{ background: '#0D0D12', borderLeft: '3px solid #39D353', border: '1px solid #1E1E28', borderLeftColor: '#39D353' }}>
+        <div className="absolute top-0 right-0 w-48 h-48 opacity-5 blur-[60px] pointer-events-none" style={{ background: '#39D353', borderRadius: '50%' }}></div>
         <div className="relative z-10 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)' }}>
-            <i className="fa-solid fa-chart-mixed text-sm" style={{ color: '#C8A96E' }}></i>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(57, 211, 83,0.1)', border: '1px solid rgba(57, 211, 83,0.2)' }}>
+            <i className="fa-solid fa-chart-mixed text-sm" style={{ color: '#39D353' }}></i>
           </div>
           <div>
             <h2 className="text-base font-semibold" style={{ color: '#F0F0F4' }}>Backtest Pro Engine</h2>
@@ -327,8 +327,8 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
           {/* CONFIGURAÇÃO */}
           <div className="rounded-2xl p-5" style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)' }}>
-                <span className="text-[9px] font-bold" style={{ color: '#C8A96E' }}>01</span>
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(57, 211, 83,0.1)', border: '1px solid rgba(57, 211, 83,0.2)' }}>
+                <span className="text-[9px] font-bold" style={{ color: '#39D353' }}>01</span>
               </div>
               <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#8888A0' }}>Configuração</h3>
             </div>
@@ -339,7 +339,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                 <input type="number" value={unitValue} onChange={e => setUnitValue(Number(e.target.value))}
                   className="w-full rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all"
                   style={{ background: '#13131A', border: '1px solid #1E1E28', color: '#F0F0F4' }}
-                  onFocus={e => e.target.style.borderColor = 'rgba(200,169,110,0.4)'}
+                  onFocus={e => e.target.style.borderColor = 'rgba(57, 211, 83,0.4)'}
                   onBlur={e => e.target.style.borderColor = '#1E1E28'} />
               </div>
               <div className="space-y-1.5">
@@ -347,7 +347,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                 <input type="number" step="0.05" value={baseOdd} onChange={e => setBaseOdd(Number(e.target.value))}
                   className="w-full rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all"
                   style={{ background: '#13131A', border: '1px solid #1E1E28', color: '#F0F0F4' }}
-                  onFocus={e => e.target.style.borderColor = 'rgba(200,169,110,0.4)'}
+                  onFocus={e => e.target.style.borderColor = 'rgba(57, 211, 83,0.4)'}
                   onBlur={e => e.target.style.borderColor = '#1E1E28'} />
               </div>
               <div className="space-y-1.5">
@@ -356,14 +356,14 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                   {[5, 10, 15, 20].map(n => (
                     <button key={n} onClick={() => setBtSampleSize(n)}
                       className="flex-1 py-2 rounded-lg text-[9px] font-semibold transition-all"
-                      style={btSampleSize === n ? { background: '#C8A96E', color: '#07070A' } : { color: '#44445A' }}>{n}J</button>
+                      style={btSampleSize === n ? { background: '#39D353', color: '#07070A' } : { color: '#44445A' }}>{n}J</button>
                   ))}
                 </div>
               </div>
               <div className="flex items-end">
                 <button onClick={runProBacktest} disabled={btRunning}
                   className="w-full py-3 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
-                  style={{ background: '#C8A96E', color: '#07070A' }}>
+                  style={{ background: '#39D353', color: '#07070A' }}>
                   {btRunning ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-rotate"></i>}
                   {btRunning ? 'Calculando...' : 'Atualizar'}
                 </button>
@@ -377,17 +377,17 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
               {/* Nuclear Over — sem cyan, usa accent */}
               {nuclearOver && (
                 <div className="relative rounded-2xl p-5 flex items-center justify-between overflow-hidden"
-                  style={{ background: '#0D0D12', border: '1px solid rgba(200,169,110,0.25)', borderLeft: '3px solid #C8A96E' }}>
-                  <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.04] blur-[50px] pointer-events-none" style={{ background: '#C8A96E', borderRadius: '50%' }}></div>
+                  style={{ background: '#0D0D12', border: '1px solid rgba(57, 211, 83,0.25)', borderLeft: '3px solid #39D353' }}>
+                  <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.04] blur-[50px] pointer-events-none" style={{ background: '#39D353', borderRadius: '50%' }}></div>
                   <div className="flex items-center gap-4 relative z-10">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center animate-accent-glow"
-                      style={{ background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)' }}>
-                      <i className="fa-solid fa-bolt text-lg" style={{ color: '#C8A96E' }}></i>
+                      style={{ background: 'rgba(57, 211, 83,0.12)', border: '1px solid rgba(57, 211, 83,0.25)' }}>
+                      <i className="fa-solid fa-bolt text-lg" style={{ color: '#39D353' }}></i>
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#C8A96E' }}></span>
-                        <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#C8A96E' }}>Padrão Nuclear Detectado</span>
+                        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#39D353' }}></span>
+                        <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#39D353' }}>Padrão Nuclear Detectado</span>
                       </div>
                       <div className="text-lg font-semibold tracking-tight" style={{ color: '#F0F0F4' }}>{nuclearOver.league}</div>
                       <div className="text-[9px] mt-0.5" style={{ color: '#8888A0' }}>Histórico de Gols — Over 3.5 FT</div>
@@ -395,8 +395,8 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                   </div>
                   <div className="flex flex-col items-end relative z-10">
                     <div className="flex items-baseline gap-0.5">
-                      <span className="text-4xl font-bold font-mono-numbers" style={{ color: '#C8A96E' }}>{nuclearOver.stats['over_3.5_ft']?.toFixed(0)}</span>
-                      <span className="text-lg font-semibold" style={{ color: 'rgba(200,169,110,0.6)' }}>%</span>
+                      <span className="text-4xl font-bold font-mono-numbers" style={{ color: '#39D353' }}>{nuclearOver.stats['over_3.5_ft']?.toFixed(0)}</span>
+                      <span className="text-lg font-semibold" style={{ color: 'rgba(57, 211, 83,0.6)' }}>%</span>
                     </div>
                     <span className="text-[8px] font-medium uppercase tracking-wider mt-1" style={{ color: '#44445A' }}>Over 3.5 FT</span>
                   </div>
@@ -446,8 +446,8 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
           <div className="rounded-2xl overflow-hidden" style={{ background: '#0D0D12', border: '1px solid #1E1E28' }}>
             <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid #1E1E28', background: '#13131A' }}>
               <div className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)' }}>
-                  <span className="text-[9px] font-bold" style={{ color: '#C8A96E' }}>02</span>
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(57, 211, 83,0.1)', border: '1px solid rgba(57, 211, 83,0.2)' }}>
+                  <span className="text-[9px] font-bold" style={{ color: '#39D353' }}>02</span>
                 </div>
                 <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#8888A0' }}>Painel de Calor das Ligas</h3>
               </div>
@@ -461,13 +461,13 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                 <thead>
                   <tr style={{ background: '#13131A' }}>
                     <th rowSpan={2} className="p-4 text-[9px] font-medium uppercase tracking-wider" style={{ color: '#44445A', borderRight: '1px solid #1E1E28' }}>Liga</th>
-                    <th colSpan={4} className="p-2.5 text-[8px] font-medium uppercase tracking-wider text-center" style={{ color: '#C8A96E', borderBottom: '1px solid #1E1E28', borderRight: '1px solid rgba(200,169,110,0.15)' }}>1º Tempo (HT)</th>
+                    <th colSpan={4} className="p-2.5 text-[8px] font-medium uppercase tracking-wider text-center" style={{ color: '#39D353', borderBottom: '1px solid #1E1E28', borderRight: '1px solid rgba(57, 211, 83,0.15)' }}>1º Tempo (HT)</th>
                     <th colSpan={4} className="p-2.5 text-[8px] font-medium uppercase tracking-wider text-center" style={{ color: '#34D399', borderBottom: '1px solid #1E1E28' }}>Jogo Completo (FT)</th>
                   </tr>
                   <tr style={{ background: '#0D0D12' }}>
                     {PRO_MARKETS.map((m, i) => (
                       <th key={m} className="p-3 text-[8px] font-medium text-center whitespace-nowrap"
-                        style={{ color: '#44445A', borderRight: `1px solid ${i === 3 ? 'rgba(200,169,110,0.15)' : '#161620'}` }}>
+                        style={{ color: '#44445A', borderRight: `1px solid ${i === 3 ? 'rgba(57, 211, 83,0.15)' : '#161620'}` }}>
                         {m.replace('over_', '+').replace('_ht', '').replace('_ft', '').replace('btts', 'BTTS').toUpperCase()}
                       </th>
                     ))}
@@ -494,7 +494,7 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
 
                         return (
                           <td key={mi} className="p-3 text-center"
-                            style={{ ...cellStyle, borderRight: `1px solid ${mi === 3 ? 'rgba(200,169,110,0.1)' : '#161620'}` }}>
+                            style={{ ...cellStyle, borderRight: `1px solid ${mi === 3 ? 'rgba(57, 211, 83,0.1)' : '#161620'}` }}>
                             <div className="flex flex-col items-center gap-1">
                               <span className="text-[11px] font-mono-numbers" style={textStyle}>{val.toFixed(1)}%</span>
                               <DotStreak results={row.hits[market] || []} rowIndex={i} align={mi >= 6 ? 'right' : (mi <= 2 ? 'left' : 'center')} />
@@ -512,8 +512,8 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
           {/* CENÁRIOS DE ANÁLISE */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)' }}>
-                <span className="text-[9px] font-bold" style={{ color: '#C8A96E' }}>03</span>
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(57, 211, 83,0.1)', border: '1px solid rgba(57, 211, 83,0.2)' }}>
+                <span className="text-[9px] font-bold" style={{ color: '#39D353' }}>03</span>
               </div>
               <h3 className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#8888A0' }}>Cenários de Análise</h3>
             </div>
@@ -597,13 +597,13 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                   {scenarioPlayers.map((sig, i) => (
                     <div key={i} className="rounded-xl p-3.5 flex justify-between items-center transition-all"
                       style={{
-                        background: sig.momentum === 'heating' ? 'rgba(200,169,110,0.04)' : '#13131A',
-                        border: `1px solid ${sig.momentum === 'heating' ? 'rgba(200,169,110,0.15)' : '#1E1E28'}`
+                        background: sig.momentum === 'heating' ? 'rgba(57, 211, 83,0.04)' : '#13131A',
+                        border: `1px solid ${sig.momentum === 'heating' ? 'rgba(57, 211, 83,0.15)' : '#1E1E28'}`
                       }}>
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                           style={{ background: '#1E1E28', border: '1px solid #2A2A35' }}>
-                          <i className="fa-solid fa-user text-[8px]" style={{ color: sig.momentum === 'heating' ? '#C8A96E' : '#44445A' }}></i>
+                          <i className="fa-solid fa-user text-[8px]" style={{ color: sig.momentum === 'heating' ? '#39D353' : '#44445A' }}></i>
                         </div>
                         <div>
                           <div className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: '#F0F0F4' }}>{sig.player}</div>
@@ -639,13 +639,13 @@ export const FifaAnalyticsDashboard: React.FC<FifaAnalyticsDashboardProps> = ({ 
                   {scenarioVictories.map((sig, i) => (
                     <div key={i} className="rounded-xl p-3.5 flex justify-between items-center transition-all"
                       style={{
-                        background: sig.momentum === 'heating' ? 'rgba(200,169,110,0.04)' : '#13131A',
-                        border: `1px solid ${sig.momentum === 'heating' ? 'rgba(200,169,110,0.15)' : '#1E1E28'}`
+                        background: sig.momentum === 'heating' ? 'rgba(57, 211, 83,0.04)' : '#13131A',
+                        border: `1px solid ${sig.momentum === 'heating' ? 'rgba(57, 211, 83,0.15)' : '#1E1E28'}`
                       }}>
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                           style={{ background: '#1E1E28', border: '1px solid #2A2A35' }}>
-                          <i className="fa-solid fa-crown text-[8px]" style={{ color: sig.momentum === 'heating' ? '#C8A96E' : '#44445A' }}></i>
+                          <i className="fa-solid fa-crown text-[8px]" style={{ color: sig.momentum === 'heating' ? '#39D353' : '#44445A' }}></i>
                         </div>
                         <div>
                           <div className="text-[11px] font-semibold" style={{ color: '#F0F0F4' }}>{sig.player}</div>

@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { LeagueStats } from '../types';
 import { getLeagueInfo } from '../services/analyzer';
@@ -14,9 +14,9 @@ export const LeagueThermometer: React.FC<LeagueThermometerProps> = ({ stats, onV
   const getStatusInfo = () => {
     switch (stats.temperature) {
       case 'hot': return { label: 'MERCADO HOT', color: '#F87171', bg: '#F87171', icon: 'fa-fire' };
-      case 'ht_pro': return { label: 'HT PRO SNIPER', color: '#C8A96E', bg: '#C8A96E', icon: 'fa-crosshairs' };
-      case 'ft_pro': return { label: 'FT PRO ENGINE', color: '#C8A96E', bg: '#C8A96E', icon: 'fa-gears' };
-      case 'warm': return { label: 'EM ALTA', color: '#C8A96E', bg: '#C8A96E', icon: 'fa-arrow-trend-up' };
+      case 'ht_pro': return { label: 'HT PRO SNIPER', color: '#39D353', bg: '#39D353', icon: 'fa-crosshairs' };
+      case 'ft_pro': return { label: 'FT PRO ENGINE', color: '#39D353', bg: '#39D353', icon: 'fa-gears' };
+      case 'warm': return { label: 'EM ALTA', color: '#39D353', bg: '#39D353', icon: 'fa-arrow-trend-up' };
       case 'cold': return { label: 'EM QUEDA', color: '#8888A0', bg: '#8888A0', icon: 'fa-arrow-trend-down' };
       default: return { label: 'ESTÁVEL', color: '#44445A', bg: '#44445A', icon: 'fa-scale-balanced' };
     }
@@ -29,7 +29,7 @@ export const LeagueThermometer: React.FC<LeagueThermometerProps> = ({ stats, onV
   };
 
   const MetricItem = ({ label, val, isBad }: { label: string, val: number, isBad?: boolean }) => {
-    const mainColor = val >= 70 ? (isBad ? '#F87171' : '#34D399') : val >= 50 ? '#C8A96E' : (isBad ? '#34D399' : '#F87171');
+    const mainColor = val >= 70 ? (isBad ? '#F87171' : '#34D399') : val >= 50 ? '#39D353' : (isBad ? '#34D399' : '#F87171');
     const softColor = mainColor + '60';
 
     return (

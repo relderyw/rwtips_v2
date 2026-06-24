@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { Gamepad2, Trophy, Dribbble, ChevronRight, Sparkles, Disc } from 'lucide-react';
 
@@ -65,18 +65,18 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userNa
 
             {/* Accent glow */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-[0.06] blur-[120px] pointer-events-none"
-                style={{ background: '#C8A96E', borderRadius: '50%' }}></div>
+                style={{ background: '#39D353', borderRadius: '50%' }}></div>
 
             <div className="max-w-5xl w-full z-10">
                 {/* Header */}
                 <header className="text-center mb-14 animate-in fade-in slide-in-from-top-4 duration-700">
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5"
-                        style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.25)' }}>
-                        <Sparkles className="w-3.5 h-3.5" style={{ color: '#C8A96E' }} />
-                        <span className="text-[10px] font-medium uppercase tracking-[0.25em]" style={{ color: '#C8A96E' }}>RW TIPS — Analytics Platform</span>
+                        style={{ background: 'rgba(57, 211, 83,0.1)', border: '1px solid rgba(57, 211, 83,0.25)' }}>
+                        <Sparkles className="w-3.5 h-3.5" style={{ color: '#39D353' }} />
+                        <span className="text-[10px] font-medium uppercase tracking-[0.25em]" style={{ color: '#39D353' }}>RW TIPS — Analytics Platform</span>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3" style={{ color: '#F0F0F4' }}>
-                        Selecione o <span style={{ color: '#C8A96E' }}>Módulo</span>
+                        Selecione o <span style={{ color: '#39D353' }}>Módulo</span>
                     </h1>
                     <p className="text-sm" style={{ color: '#8888A0', maxWidth: '480px', margin: '0 auto' }}>
                         Escolha a modalidade de análise para iniciar sua sessão de trading esportivo.
@@ -104,7 +104,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userNa
                                     animationDelay: `${idx * 120}ms`,
                                     boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
                                 }}
-                                onMouseEnter={e => { if (isAllowed) { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(200,169,110,0.25)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(200,169,110,0.1)'; } }}
+                                onMouseEnter={e => { if (isAllowed) { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(57, 211, 83,0.25)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(57, 211, 83,0.1)'; } }}
                                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1E1E28'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(0,0,0,0.5)'; }}
                             >
                                 {/* Background Image */}
@@ -140,10 +140,10 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userNa
 
                                     {/* CTA */}
                                     <div className="flex items-center gap-2.5 text-xs font-medium transition-all group-hover:gap-4"
-                                        style={{ color: '#C8A96E' }}>
+                                        style={{ color: '#39D353' }}>
                                         {isAllowed ? 'Acessar módulo' : 'Sem acesso'}
                                         <div className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300"
-                                            style={{ border: '1px solid rgba(200,169,110,0.25)', background: 'rgba(200,169,110,0.1)' }}>
+                                            style={{ border: '1px solid rgba(57, 211, 83,0.25)', background: 'rgba(57, 211, 83,0.1)' }}>
                                             <ChevronRight className="w-4 h-4" />
                                         </div>
                                     </div>
@@ -160,7 +160,7 @@ export const ModuleSelector: React.FC<ModuleSelectorProps> = ({ onSelect, userNa
                             {onAdminClick && (
                                 <button onClick={onAdminClick}
                                     className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all"
-                                    style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.2)', color: '#C8A96E' }}>
+                                    style={{ background: 'rgba(57, 211, 83,0.1)', border: '1px solid rgba(57, 211, 83,0.2)', color: '#39D353' }}>
                                     <i className="fa-solid fa-shield-halved text-xs"></i>
                                     Painel Admin
                                 </button>

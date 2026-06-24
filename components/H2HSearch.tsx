@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { fetchConfronto, fetchPlayers } from '../services/api';
 
 interface H2HStats {
@@ -101,7 +101,7 @@ const calculateMetrics = (matches: ParsedMatch[]) => {
 
 const getBarColor = (value: number): string => {
     if (value >= 80) return '#10b981'; // Green
-    if (value >= 40) return '#f59e0b'; // Amber/Yellow
+    if (value >= 40) return '#39D353'; // Amber/Yellow
     return '#f97316'; // Orange/Red
 };
 
@@ -350,7 +350,7 @@ export const H2HSearch: React.FC = () => {
                     <div className="bg-black border border-zinc-800 rounded-2xl p-4">
                         <div className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Modo de Análise</div>
                         <div className="flex gap-2 mb-4">
-                            <button onClick={() => setAnalysisMode('h2h')} className={`flex-1 py-2.5 rounded-xl font-bold text-xs transition-all ${analysisMode === 'h2h' ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}>H2H</button>
+                            <button onClick={() => setAnalysisMode('h2h')} className={`flex-1 py-2.5 rounded-xl font-bold text-xs transition-all ${analysisMode === 'h2h' ? 'bg-gradient-to-r from-green-500 to-green-400 text-black' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}>H2H</button>
                             <button onClick={() => setAnalysisMode('individual')} className={`flex-1 py-2.5 rounded-xl font-bold text-xs transition-all ${analysisMode === 'individual' ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-black' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}>INDIVIDUAL</button>
                         </div>
                         <div className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Nº de Jogos</div>
@@ -435,11 +435,11 @@ export const H2HSearch: React.FC = () => {
                         {/* DRAW */}
                         <div className="space-y-3">
                             <div className="flex items-end justify-between">
-                                <span className="text-[10px] text-amber-500 font-black uppercase tracking-wider">Empate</span>
+                                <span className="text-[10px] text-green-500 font-black uppercase tracking-wider">Empate</span>
                                 <span className="text-4xl font-black text-white leading-none">{stats.p1.drawPct.toFixed(0)}%</span>
                             </div>
                             <div className="h-1.5 bg-zinc-900 rounded-full overflow-hidden">
-                                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${stats.p1.drawPct}%` }}></div>
+                                <div className="h-full bg-green-500 rounded-full" style={{ width: `${stats.p1.drawPct}%` }}></div>
                             </div>
                         </div>
 
@@ -464,7 +464,7 @@ export const H2HSearch: React.FC = () => {
                         <div className="grid grid-cols-2 gap-2">
                             {/* HT Stats */}
                             <div className="bg-[#1a1b2e]/50 border border-zinc-800/50 rounded-xl p-2.5">
-                                <div className="text-[9px] text-amber-400 uppercase mb-1.5 font-black tracking-wider">Half Time</div>
+                                <div className="text-[9px] text-green-400 uppercase mb-1.5 font-black tracking-wider">Half Time</div>
                                 <div className="space-y-1">
                                     <div className="flex items-center justify-between">
                                         <span className="text-[9px] text-zinc-500 uppercase font-bold">Gols Pro</span>
@@ -500,7 +500,7 @@ export const H2HSearch: React.FC = () => {
                         <div className="grid grid-cols-2 gap-2">
                             {/* HT Stats */}
                             <div className="bg-[#1a1b2e]/50 border border-zinc-800/50 rounded-xl p-2.5">
-                                <div className="text-[9px] text-amber-400 uppercase mb-1.5 font-black tracking-wider">Half Time</div>
+                                <div className="text-[9px] text-green-400 uppercase mb-1.5 font-black tracking-wider">Half Time</div>
                                 <div className="space-y-1">
                                     <div className="flex items-center justify-between">
                                         <span className="text-[9px] text-zinc-500 uppercase font-bold">Gols Pro</span>
@@ -541,7 +541,7 @@ export const H2HSearch: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4">
                         {/* HT METRICS */}
                         <div className="bg-zinc-900/20 rounded-xl p-2.5 border border-zinc-800/50">
-                            <div className="text-[10px] font-black text-amber-400 mb-2.5 uppercase tracking-widest text-center border-b border-zinc-800 pb-1.5">Half Time (HT)</div>
+                            <div className="text-[10px] font-black text-green-400 mb-2.5 uppercase tracking-widest text-center border-b border-zinc-800 pb-1.5">Half Time (HT)</div>
                             <div className="space-y-1.5">
                                 {[
                                     { label: '0.5HT', value: stats.p1.ht_05 },
@@ -651,7 +651,7 @@ export const H2HSearch: React.FC = () => {
                                             {/* RIGHT - Opponent */}
                                             <div className="text-right flex-1">
                                                 <div className="text-xs font-black text-zinc-500 leading-tight">{oppName.slice(0, 12)}</div>
-                                                <div className={`w-1.5 h-1.5 rounded-full ml-auto mt-0.5 ${dot.color === 'p1' ? 'bg-emerald-500' : dot.color === 'p2' ? 'bg-rose-500' : 'bg-amber-500'}`}></div>
+                                                <div className={`w-1.5 h-1.5 rounded-full ml-auto mt-0.5 ${dot.color === 'p1' ? 'bg-emerald-500' : dot.color === 'p2' ? 'bg-rose-500' : 'bg-green-500'}`}></div>
                                             </div>
                                         </div>
                                     </div>
@@ -723,7 +723,7 @@ export const H2HSearch: React.FC = () => {
 
                                             <div className="text-right flex-1">
                                                 <div className="text-xs font-black text-zinc-500 leading-tight">{oppName.slice(0, 12)}</div>
-                                                <div className={`w-1.5 h-1.5 rounded-full ml-auto mt-0.5 ${dot.color === 'p1' ? 'bg-emerald-500' : dot.color === 'p2' ? 'bg-rose-500' : 'bg-amber-500'}`}></div>
+                                                <div className={`w-1.5 h-1.5 rounded-full ml-auto mt-0.5 ${dot.color === 'p1' ? 'bg-emerald-500' : dot.color === 'p2' ? 'bg-rose-500' : 'bg-green-500'}`}></div>
                                             </div>
                                         </div>
                                     </div>

@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import { auth, db } from '../services/firebase';
 import { sendLoginNotification } from '../services/telegram';
@@ -102,7 +102,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
                 {/* Logo */}
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-2xl overflow-hidden"
-                    style={{ background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.2)' }}>
+                    style={{ background: 'rgba(57, 211, 83,0.08)', border: '1px solid rgba(57, 211, 83,0.2)' }}>
                     <img src="https://i.ibb.co/G4Y8sHMk/Chat-GPT-Image-21-de-abr-de-2025-16-14-34-1.png" alt="RW" className="w-11 h-11 object-contain" />
                 </div>
 

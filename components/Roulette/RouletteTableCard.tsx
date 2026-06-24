@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { RouletteTable, getNumberColor } from '../../services/rouletteApi';
 import { analyzeRouletteTable, StrategyOpportunity } from './utils/rouletteStrategies';
@@ -87,15 +87,15 @@ function HistoryModal({ table, onClose }: { table: RouletteTable; onClose: () =>
         onClick={e => e.stopPropagation()}
       >
         {/* Top glow bar */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8A96E]/60 to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#39D353]/60 to-transparent" />
 
         {/* Header */}
         <div className="flex items-center gap-4 p-6 pb-4 border-b border-white/[0.06]">
-          <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 flex items-center justify-center bg-[#C8A96E]/10">
+          <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 flex items-center justify-center bg-[#39D353]/10">
             {table.image && !imgError ? (
               <img src={table.image} alt={table.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
             ) : (
-              <i className="fa-solid fa-dharmachakra text-[#C8A96E]/60 text-lg" />
+              <i className="fa-solid fa-dharmachakra text-[#39D353]/60 text-lg" />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -166,7 +166,7 @@ function HistoryModal({ table, onClose }: { table: RouletteTable; onClose: () =>
               <div key={`hist-${i}`} className="relative">
                 <NumberBall num={num} size="md" newest={i === 0} />
                 {i === 0 && (
-                  <span className="absolute -top-2 -right-1 text-[7px] bg-[#C8A96E] text-black font-black px-1 rounded-full">1º</span>
+                  <span className="absolute -top-2 -right-1 text-[7px] bg-[#39D353] text-black font-black px-1 rounded-full">1º</span>
                 )}
               </div>
             ))}
@@ -187,7 +187,7 @@ function StrategyOpportunityCard({ opportunity }: { opportunity: StrategyOpportu
     color: 'from-red-500/20 to-red-900/20 border-red-500/30',
     terminal: 'from-purple-500/20 to-purple-900/20 border-purple-500/30',
     column: 'from-blue-500/20 to-blue-900/20 border-blue-500/30',
-    dozen: 'from-amber-500/20 to-amber-900/20 border-amber-500/30'
+    dozen: 'from-green-500/20 to-green-900/20 border-green-500/30'
   };
   
   const typeIcons = {
@@ -206,7 +206,7 @@ function StrategyOpportunityCard({ opportunity }: { opportunity: StrategyOpportu
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <div className="text-[9px] font-black text-emerald-400">{opportunity.confidence}%</div>
-          <div className="text-[9px] font-black text-[#C8A96E]">{opportunity.streak}×</div>
+          <div className="text-[9px] font-black text-[#39D353]">{opportunity.streak}×</div>
         </div>
       </div>
       <p className="text-[9px] text-white/60 leading-relaxed">{opportunity.description}</p>
@@ -269,7 +269,7 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
         {/* Top accent line */}
         <div
           className="absolute top-0 left-6 right-6 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-          style={{ background: 'linear-gradient(90deg, transparent, #C8A96E50, transparent)' }}
+          style={{ background: 'linear-gradient(90deg, transparent, #39D35350, transparent)' }}
         />
 
         {/* Card inner */}
@@ -280,10 +280,10 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
             {/* Image */}
             <div className="relative shrink-0">
               <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-lg flex items-center justify-center"
-                style={{ background: 'rgba(200,169,110,0.08)' }}>
+                style={{ background: 'rgba(57, 211, 83,0.08)' }}>
                 {table.image && !imgError
                   ? <img src={table.image} alt={table.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
-                  : <i className="fa-solid fa-dharmachakra text-[#C8A96E]/60 text-xl" />}
+                  : <i className="fa-solid fa-dharmachakra text-[#39D353]/60 text-xl" />}
               </div>
               {/* Online dot */}
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-[#0a0a0f] shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
@@ -293,7 +293,7 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
             <div className="flex-1 min-w-0">
               <h3 className="text-[13px] font-bold text-white leading-tight truncate">{table.name}</h3>
               <div className="flex items-center gap-1.5 mt-1">
-                <i className="fa-solid fa-user-tie text-[9px] text-[#C8A96E]/70" />
+                <i className="fa-solid fa-user-tie text-[9px] text-[#39D353]/70" />
                 <span className="text-[10px] text-[#8888A0] font-medium truncate">{table.dealerName || 'Auto'}</span>
               </div>
             </div>
@@ -334,7 +334,7 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
               {table.lastResults.length > 0 && (
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="flex items-center gap-1 text-[8px] font-bold text-[#C8A96E]/70 hover:text-[#C8A96E] transition-colors uppercase tracking-wider"
+                  className="flex items-center gap-1 text-[8px] font-bold text-[#39D353]/70 hover:text-[#39D353] transition-colors uppercase tracking-wider"
                 >
                   <i className="fa-solid fa-clock-rotate-left text-[7px]" />
                   Ver histórico
@@ -344,8 +344,8 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
 
             {table.lastResults.length === 0 ? (
               <div className="flex items-center gap-2 py-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                <span className="text-[9px] text-amber-500/70 font-medium">Aguardando dados do histórico…</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[9px] text-green-500/70 font-medium">Aguardando dados do histórico…</span>
               </div>
             ) : (
               <div className="flex gap-1.5 overflow-x-hidden">
@@ -373,11 +373,11 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
           {analysis.opportunities.length > 0 && (
             <div
               className="rounded-2xl p-3 space-y-2.5"
-              style={{ background: 'rgba(200, 169, 110, 0.05)', border: '1px solid rgba(200, 169, 110, 0.15)' }}
+              style={{ background: 'rgba(57, 211, 83, 0.05)', border: '1px solid rgba(57, 211, 83, 0.15)' }}
             >
               <div className="flex items-center gap-2">
-                <i className="fa-solid fa-bullseye text-[9px] text-[#C8A96E]" />
-                <span className="text-[8px] uppercase tracking-[0.22em] font-bold text-[#C8A96E]/80">
+                <i className="fa-solid fa-bullseye text-[9px] text-[#39D353]" />
+                <span className="text-[8px] uppercase tracking-[0.22em] font-bold text-[#39D353]/80">
                   Oportunidades Detectadas ({analysis.opportunities.length})
                 </span>
               </div>

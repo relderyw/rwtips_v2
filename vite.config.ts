@@ -146,6 +146,20 @@ export default defineConfig(({ mode }) => {
                     });
                 }
             },
+            '/api/gaming-cdn': {
+                target: 'https://prod-cdn-gaming.freetls.fastly.net',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/gaming-cdn/, ''),
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, _req, _res) => {
+                        proxyReq.setHeader('Accept', 'image/webp,image/png,image/*,*/*');
+                        proxyReq.setHeader('Origin', 'https://superbet.bet.br');
+                        proxyReq.setHeader('Referer', 'https://superbet.bet.br/');
+                        proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36');
+                    });
+                }
+            },
             '/api/superbet-gaming': {
                 target: 'https://superbet-gaming-production.global.ssl.fastly.net',
                 changeOrigin: true,

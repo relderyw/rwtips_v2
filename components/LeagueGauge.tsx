@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 export const LeagueGauge = ({ value }: { value: number }) => {
   const radius = 40;
@@ -14,7 +14,7 @@ export const LeagueGauge = ({ value }: { value: number }) => {
         <defs>
           <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ef4444" />
-            <stop offset="50%" stopColor="#f59e0b" />
+            <stop offset="50%" stopColor="#39D353" />
             <stop offset="100%" stopColor="#10b981" />
           </linearGradient>
         </defs>

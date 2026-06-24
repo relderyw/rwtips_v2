@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useMemo } from 'react';
 import { getLeagueInfo, ALLOWED_LEAGUES } from '../../services/analyzer';
 import {
@@ -1064,7 +1064,7 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
                   {/* Result Indicator */}
                   <div className={`w-1.5 h-12 rounded-full shrink-0 ${bet.resultado === 'green' || bet.resultado === 'meio-green' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' :
                     bet.resultado === 'red' || bet.resultado === 'meio-red' ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.3)]' :
-                      bet.resultado === 'reembolso' ? 'bg-amber-500' : 'bg-white/10'
+                      bet.resultado === 'reembolso' ? 'bg-green-500' : 'bg-white/10'
                     }`}></div>
 
                   <div className="flex-1 w-full min-w-0 grid grid-cols-2 md:grid-cols-5 gap-4 items-center">

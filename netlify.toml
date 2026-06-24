@@ -19,6 +19,13 @@
   status = 200
   force = true
 
+# Proxy for Gaming CDN (Evolution/Superbet game images)
+[[redirects]]
+  from = "/api/gaming-cdn/*"
+  to = "https://prod-cdn-gaming.freetls.fastly.net/:splat"
+  status = 200
+  force = true
+
 # Proxy for Superbet API
 [[redirects]]
   from = "/api/superbet-gaming/*"

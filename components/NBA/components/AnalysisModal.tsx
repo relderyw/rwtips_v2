@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect } from 'react';
 import { X, BarChart3, Users, BadgeDollarSign, Activity, AlertCircle, TrendingUp, History, Percent } from 'lucide-react';
 import { GameEvent, SeasonStats, Projections } from '../types';
@@ -77,13 +77,13 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ game, onClose }) => {
 
   const getProbColor = (prob: number) => {
     if (prob >= 60) return 'text-emerald-500';
-    if (prob >= 40) return 'text-amber-500';
+    if (prob >= 40) return 'text-green-500';
     return 'text-red-500';
   };
 
   const getProbShadow = (prob: number) => {
     if (prob >= 60) return 'rgba(16,185,129,0.5)';
-    if (prob >= 40) return 'rgba(245,158,11,0.5)';
+    if (prob >= 40) return 'rgba(57, 211, 83,0.5)';
     return 'rgba(239,68,68,0.5)';
   };
 
@@ -418,7 +418,7 @@ const OverviewPlayerCard = ({ title, logo, players, isHome }: { title: string, l
     <div className="space-y-5">
       <OverviewPlayerRow label="PONTOS" color="bg-emerald-500" name={players?.pointsAverage?.[0]?.player.displayName} val={players?.pointsAverage?.[0]?.stats.pointsAverage} />
       <OverviewPlayerRow label="REBOTES" color="bg-blue-500" name={players?.reboundsPerGame?.[0]?.player.displayName} val={players?.reboundsPerGame?.[0]?.stats.reboundsPerGame} />
-      <OverviewPlayerRow label="ASSISTÊNCIAS" color="bg-amber-500" name={players?.assistsPerGame?.[0]?.player.displayName} val={players?.assistsPerGame?.[0]?.stats.assistsPerGame} />
+      <OverviewPlayerRow label="ASSISTÊNCIAS" color="bg-green-500" name={players?.assistsPerGame?.[0]?.player.displayName} val={players?.assistsPerGame?.[0]?.stats.assistsPerGame} />
     </div>
   </div>
 );
@@ -514,7 +514,7 @@ const BetRecommendation = ({ title, value, conf }: { title: string; value: strin
       <span className="text-xl font-bold text-white group-hover:text-emerald-500 transition-colors tracking-tight">{value}</span>
     </div>
     <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${conf === 'ALTA' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]' :
-      conf === 'MÉDIA' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30' :
+      conf === 'MÉDIA' ? 'bg-green-500/10 text-green-500 border border-green-500/30' :
         'bg-red-500/10 text-red-500 border border-red-500/30'
       }`}>
       {conf}

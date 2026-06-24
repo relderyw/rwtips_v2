@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LiveEvent, HistoryMatch } from '../types';
 import { calculatePlayerStats, getLeagueInfo, calculateMetricProbability, normalize } from '../services/analyzer';
@@ -50,7 +50,7 @@ const FormDots = ({ results, stats }: { results: string[]; stats: any }) => {
 
         const isWin = r === 'W';
         const isDraw = r === 'D';
-        const dotColor = isWin ? '#34D399' : isDraw ? '#FBBF24' : '#F87171';
+        const dotColor = isWin ? '#34D399' : isDraw ? '#4ade80' : '#F87171';
         const statusText = isWin ? "VITÓRIA" : isDraw ? "EMPATE" : "DERROTA";
 
         const dateObj = new Date(game.data_realizacao);
@@ -128,8 +128,8 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
 
   // Metric bar — color based on value only (semantic)
   const MetricRow = ({ label, value }: { label: string; value: number }) => {
-    const fillColor = value >= 70 ? '#34D399' : value >= 50 ? 'rgba(200,169,110,0.75)' : 'rgba(248,113,113,0.6)';
-    const textColor = value >= 70 ? '#34D399' : value >= 50 ? '#C8A96E' : '#F87171';
+    const fillColor = value >= 70 ? '#34D399' : value >= 50 ? 'rgba(57, 211, 83,0.75)' : 'rgba(248,113,113,0.6)';
+    const textColor = value >= 70 ? '#34D399' : value >= 50 ? '#39D353' : '#F87171';
 
     return (
       <div className="flex items-center gap-2.5 mb-2 last:mb-0">
@@ -186,26 +186,26 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
       className={`relative flex flex-col transition-all duration-300 h-full min-h-[480px] rounded-xl overflow-visible ${isSignaled ? 'animate-accent-glow' : ''}`}
       style={{
         background: '#0D0D12',
-        border: `1px solid ${isSignaled ? 'rgba(200,169,110,0.3)' : '#1E1E28'}`,
-        borderLeft: `3px solid ${isSignaled ? '#C8A96E' : leagueInfo.color + '60'}`,
-        boxShadow: isSignaled ? '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(200,169,110,0.1)' : '0 4px 20px rgba(0,0,0,0.4)',
+        border: `1px solid ${isSignaled ? 'rgba(57, 211, 83,0.3)' : '#1E1E28'}`,
+        borderLeft: `3px solid ${isSignaled ? '#39D353' : leagueInfo.color + '60'}`,
+        boxShadow: isSignaled ? '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(57, 211, 83,0.1)' : '0 4px 20px rgba(0,0,0,0.4)',
       }}
     >
       {/* SIGNAL PANEL */}
       {potential !== 'none' && (
         <div className="mx-3 mt-3 p-3 rounded-xl"
           style={{
-            background: isSignaled ? 'rgba(200,169,110,0.06)' : '#13131A',
-            border: `1px solid ${isSignaled ? 'rgba(200,169,110,0.2)' : '#1E1E28'}`,
+            background: isSignaled ? 'rgba(57, 211, 83,0.06)' : '#13131A',
+            border: `1px solid ${isSignaled ? 'rgba(57, 211, 83,0.2)' : '#1E1E28'}`,
           }}>
           <div className="flex items-center justify-between">
             <div className={`flex items-center gap-2.5 ${!isSignaled ? 'opacity-40' : ''}`}>
               <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: isSignaled ? 'rgba(200,169,110,0.12)' : '#1E1E28', border: `1px solid ${isSignaled ? 'rgba(200,169,110,0.25)' : '#1E1E28'}` }}>
-                <i className={`fa-solid ${theme.icon} text-xs`} style={{ color: isSignaled ? '#C8A96E' : '#44445A' }}></i>
+                style={{ background: isSignaled ? 'rgba(57, 211, 83,0.12)' : '#1E1E28', border: `1px solid ${isSignaled ? 'rgba(57, 211, 83,0.25)' : '#1E1E28'}` }}>
+                <i className={`fa-solid ${theme.icon} text-xs`} style={{ color: isSignaled ? '#39D353' : '#44445A' }}></i>
               </div>
               <div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider block" style={{ color: isSignaled ? '#C8A96E' : '#44445A' }}>
+                <span className="text-[11px] font-semibold uppercase tracking-wider block" style={{ color: isSignaled ? '#39D353' : '#44445A' }}>
                   {theme.label}
                   {!isSignaled && <span className="ml-2 text-[8px] font-normal" style={{ color: '#44445A' }}>OBSERVANDO</span>}
                 </span>
@@ -217,12 +217,12 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
 
             <div className={`flex flex-col items-end gap-1 ${!isSignaled ? 'opacity-30' : ''}`}>
               <span className="text-sm font-bold tabular-nums font-mono-numbers"
-                style={{ color: confidence && confidence >= 85 ? '#34D399' : confidence && confidence >= 75 ? '#C8A96E' : '#F87171' }}>
+                style={{ color: confidence && confidence >= 85 ? '#34D399' : confidence && confidence >= 75 ? '#39D353' : '#F87171' }}>
                 {confidence}%
               </span>
               <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: '#1E1E28' }}>
                 <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${confidence}%`, background: confidence && confidence >= 85 ? '#34D399' : confidence && confidence >= 75 ? '#C8A96E' : '#F87171' }}></div>
+                  style={{ width: `${confidence}%`, background: confidence && confidence >= 85 ? '#34D399' : confidence && confidence >= 75 ? '#39D353' : '#F87171' }}></div>
               </div>
             </div>
           </div>
@@ -255,7 +255,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
               style={{ background: '#13131A', border: '1px solid #1E1E28' }}
               title={isPinned ? "Desfixar" : "Fixar"}>
               <i className={`fa-solid fa-star text-xs ${isPinned ? '' : 'opacity-30 hover:opacity-60'}`}
-                style={{ color: isPinned ? '#C8A96E' : '#F0F0F4' }}></i>
+                style={{ color: isPinned ? '#39D353' : '#F0F0F4' }}></i>
             </button>
           )}
           {/* Timer */}
@@ -275,8 +275,8 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             {p1.lastMatches && p1.lastMatches.length >= 3 ? (
               <FormDots results={p1.last5} stats={p1} />
             ) : (
-              <div className="mt-2 px-2 py-1 rounded-lg inline-block" style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }}>
-                <span className="text-[7px] font-medium" style={{ color: '#FBBF24' }}>Poucos dados</span>
+              <div className="mt-2 px-2 py-1 rounded-lg inline-block" style={{ background: 'rgba(74, 222, 128,0.06)', border: '1px solid rgba(74, 222, 128,0.15)' }}>
+                <span className="text-[7px] font-medium" style={{ color: '#4ade80' }}>Poucos dados</span>
               </div>
             )}
           </div>
@@ -305,8 +305,8 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             {p2.lastMatches && p2.lastMatches.length >= 3 ? (
               <FormDots results={p2.last5} stats={p2} />
             ) : (
-              <div className="mt-2 px-2 py-1 rounded-lg inline-block" style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }}>
-                <span className="text-[7px] font-medium" style={{ color: '#FBBF24' }}>Poucos dados</span>
+              <div className="mt-2 px-2 py-1 rounded-lg inline-block" style={{ background: 'rgba(74, 222, 128,0.06)', border: '1px solid rgba(74, 222, 128,0.15)' }}>
+                <span className="text-[7px] font-medium" style={{ color: '#4ade80' }}>Poucos dados</span>
               </div>
             )}
           </div>
@@ -319,7 +319,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
               <i className="fa-solid fa-bolt text-[8px]" style={{ color: '#34D399' }}></i>
               Linhas Confronto
               {syncLimit < 5 && <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: '#F87171' }}></span>}
-              <span className={syncLimit < 5 ? '' : ''} style={{ color: syncLimit < 5 ? '#FBBF24' : '#44445A' }}>({syncLimit}J)</span>
+              <span className={syncLimit < 5 ? '' : ''} style={{ color: syncLimit < 5 ? '#4ade80' : '#44445A' }}>({syncLimit}J)</span>
             </span>
             <div className="flex p-0.5 rounded-lg" style={{ background: '#07070A', border: '1px solid #1E1E28' }}>
               <button onClick={() => setActiveTab('HT')} className="px-2 py-0.5 rounded-md text-[8px] font-semibold transition-all"
@@ -377,7 +377,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           <button onClick={() => onDetailClick(match)}
             className="flex-[0.8] py-2.5 rounded-xl text-[9px] font-semibold uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
             style={{ background: '#13131A', border: '1px solid #1E1E28', color: '#8888A0' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(200,169,110,0.3)'; (e.currentTarget as HTMLElement).style.color = '#C8A96E'; }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(57, 211, 83,0.3)'; (e.currentTarget as HTMLElement).style.color = '#39D353'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1E1E28'; (e.currentTarget as HTMLElement).style.color = '#8888A0'; }}>
             Análise <i className="fa-solid fa-microchip text-[9px]"></i>
           </button>

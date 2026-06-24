@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
@@ -22,9 +22,9 @@ export function SummaryCard({ title, value, icon: Icon, subtext, trend, color = 
         };
       case 'amber':
         return {
-          icon: 'bg-amber-500/10 text-amber-500',
-          border: 'border-amber-500/20',
-          glow: 'shadow-amber-500/10'
+          icon: 'bg-green-500/10 text-green-500',
+          border: 'border-green-500/20',
+          glow: 'shadow-green-500/10'
         };
       case 'indigo':
         return {

@@ -518,7 +518,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-[#080808] text-[#e4e4e7] selection:bg-amber-500/30 selection:text-amber-100`}>
+    <div className={`min-h-screen bg-[#080808] text-[#e4e4e7] selection:bg-green-500/30 selection:text-green-100`}>
 
       {!isLoggedIn && !isAdminView && <LoginScreen onLoginSuccess={handleLoginSuccess} />}
 
@@ -537,11 +537,11 @@ const App: React.FC = () => {
         <header className="px-6 py-3.5 border-b border-[#1c1c21] bg-[#0a0a0d]/98 backdrop-blur-3xl sticky top-0 z-[1000] shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className={`w-9 h-9 bg-[#111115] rounded-xl flex items-center justify-center shadow-lg border transition-all duration-500 overflow-hidden group ${isAnySyncing ? 'border-amber-500/50' : 'border-[#25252a]'}`}>
+              <div className={`w-9 h-9 bg-[#111115] rounded-xl flex items-center justify-center shadow-lg border transition-all duration-500 overflow-hidden group ${isAnySyncing ? 'border-green-500/50' : 'border-[#25252a]'}`}>
                 <img src="https://i.ibb.co/G4Y8sHMk/Chat-GPT-Image-21-de-abr-de-2025-16-14-34-1.png" alt="👑RW" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
               </div>
               <div>
-                <h1 className="text-base font-bold tracking-tight text-white leading-none">👑RW <span className="text-amber-500">TIPS🎮</span></h1>
+                <h1 className="text-base font-bold tracking-tight text-white leading-none">👑RW <span className="text-green-500">TIPS🎮</span></h1>
                 <p className="text-[10px] font-medium text-[#52525b] mt-1">{isAnySyncing ? 'Sincronizando...' : 'Conectado'}</p>
               </div>
             </div>
@@ -551,7 +551,7 @@ const App: React.FC = () => {
                 onClick={() => setSelectedModule(null)}
                 className="px-3 py-2 bg-[#111115] border border-[#25252a] rounded-lg text-[10px] font-semibold text-[#a1a1aa] hover:text-white hover:border-[#3f3f46] transition-all flex items-center gap-2"
               >
-                <i className="fa-solid fa-layer-group text-amber-500 text-xs"></i>
+                <i className="fa-solid fa-layer-group text-green-500 text-xs"></i>
                 Módulos
               </button>
 
@@ -562,14 +562,14 @@ const App: React.FC = () => {
                     <button onClick={() => setActiveMainTab('results')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'results' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Resultados</button>
                     <button onClick={() => setActiveMainTab('upcoming')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'upcoming' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Próximos Jogos</button>
                     <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'bankroll' ? 'bg-[#22c55e] text-black shadow-sm' : 'text-[#52525b] hover:text-[#22c55e]'}`}>Banca</button>
-                    <button onClick={() => setActiveMainTab('analytics')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'analytics' ? 'bg-amber-500 text-black shadow-sm' : 'text-[#52525b] hover:text-amber-500'}`}>Backtest</button>
+                    <button onClick={() => setActiveMainTab('analytics')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'analytics' ? 'bg-green-500 text-black shadow-sm' : 'text-[#52525b] hover:text-green-500'}`}>Backtest</button>
                   </>
                 )}
               </nav>
               {isLoggedIn && isAdmin && (
                 <button
                   onClick={() => setIsAdminView(true)}
-                  className="px-3 py-2 bg-amber-500/10 border border-amber-500/25 rounded-lg text-[10px] font-semibold text-amber-500 hover:bg-amber-500/20 transition-all flex items-center gap-1.5"
+                  className="px-3 py-2 bg-green-500/10 border border-green-500/25 rounded-lg text-[10px] font-semibold text-green-500 hover:bg-green-500/20 transition-all flex items-center gap-1.5"
                 >
                   <i className="fa-solid fa-shield-halved text-xs"></i>
                   Admin
@@ -605,7 +605,7 @@ const App: React.FC = () => {
                             <input
                               type="text"
                               placeholder="Buscar jogador..."
-                              className="w-full bg-[#0a0a0d] border border-[#25252a] rounded-xl py-3 pl-12 pr-4 text-sm font-medium outline-none focus:border-amber-500/40 transition-all placeholder:text-[#3f3f46] shadow-inner"
+                              className="w-full bg-[#0a0a0d] border border-[#25252a] rounded-xl py-3 pl-12 pr-4 text-sm font-medium outline-none focus:border-green-500/40 transition-all placeholder:text-[#3f3f46] shadow-inner"
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -614,7 +614,7 @@ const App: React.FC = () => {
                             <select
                               value={selectedLeague}
                               onChange={(e) => setSelectedLeague(e.target.value)}
-                              className="w-full bg-[#0a0a0d] border border-[#25252a] rounded-xl py-3 px-4 text-sm font-medium outline-none appearance-none cursor-pointer focus:border-amber-500/40 transition-all text-[#a1a1aa]"
+                              className="w-full bg-[#0a0a0d] border border-[#25252a] rounded-xl py-3 px-4 text-sm font-medium outline-none appearance-none cursor-pointer focus:border-green-500/40 transition-all text-[#a1a1aa]"
                             >
                               <option value="all">🌐 TODAS AS LIGAS</option>
                               {availableLeagues.map(l => (
@@ -636,15 +636,15 @@ const App: React.FC = () => {
                                   onClick={() => setFilter(f.id)}
                                   className={`relative px-3 py-2.5 rounded-xl text-[11px] font-medium flex items-center gap-2 border transition-all duration-300 ${
                                     isActive 
-                                      ? 'bg-amber-500 text-black border-amber-400 shadow-md' 
+                                      ? 'bg-green-500 text-black border-green-400 shadow-md' 
                                       : hasMatches 
-                                        ? 'bg-[#111115] border-amber-500/30 text-amber-500/90 hover:bg-[#16161b] hover:border-amber-500/50' 
+                                        ? 'bg-[#111115] border-green-500/30 text-green-500/90 hover:bg-[#16161b] hover:border-green-500/50' 
                                         : 'bg-[#111115] border-[#25252a] text-[#52525b] hover:text-[#a1a1aa] hover:border-[#3f3f46]'
                                   }`}
                                 >
                                   <i className={`fa-solid ${f.icon} text-[11px]`}></i> {f.label}
                                   {hasMatches && (
-                                    <span className={`flex items-center justify-center min-w-[16px] h-[16px] px-1.5 rounded-full text-[9px] font-bold border ${isActive ? 'bg-black/30 text-black border-black/20' : 'bg-amber-500/20 text-amber-400 border-amber-500/20'}`}>
+                                    <span className={`flex items-center justify-center min-w-[16px] h-[16px] px-1.5 rounded-full text-[9px] font-bold border ${isActive ? 'bg-black/30 text-black border-black/20' : 'bg-green-500/20 text-green-400 border-green-500/20'}`}>
                                       {count}
                                     </span>
                                   )}
@@ -661,11 +661,11 @@ const App: React.FC = () => {
                       <div className="space-y-16">
                         {pinnedLive.length > 0 && (
                           <section className="space-y-6">
-                            <div className="flex items-center gap-4 border-b border-amber-500/20 pb-3 px-2">
-                              <i className="fa-solid fa-star text-amber-400"></i>
-                              <h3 className="text-sm font-black italic uppercase text-amber-400 tracking-tight">Favoritos</h3>
+                            <div className="flex items-center gap-4 border-b border-green-500/20 pb-3 px-2">
+                              <i className="fa-solid fa-star text-green-400"></i>
+                              <h3 className="text-sm font-black italic uppercase text-green-400 tracking-tight">Favoritos</h3>
                               <div className="h-4 w-px bg-white/5 mx-2"></div>
-                              <span className="text-[8px] font-black text-amber-500/40 uppercase tracking-[0.4em]">{pinnedLive.length} CONFRONTOS FIXADOS</span>
+                              <span className="text-[8px] font-black text-green-500/40 uppercase tracking-[0.4em]">{pinnedLive.length} CONFRONTOS FIXADOS</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                               {pinnedLive.map(({ event, potential, confidence, reasons }: any) => (
@@ -739,15 +739,15 @@ const App: React.FC = () => {
                                        className="group relative bg-[#0a0a0c]/80 border border-white/[0.05] rounded-[1.5rem] p-4 backdrop-blur-md transition-all duration-500 overflow-hidden flex flex-col hover:bg-[#111115] hover:border-white/10 hover:shadow-2xl hover:shadow-black/50 hover:z-50 cursor-default"
                                     >
                                       {/* Background Glow */}
-                                      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full opacity-[0.03] blur-3xl group-hover:opacity-[0.08] transition-opacity duration-1000 pointer-events-none" style={{ backgroundColor: '#C8A96E' }}></div>
+                                      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full opacity-[0.03] blur-3xl group-hover:opacity-[0.08] transition-opacity duration-1000 pointer-events-none" style={{ backgroundColor: '#39D353' }}></div>
                                       
                                       <div className="flex items-center justify-between pointer-events-none relative z-10 w-full mb-4">
                                          <div className="flex items-center gap-2 max-w-[80%]">
-                                            <div className="w-1.5 h-3 rounded-full mt-0.5" style={{ backgroundColor: '#C8A96E' }}></div>
+                                            <div className="w-1.5 h-3 rounded-full mt-0.5" style={{ backgroundColor: '#39D353' }}></div>
                                             <h3 className="text-xs font-semibold uppercase tracking-tight truncate" style={{color: '#F0F0F4'}}>{lInfo.name}</h3>
                                          </div>
                                          <div className="flex items-center gap-3">
-                                           <div className={`w-2 h-2 rounded-full ${overAvg >= 70 ? 'bg-emerald-500' : overAvg >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}></div>
+                                           <div className={`w-2 h-2 rounded-full ${overAvg >= 70 ? 'bg-emerald-500' : overAvg >= 50 ? 'bg-green-500' : 'bg-red-500'}`}></div>
                                          </div>
                                       </div>
 
@@ -797,7 +797,7 @@ const App: React.FC = () => {
                           return (
                             <section key={`matches-${leagueName}`} className="space-y-5">
                               <div className="flex items-center gap-4 pb-3 px-2" style={{ borderBottom: '1px solid #1E1E28' }}>
-                                <div className="w-1.5 h-5 rounded-full" style={{ backgroundColor: '#C8A96E' }}></div>
+                                <div className="w-1.5 h-5 rounded-full" style={{ backgroundColor: '#39D353' }}></div>
                                 <h3 className="text-sm font-semibold uppercase tracking-tight" style={{ color: '#F0F0F4' }}>{lInfo.name}</h3>
                                 <div className="h-4 w-px mx-2" style={{ background: '#1E1E28' }}></div>
                                 <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#8888A0' }}>{matches.length} CONFRONTOS ATIVOS</span>
@@ -832,7 +832,7 @@ const App: React.FC = () => {
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
                       <div className="bg-[#111115] border border-[#25252a] p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex flex-col">
-                          <h3 className="text-base font-bold text-white">Resultados <span className="text-amber-500">Pro</span></h3>
+                          <h3 className="text-base font-bold text-white">Resultados <span className="text-green-500">Pro</span></h3>
                           <p className="text-xs text-[#52525b] mt-0.5">Histórico completo de jogos e desempenho por liga</p>
                         </div>
 
@@ -841,7 +841,7 @@ const App: React.FC = () => {
                             <button
                               key={size}
                               onClick={() => setResultsSampleSize(size)}
-                              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-300 border ${resultsSampleSize === size ? 'bg-amber-500 text-black border-amber-400 shadow-sm' : 'text-[#52525b] border-transparent hover:text-[#a1a1aa]'}`}
+                              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-300 border ${resultsSampleSize === size ? 'bg-green-500 text-black border-green-400 shadow-sm' : 'text-[#52525b] border-transparent hover:text-[#a1a1aa]'}`}
                             >
                               {size} jogos
                             </button>
@@ -920,7 +920,7 @@ const App: React.FC = () => {
                                   <div
                                     key={i}
                                     className="rounded-xl p-4 grid grid-cols-[100px_1fr_auto] items-center gap-4 transition-colors"
-                                    style={{ background: '#0D0D12', border: '1px solid #1E1E28', borderLeft: `3px solid #C8A96E` }}
+                                    style={{ background: '#0D0D12', border: '1px solid #1E1E28', borderLeft: `3px solid #39D353` }}
                                   >
                                     <div className="flex flex-col gap-1 shrink-0">
                                       <span className="text-[10px] font-semibold uppercase tracking-wider truncate" style={{ color: '#F0F0F4' }}>
@@ -960,7 +960,7 @@ const App: React.FC = () => {
                               return (
                                 <section key={leagueName} className="space-y-3">
                                   <div className="flex items-center gap-3 px-2">
-                                    <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: '#C8A96E' }}></div>
+                                    <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: '#39D353' }}></div>
                                     <h5 className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#F0F0F4' }}>{lInfo.name}</h5>
                                     <span className="text-[9px] font-medium uppercase" style={{ color: '#8888A0' }}>{games.length} Jogos</span>
                                   </div>
@@ -969,7 +969,7 @@ const App: React.FC = () => {
                                       <div
                                         key={i}
                                         className="rounded-xl p-4 grid grid-cols-[100px_1fr_auto] items-center gap-4 transition-colors"
-                                        style={{ background: '#0D0D12', border: '1px solid #1E1E28', borderLeft: `3px solid #C8A96E` }}
+                                        style={{ background: '#0D0D12', border: '1px solid #1E1E28', borderLeft: `3px solid #39D353` }}
                                       >
                                         <div className="flex flex-col gap-1 shrink-0">
                                           <span className="text-[11px] font-medium tabular-nums" style={{ color: '#8888A0' }}>
@@ -1101,7 +1101,7 @@ const App: React.FC = () => {
                       <div className="flex justify-between items-center mb-10">
                         <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.5em]">Probabilidades H2H (Histórico Direto)</h3>
                         {h2hStats.syncLimit < 5 && (
-                          <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1 mt-1">
+                          <span className="text-[8px] font-black text-green-500 uppercase tracking-widest flex items-center gap-1 mt-1">
                             <i className="fa-solid fa-triangle-exclamation"></i> DADOS ADAPTADOS PARA {h2hStats.syncLimit} JOGOS (AMOSTRAGEM REDUZIDA)
                           </span>
                         )}
@@ -1120,11 +1120,11 @@ const App: React.FC = () => {
                         </div>
                         <div className="space-y-4">
                           <div className="flex justify-between items-end">
-                            <span className="text-[10px] font-black text-amber-500 uppercase">Empate</span>
+                            <span className="text-[10px] font-black text-green-500 uppercase">Empate</span>
                             <span className="text-4xl font-mono-numbers font-black text-white">{h2hStats.drawProb.toFixed(0)}%</span>
                           </div>
                           <div className="h-3 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5">
-                            <div className="h-full bg-amber-500 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.5)] transition-all duration-1000" style={{ width: `${h2hStats.drawProb}%` }}></div>
+                            <div className="h-full bg-green-500 rounded-full shadow-[0_0_15px_rgba(57, 211, 83,0.5)] transition-all duration-1000" style={{ width: `${h2hStats.drawProb}%` }}></div>
                           </div>
                         </div>
                         <div className="space-y-4">
@@ -1206,7 +1206,7 @@ const App: React.FC = () => {
                         Forma Individual: {selectedMatch.homePlayer}
                         {h2hStats.syncLimit < 5 && <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>}
                       </h3>
-                      <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-black rounded-lg uppercase tracking-widest">Últimos <span className={h2hStats.syncLimit < 5 ? 'text-amber-500' : ''}>{h2hStats.syncLimit || 5}</span> Jogos</span>
+                      <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-black rounded-lg uppercase tracking-widest">Últimos <span className={h2hStats.syncLimit < 5 ? 'text-green-500' : ''}>{h2hStats.syncLimit || 5}</span> Jogos</span>
                     </div>
                     <div className="space-y-4 flex-1 overflow-y-auto pr-3 custom-scroll">
                       {h2hStats.p1Stats?.lastMatches?.map((game: any, i: number) => {
@@ -1223,7 +1223,7 @@ const App: React.FC = () => {
                                 {/* HT Score fix: Always Home x Away to match the names below */}
                                 <span className="px-2 py-0.5 bg-black/60 text-emerald-500 text-[8px] font-black rounded border border-white/5 uppercase tracking-tighter shadow-xl">HT: {game.halftime_score_home}-{game.halftime_score_away}</span>
                               </div>
-                              <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${isWinner ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : isDraw ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
+                              <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${isWinner ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : isDraw ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
                                 {isWinner ? 'Vitória' : isDraw ? 'Empate' : 'Derrota'}
                               </span>
                             </div>
@@ -1248,7 +1248,7 @@ const App: React.FC = () => {
                         Forma Individual: {selectedMatch.awayPlayer}
                         {h2hStats.syncLimit < 5 && <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>}
                       </h3>
-                      <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-[9px] font-black rounded-lg uppercase tracking-widest">Últimos <span className={h2hStats.syncLimit < 5 ? 'text-amber-500' : ''}>{h2hStats.syncLimit || 5}</span> Jogos</span>
+                      <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-[9px] font-black rounded-lg uppercase tracking-widest">Últimos <span className={h2hStats.syncLimit < 5 ? 'text-green-500' : ''}>{h2hStats.syncLimit || 5}</span> Jogos</span>
                     </div>
                     <div className="space-y-4 flex-1 overflow-y-auto pr-3 custom-scroll">
                       {h2hStats.p2Stats?.lastMatches?.map((game: any, i: number) => {
@@ -1265,7 +1265,7 @@ const App: React.FC = () => {
                                 {/* HT Score fix: Always Home x Away to match the names below */}
                                 <span className="px-2 py-0.5 bg-black/60 text-emerald-500 text-[8px] font-black rounded border border-white/5 uppercase tracking-tighter shadow-xl">HT: {game.halftime_score_home}-{game.halftime_score_away}</span>
                               </div>
-                              <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${isWinner ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : isDraw ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
+                              <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${isWinner ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : isDraw ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
                                 {isWinner ? 'Vitória' : isDraw ? 'Empate' : 'Derrota'}
                               </span>
                             </div>
