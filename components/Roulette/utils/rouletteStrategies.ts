@@ -15,6 +15,7 @@ export interface StrategyOpportunity {
   target: string; // What to bet on (e.g., "red", "terminal 5", "column 1", "dozen 2")
   streak: number; // Length of the current streak that creates the opportunity
   history: string[]; // The last N numbers that formed the pattern
+  entryTip: string; // Human-readable entry suggestion for Telegram
 }
 
 export interface RouletteAnalysis {
@@ -79,110 +80,122 @@ const calculateStreak = <T>(arr: string[], getValue: (item: string) => T): { val
 
 // ============================================
 // STRATEGY DETECTORS
+// Thresholds raised to avoid false positives:
+//   Color:   requires ≥ 4 consecutive (was 3)
+//   Terminal: requires ≥ 3 consecutive (was 2)
+//   Column:  requires ≥ 3 consecutive (was 2)
+//   Dozen:   requires ≥ 3 consecutive (was 2)
+//
+// Confidence formula updated to grow slowly so
+// values above 80% require long confirmed streaks.
 // ============================================
 
 /**
  * Strategy 1: Repetições em cor
- * Detects when same color repeats multiple times, signaling potential color change
+ * Requires ≥ 4 consecutive same color to fire.
+ * Confidence only reaches 80% at 6× streak.
  */
 const detectColorStrategy = (lastResults: string[]): StrategyOpportunity | null => {
-  if (lastResults.length < 3) return null;
+  if (lastResults.length < 4) return null;
   
   const streak = calculateStreak(lastResults, getNumberColor);
   if (streak.value === 'green') return null; // Ignore green streaks for color strategy
   
-  // Confidence increases with streak length
-  const confidence = Math.min(95, 50 + (streak.count * 10));
-  
-  if (streak.count >= 3) {
-    return {
-      type: 'color',
-      name: `Sequência de ${streak.value === 'red' ? 'Vermelhos' : 'Pretos'}`,
-      description: `${streak.count}× ${streak.value === 'red' ? 'vermelhos' : 'pretos'} consecutivos - alta chance de troca de cor`,
-      confidence,
-      target: streak.value === 'red' ? 'preto' : 'vermelho',
-      streak: streak.count,
-      history: streak.history
-    };
-  }
-  
-  return null;
+  // Confidence grows slowly: 40 + streak*12 → 4×=88%, 5×=100 capped at 92
+  // Requires 4+ to fire, only meaningful at 5+
+  if (streak.count < 4) return null;
+
+  const confidence = Math.min(92, 40 + streak.count * 12);
+  const targetColor = streak.value === 'red' ? 'preto' : 'vermelho';
+  const srcColor = streak.value === 'red' ? 'Vermelhos' : 'Pretos';
+  const srcColorPT = streak.value === 'red' ? 'vermelhos' : 'pretos';
+
+  return {
+    type: 'color',
+    name: `Sequência de ${srcColor}`,
+    description: `${streak.count}× ${srcColorPT} consecutivos — alta chance de inversão de cor`,
+    confidence,
+    target: targetColor,
+    streak: streak.count,
+    history: streak.history,
+    entryTip: `Apostar no ${targetColor.toUpperCase()} (inversão após ${streak.count}× ${srcColorPT})`,
+  };
 };
 
 /**
  * Strategy 2: Repetições em terminais
- * Detects when same terminal repeats
+ * Requires ≥ 3 consecutive same terminal.
  */
 const detectTerminalStrategy = (lastResults: string[]): StrategyOpportunity | null => {
-  if (lastResults.length < 2) return null;
+  if (lastResults.length < 3) return null;
   
   const streak = calculateStreak(lastResults, getTerminal);
   
-  const confidence = Math.min(90, 60 + (streak.count * 8));
+  if (streak.count < 3) return null;
+
+  const confidence = Math.min(88, 40 + streak.count * 13);
   
-  if (streak.count >= 2) {
-    return {
-      type: 'terminal',
-      name: `Terminal ${streak.value} em alta`,
-      description: `${streak.count}× terminais com final ${streak.value} - potencial para continuação ou opostos`,
-      confidence,
-      target: `terminal ${streak.value}`,
-      streak: streak.count,
-      history: streak.history
-    };
-  }
-  
-  return null;
+  return {
+    type: 'terminal',
+    name: `Terminal ${streak.value} em alta`,
+    description: `${streak.count}× terminais com final ${streak.value} — potencial continuação ou opostos`,
+    confidence,
+    target: `terminal ${streak.value}`,
+    streak: streak.count,
+    history: streak.history,
+    entryTip: `Apostar em números com final ${streak.value} (Terminal ${streak.value} — ${streak.count}× seguidos)`,
+  };
 };
 
 /**
  * Strategy 3: Repetições em Colunas
+ * Requires ≥ 3 consecutive same column.
  */
 const detectColumnStrategy = (lastResults: string[]): StrategyOpportunity | null => {
-  if (lastResults.length < 2) return null;
+  if (lastResults.length < 3) return null;
   
   const streak = calculateStreak(lastResults, getColumn);
   
-  const confidence = Math.min(90, 55 + (streak.count * 12));
+  if (streak.count < 3) return null;
+
+  const confidence = Math.min(88, 40 + streak.count * 13);
   
-  if (streak.count >= 2) {
-    return {
-      type: 'column',
-      name: `Coluna ${streak.value} dominando`,
-      description: `${streak.count}× números na coluna ${streak.value} - tendência identificada`,
-      confidence,
-      target: `coluna ${streak.value}`,
-      streak: streak.count,
-      history: streak.history
-    };
-  }
-  
-  return null;
+  return {
+    type: 'column',
+    name: `Coluna ${streak.value} dominando`,
+    description: `${streak.count}× números na coluna ${streak.value} — tendência identificada`,
+    confidence,
+    target: `coluna ${streak.value}`,
+    streak: streak.count,
+    history: streak.history,
+    entryTip: `Apostar na Coluna ${streak.value} (dominância confirmada — ${streak.count}× seguidos)`,
+  };
 };
 
 /**
  * Strategy 4: Repetições em Dúzias
+ * Requires ≥ 3 consecutive same dozen.
  */
 const detectDozenStrategy = (lastResults: string[]): StrategyOpportunity | null => {
-  if (lastResults.length < 2) return null;
+  if (lastResults.length < 3) return null;
   
   const streak = calculateStreak(lastResults, getDozen);
   
-  const confidence = Math.min(90, 55 + (streak.count * 12));
+  if (streak.count < 3) return null;
+
+  const confidence = Math.min(88, 40 + streak.count * 13);
+  const dozenNames: Record<string, string> = { '1': '1ª (1-12)', '2': '2ª (13-24)', '3': '3ª (25-36)' };
   
-  if (streak.count >= 2) {
-    return {
-      type: 'dozen',
-      name: `Dúzia ${streak.value} em sequência`,
-      description: `${streak.count}× números na dúzia ${streak.value} - padrão detectado`,
-      confidence,
-      target: `dúzia ${streak.value}`,
-      streak: streak.count,
-      history: streak.history
-    };
-  }
-  
-  return null;
+  return {
+    type: 'dozen',
+    name: `Dúzia ${streak.value} em sequência`,
+    description: `${streak.count}× números na dúzia ${streak.value} — padrão detectado`,
+    confidence,
+    target: `dúzia ${streak.value}`,
+    streak: streak.count,
+    history: streak.history,
+    entryTip: `Apostar na Dúzia ${dozenNames[streak.value] || streak.value} (${streak.count}× seguidos)`,
+  };
 };
 
 // ============================================
@@ -247,4 +260,3 @@ export const analyzeRouletteTable = (table: RouletteTable): RouletteAnalysis => 
     }
   };
 };
-

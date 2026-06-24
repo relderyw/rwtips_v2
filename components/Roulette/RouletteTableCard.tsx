@@ -1,10 +1,12 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { RouletteTable, getNumberColor } from '../../services/rouletteApi';
 import { analyzeRouletteTable, StrategyOpportunity } from './utils/rouletteStrategies';
 
 interface Props {
   table: RouletteTable;
+  isConfirmed?: boolean;   // true when trend is confirmed across ≥2 cycles
+  superbetUrl?: string;    // pre-built Superbet game URL
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -210,6 +212,10 @@ function StrategyOpportunityCard({ opportunity }: { opportunity: StrategyOpportu
         </div>
       </div>
       <p className="text-[9px] text-white/60 leading-relaxed">{opportunity.description}</p>
+      {/* Entry tip */}
+      <p className="text-[9px] text-[#39D353]/80 font-semibold mt-1.5 leading-relaxed">
+        💡 {opportunity.entryTip}
+      </p>
       <div className="mt-2 flex flex-wrap gap-1">
         {opportunity.history.map((num, i) => (
           <NumberBall key={`opp-${i}`} num={num} size="sm" />
@@ -222,7 +228,7 @@ function StrategyOpportunityCard({ opportunity }: { opportunity: StrategyOpportu
 /* ────────────────────────────────────────────────────────────
    Main Card
 ───────────────────────────────────────────────────────────── */
-export const RouletteTableCard: React.FC<Props> = ({ table }) => {
+export const RouletteTableCard: React.FC<Props> = ({ table, isConfirmed = false, superbetUrl }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [imgError, setImgError] = useState(false);
 
@@ -248,6 +254,12 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
   const latestColor = latestNum ? getNumberColor(latestNum) : null;
   const accentGlow = latestColor === 'red' ? 'rgba(220,38,38,0.15)' : latestColor === 'green' ? 'rgba(16,185,129,0.15)' : 'rgba(63,63,70,0.15)';
 
+  // Confirmed trend border/glow
+  const confirmedBorder = isConfirmed ? 'rgba(57,211,83,0.35)' : 'rgba(255,255,255,0.06)';
+  const confirmedShadow = isConfirmed
+    ? '0 4px 30px rgba(0,0,0,0.5), 0 0 20px rgba(57,211,83,0.12), inset 0 1px 0 rgba(57,211,83,0.08)'
+    : '0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)';
+
   return (
     <>
       {showHistory && <HistoryModal table={table} onClose={() => setShowHistory(false)} />}
@@ -256,10 +268,18 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
         className="group relative rounded-3xl overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-1"
         style={{
           background: 'linear-gradient(145deg, rgba(20,20,28,0.95) 0%, rgba(10,10,15,0.98) 100%)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: `0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)`,
+          border: `1px solid ${confirmedBorder}`,
+          boxShadow: confirmedShadow,
         }}
       >
+        {/* Confirmed trend pulse ring */}
+        {isConfirmed && (
+          <div
+            className="absolute inset-0 rounded-3xl pointer-events-none animate-pulse"
+            style={{ boxShadow: '0 0 0 2px rgba(57,211,83,0.2)', animationDuration: '2s' }}
+          />
+        )}
+
         {/* Ambient glow */}
         <div
           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
@@ -291,7 +311,18 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-[13px] font-bold text-white leading-tight truncate">{table.name}</h3>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className="text-[13px] font-bold text-white leading-tight truncate">{table.name}</h3>
+                {/* Confirmed badge */}
+                {isConfirmed && (
+                  <span
+                    className="text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 animate-pulse"
+                    style={{ background: 'rgba(57,211,83,0.18)', color: '#39D353', border: '1px solid rgba(57,211,83,0.4)', animationDuration: '2s' }}
+                  >
+                    🔥 CONFIRMADA
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-1.5 mt-1">
                 <i className="fa-solid fa-user-tie text-[9px] text-[#39D353]/70" />
                 <span className="text-[10px] text-[#8888A0] font-medium truncate">{table.dealerName || 'Auto'}</span>
@@ -387,6 +418,33 @@ export const RouletteTableCard: React.FC<Props> = ({ table }) => {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Superbet Link Button */}
+          {superbetUrl && (
+            <a
+              href={superbetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 hover:brightness-110 hover:-translate-y-0.5"
+              style={{
+                background: isConfirmed
+                  ? 'linear-gradient(135deg, rgba(57,211,83,0.2) 0%, rgba(57,211,83,0.08) 100%)'
+                  : 'rgba(255,255,255,0.04)',
+                border: isConfirmed ? '1px solid rgba(57,211,83,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                color: isConfirmed ? '#39D353' : '#8888A0',
+              }}
+            >
+              {/* Superbet "SB" logo mark */}
+              <span
+                className="text-[9px] font-black px-1.5 py-0.5 rounded-md"
+                style={{ background: '#FFD700', color: '#000', letterSpacing: '0.05em' }}
+              >
+                SB
+              </span>
+              Jogar na Superbet
+              <i className="fa-solid fa-arrow-up-right-from-square text-[9px]" />
+            </a>
           )}
 
         </div>

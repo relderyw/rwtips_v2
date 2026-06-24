@@ -1,6 +1,21 @@
-﻿import React, { useState, useEffect } from 'react';
-import { fetchRoulettes, RouletteTable } from '../../services/rouletteApi';
+import React, { useState, useEffect, useRef } from 'react';
+import { fetchRoulettes, RouletteTable, buildSuperbetUrl } from '../../services/rouletteApi';
 import { RouletteTableCard } from './RouletteTableCard';
+import { analyzeRouletteTable, StrategyOpportunity } from './utils/rouletteStrategies';
+import { sendRouletteAlert } from '../../services/telegramRoulette';
+
+// ─── Trend Memory ─────────────────────────────────────────────────────────────
+// Tracks which tables have a confirmed trend across ≥2 update cycles.
+// A trend must appear in at least 2 consecutive polls before being
+// considered "confirmed" (to avoid false-positives from short bursts).
+interface TrendEntry {
+  opportunity: StrategyOpportunity;
+  firstSeenAt: number;   // timestamp of first detection
+  confirmedAt?: number;  // timestamp of confirmation (≥2nd consecutive cycle)
+  alertSent: boolean;    // whether Telegram alert was already sent
+}
+
+type TrendMemory = Map<string, TrendEntry>; // key: `${tableId}:${opportunityName}`
 
 export const RouletteDashboard: React.FC = () => {
   const [tables, setTables] = useState<RouletteTable[]>([]);
@@ -9,6 +24,11 @@ export const RouletteDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [tick, setTick] = useState(0); // countdown tick
 
+  // Trend memory — persists across renders via ref so it survives re-renders
+  const trendMemoryRef = useRef<TrendMemory>(new Map());
+  // Confirmed table IDs for badge display in cards
+  const [confirmedTableIds, setConfirmedTableIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     let interval: any;
     let mounted = true;
@@ -16,13 +36,73 @@ export const RouletteDashboard: React.FC = () => {
     const loadData = async () => {
       try {
         const data = await fetchRoulettes();
-        if (mounted) {
-          const sorted = data.sort((a, b) => b.seatsTaken - a.seatsTaken);
-          setTables(sorted);
-          setLastUpdate(new Date());
-          setIsLoading(false);
-          setTick(10);
+        if (!mounted) return;
+
+        const sorted = data.sort((a, b) => b.seatsTaken - a.seatsTaken);
+        setTables(sorted);
+        setLastUpdate(new Date());
+        setIsLoading(false);
+        setTick(10);
+
+        // ── Trend confirmation logic ──────────────────────────────────────
+        const memory = trendMemoryRef.current;
+        const now = Date.now();
+        const newConfirmed = new Set<string>();
+
+        // Keys seen in this cycle
+        const seenKeys = new Set<string>();
+
+        for (const table of sorted) {
+          const analysis = analyzeRouletteTable(table);
+
+          for (const opp of analysis.opportunities) {
+            const key = `${table.id}:${opp.name}`;
+            seenKeys.add(key);
+
+            const existing = memory.get(key);
+
+            if (!existing) {
+              // First time seen — record but don't confirm yet
+              memory.set(key, {
+                opportunity: opp,
+                firstSeenAt: now,
+                alertSent: false,
+              });
+            } else {
+              // Already tracked — check if this is the 2nd+ consecutive cycle
+              if (!existing.confirmedAt) {
+                // Confirm it now (2nd consecutive detection)
+                existing.confirmedAt = now;
+                existing.opportunity = opp; // update with latest data
+                memory.set(key, existing);
+
+                // Send Telegram alert on confirmation (once)
+                if (!existing.alertSent) {
+                  existing.alertSent = true;
+                  const url = buildSuperbetUrl(table);
+                  sendRouletteAlert(table, opp, url).catch(console.error);
+                }
+              } else {
+                // Already confirmed — keep updating opportunity data
+                existing.opportunity = opp;
+                memory.set(key, existing);
+              }
+
+              newConfirmed.add(table.id);
+            }
+          }
         }
+
+        // Remove stale entries (opportunities that disappeared this cycle)
+        for (const [key] of memory) {
+          if (!seenKeys.has(key)) {
+            memory.delete(key);
+          }
+        }
+
+        setConfirmedTableIds(newConfirmed);
+        // ── End trend logic ────────────────────────────────────────────────
+
       } catch (e) {
         console.error('Failed to load roulettes', e);
       }
@@ -102,7 +182,16 @@ export const RouletteDashboard: React.FC = () => {
             <h2 className="text-lg font-black text-white tracking-tight leading-tight">
               Roletas <span style={{ color: '#39D353' }}>ONTIME</span>
             </h2>
-            <p className="text-[10px] text-[#55556A] font-medium">Evolution Gaming • {tables.length} mesas ao vivo</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              {/* Superbet logo badge */}
+              <span
+                className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                style={{ background: 'rgba(255,200,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,200,0,0.25)' }}
+              >
+                Superbet
+              </span>
+              <p className="text-[10px] text-[#55556A] font-medium">Evolution Gaming • {tables.length} mesas ao vivo</p>
+            </div>
           </div>
         </div>
 
@@ -163,7 +252,7 @@ export const RouletteDashboard: React.FC = () => {
         {[
           { label: 'Mesas ativas', value: tables.length, icon: 'fa-table', color: '#39D353', glow: 'rgba(57, 211, 83,0.15)' },
           { label: 'Jogadores online', value: tables.reduce((s, t) => s + t.seatsTaken, 0).toLocaleString(), icon: 'fa-users', color: '#10b981', glow: 'rgba(16,185,129,0.15)' },
-          { label: 'Resultados', value: tables.reduce((s, t) => s + t.lastResults.length, 0).toLocaleString(), icon: 'fa-list-ol', color: '#6366f1', glow: 'rgba(99,102,241,0.15)' },
+          { label: 'Tendências confirmadas', value: confirmedTableIds.size, icon: 'fa-fire', color: '#f59e0b', glow: 'rgba(245,158,11,0.15)' },
         ].map(stat => (
           <div
             key={stat.label}
@@ -190,7 +279,12 @@ export const RouletteDashboard: React.FC = () => {
       {/* ─── Grid ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {filteredTables.map(table => (
-          <RouletteTableCard key={table.id} table={table} />
+          <RouletteTableCard
+            key={table.id}
+            table={table}
+            isConfirmed={confirmedTableIds.has(table.id)}
+            superbetUrl={buildSuperbetUrl(table)}
+          />
         ))}
         {filteredTables.length === 0 && (
           <div className="col-span-full py-24 text-center">

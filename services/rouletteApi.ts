@@ -13,6 +13,7 @@ export interface RouletteTable {
   lastResults: string[];
   launchAlias: string;
   gameCode: string;
+  superbetGameId?: number; // numeric ID used in Superbet URLs
 }
 
 export const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
@@ -25,6 +26,99 @@ export const getNumberColor = (numStr: string): 'red' | 'black' | 'green' => {
   if (RED_NUMBERS.includes(num)) return 'red';
   if (BLACK_NUMBERS.includes(num)) return 'black';
   return 'green';
+};
+
+// ============================================================
+// SUPERBET GAME ID MAPPING
+// Maps API slug/id → numeric Superbet game ID used in URLs
+// Format: https://superbet.bet.br/jogo/<slug>/<numericId>?demo=false
+// Add more entries as discovered from the lobby page
+// ============================================================
+export const SUPERBET_GAME_IDS: Record<string, { numericId: number; slug: string }> = {
+  // Speed Roulette variants
+  'SpeedRoulette':                  { numericId: 339599, slug: 'speed-roulette' },
+  'speed-roulette':                 { numericId: 339599, slug: 'speed-roulette' },
+  'SpeedRouletteA':                 { numericId: 339599, slug: 'speed-roulette' },
+  // Lightning Roulette
+  'LightningRoulette':              { numericId: 339557, slug: 'lightning-roulette' },
+  'lightning-roulette':             { numericId: 339557, slug: 'lightning-roulette' },
+  'LightningRouletteA':             { numericId: 339557, slug: 'lightning-roulette' },
+  // Immersive Roulette
+  'ImmersiveRoulette':              { numericId: 339554, slug: 'immersive-roulette' },
+  'immersive-roulette':             { numericId: 339554, slug: 'immersive-roulette' },
+  // Roulette Live (generic)
+  'Roulette':                       { numericId: 339547, slug: 'roulette' },
+  'roulette':                       { numericId: 339547, slug: 'roulette' },
+  // European Roulette Gold
+  'EuropeanRouletteGold':           { numericId: 339548, slug: 'european-roulette-gold' },
+  // Auto Roulette
+  'AutoRoulette':                   { numericId: 339549, slug: 'auto-roulette' },
+  'auto-roulette':                  { numericId: 339549, slug: 'auto-roulette' },
+  // Bucharest Auto Roulette
+  'BucharestAutoRoulette':          { numericId: 339552, slug: 'bucharest-auto-roulette' },
+  // VIP Roulette
+  'VIPRoulette':                    { numericId: 339551, slug: 'vip-roulette' },
+  // Ruleta en Español
+  'SpanishRoulette':                { numericId: 339553, slug: 'spanish-roulette' },
+  // Salon Privé Roulette
+  'SalonPriveRoulette':             { numericId: 339556, slug: 'salon-prive-roulette' },
+  // Instant Roulette
+  'InstantRoulette':                { numericId: 339558, slug: 'instant-roulette' },
+  // XXXtreme Lightning Roulette
+  'XXXtremeLightningRoulette':      { numericId: 339560, slug: 'xxxtreme-lightning-roulette' },
+  // Double Ball Roulette
+  'DoubleBallRoulette':             { numericId: 339561, slug: 'double-ball-roulette' },
+  // Roulette Azure
+  'RouletteAzure':                  { numericId: 339562, slug: 'roulette-azure' },
+  // Spread Bet Roulette
+  'SpreadBetRoulette':              { numericId: 339563, slug: 'spread-bet-roulette' },
+  // Quantum Roulette
+  'QuantumRoulette':                { numericId: 339564, slug: 'quantum-roulette' },
+  // Gold Vault Roulette
+  'GoldVaultRoulette':              { numericId: 339565, slug: 'gold-vault-roulette' },
+  // Mega Roulette
+  'MegaRoulette':                   { numericId: 339566, slug: 'mega-roulette' },
+  // Funky Time (special)
+  'FunkyTime':                      { numericId: 339567, slug: 'funky-time' },
+  // Power Up Roulette
+  'PowerUpRoulette':                { numericId: 339568, slug: 'power-up-roulette' },
+};
+
+/**
+ * Converts a camelCase or PascalCase game ID to kebab-case slug.
+ * e.g. "SpeedRoulette" → "speed-roulette"
+ *      "LightningRouletteA" → "lightning-roulette-a"
+ */
+export const toKebabCase = (str: string): string => {
+  return str
+    .replace(/([A-Z])/g, '-$1')
+    .replace(/^-/, '')
+    .toLowerCase()
+    .replace(/-+/g, '-');
+};
+
+/**
+ * Builds the Superbet game URL for a given roulette table.
+ * Uses the static mapping when available, falls back to slug-only.
+ */
+export const buildSuperbetUrl = (table: RouletteTable): string => {
+  const BASE = 'https://superbet.bet.br/jogo';
+
+  // Check table's own numeric ID first
+  if (table.superbetGameId) {
+    const slug = toKebabCase(table.gameCode || table.id);
+    return `${BASE}/${slug}/${table.superbetGameId}?demo=false`;
+  }
+
+  // Try static mapping by id then gameCode
+  const entry = SUPERBET_GAME_IDS[table.id] || SUPERBET_GAME_IDS[table.gameCode];
+  if (entry) {
+    return `${BASE}/${entry.slug}/${entry.numericId}?demo=false`;
+  }
+
+  // Fallback: slug only (no numeric ID)
+  const slug = toKebabCase(table.gameCode || table.id);
+  return `${BASE}/${slug}?demo=false`;
 };
 
 /**
@@ -97,6 +191,10 @@ export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
       // Diferentes campos podem conter os resultados
       const lr = r.lastResults || r.results || r.roundHistory || r.history || r.drawResults || [];
 
+      // Tenta extrair o ID numérico da Superbet de campos possíveis
+      const numericId: number | undefined =
+        r.superbetId || r.gameId || r.lobbyGameId || r.externalId || undefined;
+
       return {
         id: r.id,
         name: r.name,
@@ -112,6 +210,7 @@ export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
         lastResults: lr,
         launchAlias: r.id,
         gameCode: r.id,
+        superbetGameId: typeof numericId === 'number' && !isNaN(numericId) ? numericId : undefined,
       };
     });
 
