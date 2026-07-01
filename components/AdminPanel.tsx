@@ -69,7 +69,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                 expirationDate: firebaseInstance.firestore.Timestamp.fromDate(expirationDate),
                 createdAt: firebaseInstance.firestore.Timestamp.fromDate(new Date()),
                 lastSeen: firebaseInstance.firestore.Timestamp.fromDate(new Date()),
-                allowedModules: ['fifa', 'futebol', 'basquete'] // Default to all
+                allowedModules: ['fifa', 'futebol', 'basquete', 'roletas'] // Default to all
             });
 
             setStatus({ type: 'success', msg: 'Usuário criado com sucesso!' });
@@ -258,7 +258,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button onClick={() => setModulesModal({ isOpen: true, email: u.email, allowed: u.allowedModules || ['fifa', 'futebol', 'basquete'] })} className="px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Módulos</button>
+                                        <button onClick={() => setModulesModal({ isOpen: true, email: u.email, allowed: u.allowedModules || ['fifa', 'futebol', 'basquete', 'roletas'] })} className="px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Módulos</button>
                                         <button onClick={() => setRenewModal({ isOpen: true, email: u.email, days: 30 })} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Renovar</button>
                                     </div>
                                 </div>
@@ -293,7 +293,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                         <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-6">Membro: {modulesModal.email}</p>
 
                         <div className="space-y-3 mb-8">
-                            {['fifa', 'futebol', 'basquete'].map(mod => {
+                            {['fifa', 'futebol', 'basquete', 'roletas'].map(mod => {
                                 const isSelected = modulesModal.allowed.includes(mod);
                                 return (
                                     <button
