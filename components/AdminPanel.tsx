@@ -131,6 +131,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
         });
     };
 
+    const handleDeleteUser = async (userId: string, userEmail: string) => {
+        if (!window.confirm(`Tem certeza que deseja excluir o usuário ${userEmail}? Esta ação removerá o acesso dele ao sistema.`)) return;
+        setLoadingUsers(true);
+        try {
+            await db.collection('users').doc(userId).delete();
+            fetchUsers();
+        } catch (err) {
+            console.error('Erro ao excluir usuário:', err);
+            alert('Erro ao excluir usuário.');
+        } finally {
+            setLoadingUsers(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-[10000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-6 overflow-y-auto">
             <div className="bg-[#0a0a0c] w-full max-w-2xl rounded-[3rem] border border-white/10 p-8 md:p-12 shadow-2xl relative">
@@ -260,6 +274,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
                                     <div className="flex gap-2">
                                         <button onClick={() => setModulesModal({ isOpen: true, email: u.email, allowed: u.allowedModules || ['fifa', 'futebol', 'basquete', 'roletas'] })} className="px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Módulos</button>
                                         <button onClick={() => setRenewModal({ isOpen: true, email: u.email, days: 30 })} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Renovar</button>
+                                        <button onClick={() => handleDeleteUser(u.id, u.email)} className="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Excluir Usuário"><i className="fa-solid fa-trash"></i></button>
                                     </div>
                                 </div>
                             );
