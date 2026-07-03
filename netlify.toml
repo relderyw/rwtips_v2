@@ -33,6 +33,20 @@
   status = 200
   force = true
 
+# Proxy for Superbet State (live casino roulette data)
+[[redirects]]
+  from = "/api/superbet-state"
+  to = "https://superbet-gaming-production.global.ssl.fastly.net/provider-socket/public/api/br/v2/state"
+  status = 200
+  force = true
+
+# Proxy for Estrela State (live lobby current-state)
+[[redirects]]
+  from = "/api/estrela-state"
+  to = "https://assets.estrelabet.bet.br/dynamic-lobby/current-state.json"
+  status = 200
+  force = true
+
 # Redirect for API calls to the serverless function
 [[redirects]]
   from = "/api/*"
