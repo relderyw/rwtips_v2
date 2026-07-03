@@ -38,13 +38,71 @@ export const RouletteDashboard: React.FC = () => {
         const data = await fetchRoulettes();
         if (!mounted) return;
 
-        const sorted = data.sort((a, b) => b.seatsTaken - a.seatsTaken);
-        setTables(sorted);
+        // ── Acumular histórico: mescla resultados novos com os existentes ──
+        setTables(prev => {
+          const prevById = new Map(prev.map(t => [t.id, t]));
+
+          const merged = data.map(newTable => {
+            const existing = prevById.get(newTable.id);
+            if (!existing || existing.lastResults.length === 0) {
+              return newTable; // primeira vez — usa o que veio da API
+            }
+
+            const newResults = newTable.lastResults;
+            const oldResults = existing.lastResults;
+
+            // Detecta quantos resultados novos surgiram comparando com o histórico acumulado
+            let added: string[] = [];
+            if (newResults.length > 0 && oldResults.length > 0) {
+              let overlapIndex = -1;
+
+              for (let i = 0; i < newResults.length; i++) {
+                let match = true;
+                const itemsToCheck = Math.min(newResults.length - i, oldResults.length);
+                if (itemsToCheck === 0) continue;
+
+                for (let j = 0; j < itemsToCheck; j++) {
+                  if (newResults[i + j] !== oldResults[j]) {
+                    match = false;
+                    break;
+                  }
+                }
+
+                if (match) {
+                  overlapIndex = i;
+                  break;
+                }
+              }
+
+              if (overlapIndex > 0) {
+                added = newResults.slice(0, overlapIndex);
+              } else if (overlapIndex === -1) {
+                added = newResults; // sem overlap — usa tudo
+              }
+              // overlapIndex === 0 → nenhum resultado novo
+            } else if (oldResults.length === 0) {
+              added = newResults;
+            }
+
+            // Acumula: novos na frente, máx 200 para backtesting estável
+            const accumulated = [...added, ...oldResults].slice(0, 200);
+
+            return {
+              ...newTable,
+              lastResults: accumulated.length > 0 ? accumulated : newTable.lastResults,
+              seatsTaken: newTable.seatsTaken, // sempre atualiza jogadores online
+            };
+          });
+
+          return merged.sort((a, b) => b.seatsTaken - a.seatsTaken);
+        });
+
         setLastUpdate(new Date());
         setIsLoading(false);
         setTick(10);
 
         // ── Trend confirmation logic ──────────────────────────────────────
+        // Roda análise sobre os dados da API (que refletem o estado atual)
         const memory = trendMemoryRef.current;
         const now = Date.now();
         const newConfirmed = new Set<string>();
@@ -52,7 +110,7 @@ export const RouletteDashboard: React.FC = () => {
         // Keys seen in this cycle
         const seenKeys = new Set<string>();
 
-        for (const table of sorted) {
+        for (const table of data) {
           const analysis = analyzeRouletteTable(table);
 
           for (const opp of analysis.opportunities) {
