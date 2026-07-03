@@ -189,14 +189,16 @@ function StrategyOpportunityCard({ opportunity }: { opportunity: StrategyOpportu
     color: 'from-red-500/20 to-red-900/20 border-red-500/30',
     terminal: 'from-purple-500/20 to-purple-900/20 border-purple-500/30',
     column: 'from-blue-500/20 to-blue-900/20 border-blue-500/30',
-    dozen: 'from-green-500/20 to-green-900/20 border-green-500/30'
+    dozen: 'from-green-500/20 to-green-900/20 border-green-500/30',
+    repetition: 'from-emerald-500/20 to-emerald-900/20 border-emerald-500/30'
   };
   
   const typeIcons = {
     color: 'fa-palette',
     terminal: 'fa-hashtag',
     column: 'fa-columns',
-    dozen: 'fa-th-large'
+    dozen: 'fa-th-large',
+    repetition: 'fa-repeat'
   };
 
   return (

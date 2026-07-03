@@ -14,6 +14,7 @@ export interface RouletteTable {
   launchAlias: string;
   gameCode: string;
   superbetGameId?: number; // numeric ID used in Superbet URLs
+  url?: string;
 }
 
 export const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
@@ -102,6 +103,7 @@ export const toKebabCase = (str: string): string => {
  * Uses the static mapping when available, falls back to slug-only.
  */
 export const buildSuperbetUrl = (table: RouletteTable): string => {
+  if (table.url) return table.url;
   const BASE = 'https://superbet.bet.br/jogo';
 
   // Check table's own numeric ID first
@@ -169,75 +171,75 @@ export const extractImageUrl = (r: any): string => {
   return `/api/estrelabet/uploads/games/EST/pt_pt${r.id}/pt_pt${r.id}.png`;
 };
 
-// IDs de roletas conhecidas que existem na Evolution mas não aparecem
-// no endpoint de lobby da Estrelabet.
-// Podem ser adicionadas manualmente aqui para busca via endpoint alternativo.
-const EXTRA_ROULETTE_IDS: { id: string; name: string; alias: string }[] = [];
+export interface MonitoredRoulette {
+  id: string;
+  url: string;
+  overrideName?: string;
+  overrideImage?: string;
+  minBet?: number;
+  maxBet?: number;
+}
+
+export const MONITORED_ROULETTES: MonitoredRoulette[] = [
+  {
+    id: "LightningTable01",
+    url: "https://superbet.bet.br/jogo/lightning-roulette/818267?demo=false",
+    overrideName: "Lightning Roulette",
+    overrideImage:
+      "https://static.egcdn.com/frontend/evo/branding/relampago_lro_immersive-logo.c1c7e3c.svg",
+  },
+  {
+    id: "PorROULigh000001",
+    url: "https://superbet.bet.br/jogo/lightning-roleta-relampago/113562?demo=false",
+    overrideName: "Roleta Relâmpago",
+  },
+  {
+    id: "287",
+    url: "https://superbet.bet.br/jogo/mega-roleta-brasileira/632016?demo=false",
+    overrideName: "Brazilian Mega Roulette",
+  },
+  {
+    id: "2901",
+    url: "https://superbet.bet.br/jogo/mega-roulette-3000/452209?demo=false",
+    overrideName: "Mega Roulette 3000",
+  },
+];
+
+const MONITORED_IDS = new Set(MONITORED_ROULETTES.map((r) => r.id));
 
 export const fetchRoulettes = async (): Promise<RouletteTable[]> => {
   try {
-    const response = await fetch(`/api/superbet-gaming/provider-socket/public/api/br/v2/state`);
+    const response = await fetch(`/api/superbet-state?_t=${Date.now()}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data: any[] = await response.json();
+    const data = await response.json();
+    const allGames: any[] = Array.isArray(data) ? data : Object.values(data);
 
-    // Filtra apenas roletas da Superbet
-    const roulettesData = data.filter((item: any) =>
-      item.gameType?.toLowerCase() === 'roulette'
-    );
+    const overrideById = new Map(MONITORED_ROULETTES.map((r) => [r.id, r]));
+    const filtered = allGames.filter((g) => MONITORED_IDS.has(g.id));
 
-    const roulettes: RouletteTable[] = roulettesData.map(r => {
-      // Diferentes campos podem conter os resultados
-      const lr = r.lastResults || r.results || r.roundHistory || r.history || r.drawResults || [];
-
-      // Tenta extrair o ID numérico da Superbet de campos possíveis
-      const numericId: number | undefined =
-        r.superbetId || r.gameId || r.lobbyGameId || r.externalId || undefined;
-
+    const roulettes: RouletteTable[] = filtered.map((g) => {
+      const override = overrideById.get(g.id)!;
+      const results = g.results || [];
       return {
-        id: r.id,
-        name: r.name,
-        type: 'Roulette',
-        image: extractImageUrl(r),
-        provider: r.provider || 'Evolution',
-        dealerName: null,
-        language: 'pt',
-        minBet: r.betLimit || 0,
-        maxBet: 0,
+        id: g.id,
+        name: override.overrideName ?? g.name,
+        type: "Roulette",
+        image: override.overrideImage ?? extractImageUrl(g),
+        provider: g.provider || "Evolution",
+        dealerName: g.dealerName || "Live",
+        language: "pt",
+        minBet: override.minBet ?? g.betLimit ?? 1,
+        maxBet: override.maxBet ?? 25000,
         seatsTotal: 0,
-        seatsTaken: r.players || 0,
-        lastResults: lr,
-        launchAlias: r.id,
-        gameCode: r.id,
-        superbetGameId: typeof numericId === 'number' && !isNaN(numericId) ? numericId : undefined,
+        seatsTaken: g.players ?? 0,
+        lastResults: results,
+        launchAlias: g.id,
+        gameCode: g.id,
+        url: override.url,
       };
     });
-
-    // Descobre quais IDs extras já estão presentes na resposta da API
-    const presentIds = new Set(roulettes.map((r: any) => r.id));
-
-    // Adiciona entradas conhecidas que estão ausentes na API com placeholder
-    for (const extra of EXTRA_ROULETTE_IDS) {
-      if (!presentIds.has(extra.id) && !presentIds.has(extra.alias)) {
-        roulettes.push({
-          id: extra.id,
-          name: extra.name,
-          type: 'Roulette',
-          image: `/api/estrelabet/uploads/games/EST/pt_pt${extra.alias}/pt_pt${extra.alias}.png`,
-          provider: 'Evolution',
-          dealerName: null,
-          language: 'pt',
-          minBet: 0,
-          maxBet: 0,
-          seatsTotal: 0,
-          seatsTaken: 0,
-          lastResults: [],
-          launchAlias: extra.alias,
-          gameCode: extra.alias,
-        } as RouletteTable);
-      }
-    }
 
     return roulettes;
   } catch (error) {

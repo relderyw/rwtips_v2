@@ -34,11 +34,12 @@ const colorEmoji = (color: 'red' | 'black' | 'green'): string => {
 /** Strategy type icon */
 const strategyIcon = (type: StrategyOpportunity['type']): string => {
   switch (type) {
-    case 'color':    return '🎨';
-    case 'terminal': return '#️⃣';
-    case 'column':   return '📊';
-    case 'dozen':    return '🎯';
-    default:         return '📈';
+    case 'color':      return '🎨';
+    case 'terminal':   return '#️⃣';
+    case 'column':     return '📊';
+    case 'dozen':      return '🎯';
+    case 'repetition': return '🔁';
+    default:           return '📈';
   }
 };
 
