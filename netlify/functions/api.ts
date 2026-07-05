@@ -81,7 +81,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       headers: {
         'Access-Control-Allow-Origin': FRONTEND_ORIGIN,
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-App-Key, sessionid',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-App-Key, sessionid, session_id, x-device-id',
       },
       body: '',
     };
@@ -211,10 +211,16 @@ export const handler: Handler = async (event: HandlerEvent) => {
                   'sec-fetch-mode': 'cors',
                   'sec-fetch-site': 'cross-site',
                   'sec-gpc': '1',
-                  'sessionid': event.headers['sessionid'] || '',
                   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36',
               }
           };
+          
+          // Support both sessionid and token auth
+          if (event.headers['sessionid']) {
+              config.headers['sessionid'] = event.headers['sessionid'];
+          } else if (event.headers['authorization']) {
+              config.headers['Authorization'] = event.headers['authorization'];
+          }
 
           const response = await axios(config);
           return {
@@ -230,6 +236,70 @@ export const handler: Handler = async (event: HandlerEvent) => {
           return {
               statusCode: error.response?.status || 500,
               body: JSON.stringify({ error: 'Failed to fetch Superbet tickets', details: error.message }),
+          };
+      }
+  } else if (event.path.includes('superbet-generate-token')) {
+      // Proxy to Superbet Token Generation API
+      console.log(`[Proxy] Forwarding to Superbet Token Generate: ${event.path}`);
+      const baseUrl = "https://social-front-default-production.freetls.fastly.net";
+      
+      // Extract params from query string
+      const userId = event.queryStringParameters?.userId || '';
+      const userUuid = event.queryStringParameters?.userUuid || '';
+      
+      let superbetPath = '/default/authentication/brsuperbetsocial/public/generate';
+      
+      try {
+          const config: any = {
+              method: 'GET',
+              url: `${baseUrl}${superbetPath}`,
+              params: {
+                  user_id: userId,
+                  user_uuid: userUuid
+              },
+              headers: {
+                  'accept': 'application/json, text/plain, */*',
+                  'accept-encoding': 'gzip, deflate, br, zstd',
+                  'accept-language': 'pt-BR,pt;q=0.9',
+                  'client_platform': 'web',
+                  'origin': 'https://superbet.bet.br',
+                  'priority': 'u=1, i',
+                  'referer': 'https://superbet.bet.br/',
+                  'sec-ch-ua': '"Not;A=Brand";v="8", "Chromium";v="150", "Brave";v="150"',
+                  'sec-ch-ua-mobile': '?0',
+                  'sec-ch-ua-platform': '"Windows"',
+                  'sec-fetch-dest': 'empty',
+                  'sec-fetch-mode': 'cors',
+                  'sec-fetch-site': 'cross-site',
+                  'sec-gpc': '1',
+                  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36',
+              }
+          };
+          
+          // Forward session_id if present
+          if (event.headers['session_id']) {
+              config.headers['session_id'] = event.headers['session_id'];
+          } else if (event.headers['sessionid']) {
+              config.headers['session_id'] = event.headers['sessionid'];
+          }
+          if (event.headers['x-device-id']) {
+              config.headers['x-device-id'] = event.headers['x-device-id'];
+          }
+
+          const response = await axios(config);
+          return {
+              statusCode: 200,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+              },
+              body: JSON.stringify(response.data),
+          };
+      } catch (error: any) {
+          console.error('[Proxy Error] Superbet Token Generate:', error.message);
+          return {
+              statusCode: error.response?.status || 500,
+              body: JSON.stringify({ error: 'Failed to generate Superbet token', details: error.message }),
           };
       }
   } else if (event.path.includes('statshub')) {

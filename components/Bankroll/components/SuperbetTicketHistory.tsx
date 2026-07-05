@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, RefreshCw, History, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Trophy, RefreshCw, History, CheckCircle2, XCircle, Clock, Key } from 'lucide-react';
 
 interface SuperbetTicket {
   id: string;
@@ -8,22 +8,28 @@ interface SuperbetTicket {
   status: string;
   selections: any[];
   createdAt: string;
-  [key: string]: any; // For any additional fields from the API might return
+  [key: string]: any;
 }
 
 interface SuperbetTicketHistoryProps {
-  // Add any props needed
 }
 
 const SuperbetTicketHistory: React.FC<SuperbetTicketHistoryProps> = () => {
   const [tickets, setTickets] = useState<SuperbetTicket[]>([]);
   const [loading, setLoading] = useState(false);
+  const [generatingToken, setGeneratingToken] = useState(false);
   // Initialize from localStorage if available
   const [sessionId, setSessionId] = useState(() => {
     return localStorage.getItem('superbet_sessionId') || '';
   });
   const [userId, setUserId] = useState(() => {
     return localStorage.getItem('superbet_userId') || '1232497';
+  });
+  const [userUuid, setUserUuid] = useState(() => {
+    return localStorage.getItem('superbet_userUuid') || '';
+  });
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('superbet_token') || '';
   });
   const [count, setCount] = useState(() => {
     return localStorage.getItem('superbet_count') || '11';
@@ -41,15 +47,21 @@ const SuperbetTicketHistory: React.FC<SuperbetTicketHistoryProps> = () => {
     localStorage.setItem('superbet_userId', userId);
   }, [userId]);
   useEffect(() => {
+    localStorage.setItem('superbet_userUuid', userUuid);
+  }, [userUuid]);
+  useEffect(() => {
+    localStorage.setItem('superbet_token', token);
+  }, [token]);
+  useEffect(() => {
     localStorage.setItem('superbet_count', count);
   }, [count]);
   useEffect(() => {
     localStorage.setItem('superbet_status', status);
   }, [status]);
 
-  // Auto-fetch on load if we have sessionId and userId
+  // Auto-fetch on load if we have either sessionId or token and userId
   useEffect(() => {
-    if (sessionId && userId) {
+    if ((sessionId || token) && userId) {
       fetchTickets();
     }
   }, []);
@@ -81,9 +93,43 @@ const SuperbetTicketHistory: React.FC<SuperbetTicketHistoryProps> = () => {
     return <Clock size={16} className="text-yellow-500" />;
   };
 
-  const fetchTickets = async () => {
-    if (!sessionId) {
-      setError('Por favor, informe o Session ID');
+  const generateToken = async () => {
+    if (!sessionId || !userId || !userUuid) {
+      setError('Para gerar o token, informe Session ID, User ID e User UUID');
+      return;
+    }
+    setGeneratingToken(true);
+    setError(null);
+    try {
+      const url = `/api/superbet-generate-token?userId=${userId}&userUuid=${userUuid}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'session_id': sessionId,
+        }
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.details || `Erro ao gerar token: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.token) {
+        setToken(data.token);
+        // Auto-fetch tickets after generating token
+        fetchTickets(data.token);
+      }
+    } catch (err: any) {
+      console.error('Erro ao gerar token:', err);
+      setError(`Erro ao gerar token: ${err.message}`);
+    } finally {
+      setGeneratingToken(false);
+    }
+  };
+
+  const fetchTickets = async (authToken?: string) => {
+    const useToken = authToken || token;
+    if (!(sessionId || useToken)) {
+      setError('Por favor, informe o Session ID ou Token');
       return;
     }
     if (!userId) {
@@ -94,17 +140,21 @@ const SuperbetTicketHistory: React.FC<SuperbetTicketHistoryProps> = () => {
     setError(null);
     try {
       const url = `/api/superbet-tickets?userId=${userId}&count=${count}&status=${status}`;
+      const headers: any = {};
+      if (useToken) {
+        headers['Authorization'] = `Bearer ${useToken}`;
+      } else if (sessionId) {
+        headers['sessionid'] = sessionId;
+      }
       
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'sessionid': sessionId,
-        }
+        headers,
       });
       
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Session ID expirado ou inválido! Por favor, atualize o Session ID.');
+          throw new Error('Autenticação falhou! Por favor, atualize o Session ID ou Token.');
         }
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.details || `Erro na requisição: ${response.status}`);
@@ -136,14 +186,14 @@ const SuperbetTicketHistory: React.FC<SuperbetTicketHistoryProps> = () => {
           <History size={18} className="text-emerald-500" />
           <h3 className="text-[11px] font-black text-white/60 uppercase tracking-[0.2em]">Configuração da API</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div className="space-y-2">
             <label className="text-[9px] font-bold text-white/30 uppercase tracking-widest ml-2">Session ID</label>
             <input
               type="text"
               value={sessionId}
               onChange={(e) => setSessionId(e.target.value)}
-              placeholder="Informe o sessionid"
+              placeholder="Informe o Session ID"
               className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-emerald-500/50 transition-colors"
             />
           </div>
@@ -153,10 +203,44 @@ const SuperbetTicketHistory: React.FC<SuperbetTicketHistoryProps> = () => {
               type="text"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              placeholder="Informe o user ID"
+              placeholder="Informe o User ID"
               className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-emerald-500/50 transition-colors"
             />
           </div>
+          <div className="space-y-2">
+            <label className="text-[9px] font-bold text-white/30 uppercase tracking-widest ml-2">User UUID</label>
+            <input
+              type="text"
+              value={userUuid}
+              onChange={(e) => setUserUuid(e.target.value)}
+              placeholder="Informe o User UUID"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-emerald-500/50 transition-colors"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="space-y-2">
+            <label className="text-[9px] font-bold text-white/30 uppercase tracking-widest ml-2">Token (opcional)</label>
+            <input
+              type="text"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="Informe o Token JWT"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-emerald-500/50 transition-colors"
+            />
+          </div>
+          <div className="space-y-2 flex flex-col justify-end">
+            <button
+              onClick={generateToken}
+              disabled={generatingToken || !sessionId || !userId || !userUuid}
+              className="w-full py-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 text-[9px] font-black uppercase tracking-widest hover:text-indigo-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Key size={14} className={generatingToken ? 'animate-spin' : ''} /> 
+              {generatingToken ? 'Gerando Token...' : 'Gerar Token'}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="space-y-2">
             <label className="text-[9px] font-bold text-white/30 uppercase tracking-widest ml-2">Status</label>
             <select
@@ -181,11 +265,12 @@ const SuperbetTicketHistory: React.FC<SuperbetTicketHistoryProps> = () => {
           </div>
         </div>
         <button
-            onClick={fetchTickets}
+            onClick={() => fetchTickets()}
             disabled={loading}
-            className="mt-4 w-full py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase tracking-widest hover:text-emerald-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase tracking-widest hover:text-emerald-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> {loading ? 'Carregando...' : 'Atualizar Histórico'}
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> 
+            {loading ? 'Carregando...' : 'Atualizar Histórico'}
           </button>
         {error && (
           <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
