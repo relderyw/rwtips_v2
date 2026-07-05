@@ -81,7 +81,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       headers: {
         'Access-Control-Allow-Origin': FRONTEND_ORIGIN,
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-App-Key',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-App-Key, sessionid',
       },
       body: '',
     };
@@ -174,6 +174,62 @@ export const handler: Handler = async (event: HandlerEvent) => {
           return {
               statusCode: error.response?.status || 500,
               body: JSON.stringify({ error: 'Failed to fetch Superbet data', details: error.message }),
+          };
+      }
+  } else if (event.path.includes('superbet-tickets')) {
+      // Proxy to Superbet Tickets API
+      console.log(`[Proxy] Forwarding to Superbet Tickets: ${event.path}`);
+      const baseUrl = "https://prod-superbet-betting.freetls.fastly.net";
+      
+      // Extract params from query string
+      const userId = event.queryStringParameters?.userId || '1232497';
+      const count = event.queryStringParameters?.count || '11';
+      const status = event.queryStringParameters?.status || 'finished';
+      
+      let superbetPath = `/tickets/presentation-api/v3/SB_BR/user/${userId}/tickets`;
+      
+      try {
+          const config: any = {
+              method: 'GET',
+              url: `${baseUrl}${superbetPath}`,
+              params: {
+                  locale: 'pt-BR',
+                  count,
+                  status,
+                  type: 'sports'
+              },
+              headers: {
+                  'accept': 'application/json, text/plain, */*',
+                  'accept-encoding': 'gzip, deflate, br, zstd',
+                  'accept-language': 'pt-BR,pt;q=0.8',
+                  'origin': 'https://superbet.bet.br',
+                  'referer': 'https://superbet.bet.br/',
+                  'sec-ch-ua': '"Not;A=Brand";v="8", "Chromium";v="150", "Brave";v="150"',
+                  'sec-ch-ua-mobile': '?0',
+                  'sec-ch-ua-platform': '"Windows"',
+                  'sec-fetch-dest': 'empty',
+                  'sec-fetch-mode': 'cors',
+                  'sec-fetch-site': 'cross-site',
+                  'sec-gpc': '1',
+                  'sessionid': event.headers['sessionid'] || '',
+                  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36',
+              }
+          };
+
+          const response = await axios(config);
+          return {
+              statusCode: 200,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+              },
+              body: JSON.stringify(response.data),
+          };
+      } catch (error: any) {
+          console.error('[Proxy Error] Superbet Tickets:', error.message);
+          return {
+              statusCode: error.response?.status || 500,
+              body: JSON.stringify({ error: 'Failed to fetch Superbet tickets', details: error.message }),
           };
       }
   } else if (event.path.includes('statshub')) {

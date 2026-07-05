@@ -93,19 +93,21 @@ const SuperbetTicketHistory: React.FC<SuperbetTicketHistoryProps> = () => {
     setLoading(true);
     setError(null);
     try {
-      const url = `https://prod-superbet-betting.freetls.fastly.net/tickets/presentation-api/v3/SB_BR/user/${userId}/tickets?locale=pt-BR&count=${count}&status=${status}&type=sports`;
+      const url = `/api/superbet-tickets?userId=${userId}&count=${count}&status=${status}`;
       
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json, text/plain, */*',
           'sessionid': sessionId,
-          'Origin': 'https://superbet.bet.br',
         }
       });
       
       if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status}`);
+        if (response.status === 401) {
+          throw new Error('Session ID expirado ou inválido! Por favor, atualize o Session ID.');
+        }
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.details || `Erro na requisição: ${response.status}`);
       }
       
       const data = await response.json();
