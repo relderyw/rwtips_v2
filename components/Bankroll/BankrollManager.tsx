@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useMemo } from 'react';
 import { getLeagueInfo, ALLOWED_LEAGUES } from '../../services/analyzer';
 import {
@@ -18,7 +18,6 @@ import { dbModular as db } from '../../services/firebase'; // Updated import
 import { Bet, BetResult, ChartDataPoint, Market, Bankroll, BetType, BetSelection } from './types';
 import { SummaryCard } from './components/SummaryCard';
 import { BetChart } from './components/BetChart';
-import SuperbetTicketHistory from './components/SuperbetTicketHistory';
 import {
   Trophy,
   Wallet,
@@ -41,8 +40,7 @@ import {
   ArrowUp,
   ArrowDown,
   Eye,
-  EyeOff,
-  History
+  EyeOff
 } from 'lucide-react';
 
 interface Category {
@@ -108,7 +106,7 @@ interface BankrollManagerProps {
 
 export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) => {
   // State
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'new-bet' | 'markets' | 'settings' | 'superbet-history'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'new-bet' | 'markets' | 'settings'>('dashboard');
   const [isLeagueStatsOpen, setIsLeagueStatsOpen] = useState(false);
   const [bets, setBets] = useState<Bet[]>([]);
   const [markets, setMarkets] = useState<Market[]>([]);
@@ -866,12 +864,6 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
           >
             <Settings size={14} /> Configurações
           </button>
-          <button
-            onClick={() => setActiveTab('superbet-history')}
-            className={`px-6 py-2.5 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'superbet-history' ? 'bg-emerald-500 text-black shadow-lg' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
-          >
-            <History size={14} /> Superbet
-          </button>
         </div>
 
         {/* BANKROLL SELECTOR */}
@@ -1598,10 +1590,6 @@ export const BankrollManager: React.FC<BankrollManagerProps> = ({ userEmail }) =
             </div>
           </div>
         </div>
-      )}
-
-      {activeTab === 'superbet-history' && (
-        <SuperbetTicketHistory />
       )}
 
     </div>
