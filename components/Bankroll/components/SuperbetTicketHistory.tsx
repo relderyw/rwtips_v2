@@ -18,11 +18,41 @@ interface SuperbetTicketHistoryProps {
 const SuperbetTicketHistory: React.FC<SuperbetTicketHistoryProps> = () => {
   const [tickets, setTickets] = useState<SuperbetTicket[]>([]);
   const [loading, setLoading] = useState(false);
-  const [sessionId, setSessionId] = useState('');
-  const [userId, setUserId] = useState('1232497'); // Default from the API example
-  const [count, setCount] = useState('11');
-  const [status, setStatus] = useState('finished');
+  // Initialize from localStorage if available
+  const [sessionId, setSessionId] = useState(() => {
+    return localStorage.getItem('superbet_sessionId') || '';
+  });
+  const [userId, setUserId] = useState(() => {
+    return localStorage.getItem('superbet_userId') || '1232497';
+  });
+  const [count, setCount] = useState(() => {
+    return localStorage.getItem('superbet_count') || '11';
+  });
+  const [status, setStatus] = useState(() => {
+    return localStorage.getItem('superbet_status') || 'finished';
+  });
   const [error, setError] = useState<string | null>(null);
+
+  // Save to localStorage whenever these values change
+  useEffect(() => {
+    localStorage.setItem('superbet_sessionId', sessionId);
+  }, [sessionId]);
+  useEffect(() => {
+    localStorage.setItem('superbet_userId', userId);
+  }, [userId]);
+  useEffect(() => {
+    localStorage.setItem('superbet_count', count);
+  }, [count]);
+  useEffect(() => {
+    localStorage.setItem('superbet_status', status);
+  }, [status]);
+
+  // Auto-fetch on load if we have sessionId and userId
+  useEffect(() => {
+    if (sessionId && userId) {
+      fetchTickets();
+    }
+  }, []);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
