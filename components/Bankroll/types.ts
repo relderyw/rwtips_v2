@@ -51,3 +51,22 @@ export interface ChartDataPoint {
   date: string;
   balance: number;
 }
+
+// Superbet API Types
+export interface SuperbetTicket {
+  id: string;
+  stake: number;
+  possibleReturn: number;
+  status: string;
+  selections: SuperbetSelection[];
+  createdAt: string;
+  // Add more fields as needed based on actual API response
+}
+
+export interface SuperbetSelection {
+  eventName: string;
+  market: string;
+  selection: string;
+  odds: number;
+  // Add more fields as needed based on actual API response
+}
