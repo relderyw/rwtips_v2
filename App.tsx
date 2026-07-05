@@ -549,35 +549,45 @@ const App: React.FC = () => {
             <div className="flex items-center gap-6">
               <button
                 onClick={() => setSelectedModule(null)}
-                className="px-3 py-2 bg-[#111115] border border-[#25252a] rounded-lg text-[10px] font-semibold text-[#a1a1aa] hover:text-white hover:border-[#3f3f46] transition-all flex items-center gap-2"
+                className="px-4 py-2.5 bg-[#111115] border border-[#25252a] rounded-xl text-[11px] font-black uppercase tracking-wider text-[#71717a] hover:text-white hover:border-[#3f3f46] hover:bg-[#1c1c21] transition-all flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
               >
-                <i className="fa-solid fa-layer-group text-green-500 text-xs"></i>
+                <i className="fa-solid fa-layer-group text-green-500 text-sm"></i>
                 Módulos
               </button>
 
-              <nav className="flex bg-[#0f0f12] p-1 rounded-xl border border-[#1c1c21]">
+              <nav className="flex items-center bg-[#111115] p-1.5 rounded-2xl border border-[#25252a] shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                 {selectedModule === 'fifa' && (
                   <>
-                    <button onClick={() => setActiveMainTab('radar')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'radar' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Radar Live</button>
-                    <button onClick={() => setActiveMainTab('results')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'results' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Resultados</button>
-                    <button onClick={() => setActiveMainTab('upcoming')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'upcoming' ? 'bg-[#1c1c21] text-white shadow-sm' : 'text-[#52525b] hover:text-[#a1a1aa]'}`}>Próximos Jogos</button>
-                    <button onClick={() => setActiveMainTab('bankroll')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'bankroll' ? 'bg-[#22c55e] text-black shadow-sm' : 'text-[#52525b] hover:text-[#22c55e]'}`}>Banca</button>
-                    <button onClick={() => setActiveMainTab('analytics')} className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${activeMainTab === 'analytics' ? 'bg-green-500 text-black shadow-sm' : 'text-[#52525b] hover:text-green-500'}`}>Backtest</button>
+                    <button onClick={() => setActiveMainTab('radar')} className={`relative px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${activeMainTab === 'radar' ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-black shadow-lg shadow-green-500/30 scale-105' : 'text-[#71717a] hover:text-white hover:bg-[#1c1c21]'}`}>
+                      <i className="fa-solid fa-radar text-sm mr-1.5"></i>Radar Live
+                    </button>
+                    <button onClick={() => setActiveMainTab('results')} className={`relative px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${activeMainTab === 'results' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-black shadow-lg shadow-blue-500/30 scale-105' : 'text-[#71717a] hover:text-white hover:bg-[#1c1c21]'}`}>
+                      <i className="fa-solid fa-trophy text-sm mr-1.5"></i>Resultados
+                    </button>
+                    <button onClick={() => setActiveMainTab('upcoming')} className={`relative px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${activeMainTab === 'upcoming' ? 'bg-gradient-to-r from-orange-500 to-red-600 text-black shadow-lg shadow-orange-500/30 scale-105' : 'text-[#71717a] hover:text-white hover:bg-[#1c1c21]'}`}>
+                      <i className="fa-solid fa-calendar-days text-sm mr-1.5"></i>Próximos Jogos
+                    </button>
+                    <button onClick={() => setActiveMainTab('bankroll')} className={`relative px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${activeMainTab === 'bankroll' ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-black shadow-lg shadow-emerald-500/30 scale-105' : 'text-[#71717a] hover:text-emerald-400 hover:bg-[#1c1c21]'}`}>
+                      <i className="fa-solid fa-wallet text-sm mr-1.5"></i>Banca
+                    </button>
+                    <button onClick={() => setActiveMainTab('analytics')} className={`relative px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${activeMainTab === 'analytics' ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-black shadow-lg shadow-purple-500/30 scale-105' : 'text-[#71717a] hover:text-purple-400 hover:bg-[#1c1c21]'}`}>
+                      <i className="fa-solid fa-chart-line text-sm mr-1.5"></i>Backtest
+                    </button>
                   </>
                 )}
               </nav>
               {isLoggedIn && isAdmin && (
                 <button
                   onClick={() => setIsAdminView(true)}
-                  className="px-3 py-2 bg-green-500/10 border border-green-500/25 rounded-lg text-[10px] font-semibold text-green-500 hover:bg-green-500/20 transition-all flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-green-500/10 border border-green-500/25 rounded-xl text-[11px] font-black uppercase tracking-wider text-green-500 hover:bg-green-500/20 hover:border-green-500/40 transition-all flex items-center gap-2 shadow-[0_4px_12px_rgba(34,197,94,0.15)]"
                 >
-                  <i className="fa-solid fa-shield-halved text-xs"></i>
+                  <i className="fa-solid fa-shield-halved text-sm"></i>
                   Admin
                 </button>
               )}
               {(isLoggedIn || isAdminView) && (
-                <button onClick={handleLogout} className="w-8 h-8 bg-[#111115] border border-[#25252a] rounded-lg flex items-center justify-center hover:border-red-500/40 hover:text-red-500 transition-all">
-                  <i className="fa-solid fa-power-off text-[#52525b] text-xs"></i>
+                <button onClick={handleLogout} className="w-10 h-10 bg-[#111115] border border-[#25252a] rounded-xl flex items-center justify-center hover:border-red-500/40 hover:text-red-500 hover:bg-red-500/10 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.2)]">
+                  <i className="fa-solid fa-power-off text-[#52525b] text-sm"></i>
                 </button>
               )}
             </div>
