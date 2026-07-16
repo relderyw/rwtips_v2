@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LiveEvent, HistoryMatch } from '../types';
 import { calculatePlayerStats, getLeagueInfo, calculateMetricProbability, normalize } from '../services/analyzer';
@@ -95,7 +95,6 @@ const FormDots = ({ results, stats }: { results: string[]; stats: any }) => {
 
 export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, confidence, reasons, historicalGames, onDetailClick, isPinned, onTogglePin }) => {
   const [activeTab, setActiveTab] = useState<'HT' | 'FT'>('FT');
-  const [activePlayerTab, setActivePlayerTab] = useState<'H' | 'A'>('H');
 
   const leagueInfo = getLeagueInfo(match.leagueName);
 
@@ -126,36 +125,52 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
   const isSignaled = potential !== 'none' && (confidence ?? 0) >= 75;
   const theme = STRATEGY_THEMES[potential] || STRATEGY_THEMES.none;
 
-  // Metric bar — color based on value only (semantic)
-  const MetricRow = ({ label, value }: { label: string; value: number }) => {
-    const fillColor = value >= 70 ? '#34D399' : value >= 50 ? 'rgba(57, 211, 83,0.75)' : 'rgba(248,113,113,0.6)';
-    const textColor = value >= 70 ? '#34D399' : value >= 50 ? '#39D353' : '#F87171';
+  // Dual metric bar — shows both players' stats mirrored from center
+  const DualMetricRow = ({ label, homeValue, awayValue }: { label: string; homeValue: number; awayValue: number }) => {
+    const getBarColor = (v: number) => v >= 70 ? '#34D399' : v >= 50 ? 'rgba(57, 211, 83,0.75)' : 'rgba(248,113,113,0.6)';
+    const getTextColor = (v: number) => v >= 70 ? '#34D399' : v >= 50 ? '#39D353' : '#F87171';
 
     return (
-      <div className="flex items-center gap-2.5 mb-2 last:mb-0">
-        <div className="w-[48px] shrink-0">
-          <span className="text-[10px] font-medium" style={{ color: '#8888A0' }}>{label}</span>
+      <div className="flex items-center gap-1 py-[3px]">
+        {/* Home percentage */}
+        <div className="w-[30px] text-left shrink-0">
+          <span className="text-[10px] font-bold font-mono-numbers tabular-nums" style={{ color: getTextColor(homeValue) }}>
+            {homeValue.toFixed(0)}%
+          </span>
         </div>
-        <div className="flex-1 h-[5px] rounded-full overflow-hidden" style={{ background: '#161620' }}>
-          <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${value}%`, background: fillColor }}></div>
+        {/* Home bar (right-aligned, grows from center outward) */}
+        <div className="flex-1 h-[4px] rounded-full overflow-hidden flex justify-end" style={{ background: '#161620' }}>
+          <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${homeValue}%`, background: getBarColor(homeValue) }}></div>
         </div>
-        <div className="w-[32px] text-right shrink-0">
-          <span className="text-[11px] font-semibold font-mono-numbers tabular-nums" style={{ color: textColor }}>
-            {value.toFixed(0)}%
+        {/* Label (center) */}
+        <div className="w-[48px] text-center shrink-0">
+          <span className="text-[8px] font-semibold uppercase" style={{ color: '#6B6B80' }}>{label}</span>
+        </div>
+        {/* Away bar (left-aligned, grows from center outward) */}
+        <div className="flex-1 h-[4px] rounded-full overflow-hidden" style={{ background: '#161620' }}>
+          <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${awayValue}%`, background: getBarColor(awayValue) }}></div>
+        </div>
+        {/* Away percentage */}
+        <div className="w-[30px] text-right shrink-0">
+          <span className="text-[10px] font-bold font-mono-numbers tabular-nums" style={{ color: getTextColor(awayValue) }}>
+            {awayValue.toFixed(0)}%
           </span>
         </div>
       </div>
     );
   };
 
-  const playerMetrics = useMemo(() => {
-    const name = activePlayerTab === 'H' ? match.homePlayer : match.awayPlayer;
-    return {
-      m05: calculateMetricProbability(name, historicalGames, 'target0.5', isHT, syncLimit),
-      m15: calculateMetricProbability(name, historicalGames, 'target1.5', isHT, syncLimit),
-      m25: calculateMetricProbability(name, historicalGames, 'target2.5', isHT, syncLimit),
-    };
-  }, [activePlayerTab, match.homePlayer, match.awayPlayer, historicalGames, isHT, syncLimit]);
+  const homePlayerMetrics = useMemo(() => ({
+    m05: calculateMetricProbability(match.homePlayer, historicalGames, 'target0.5', isHT, syncLimit),
+    m15: calculateMetricProbability(match.homePlayer, historicalGames, 'target1.5', isHT, syncLimit),
+    m25: calculateMetricProbability(match.homePlayer, historicalGames, 'target2.5', isHT, syncLimit),
+  }), [match.homePlayer, historicalGames, isHT, syncLimit]);
+
+  const awayPlayerMetrics = useMemo(() => ({
+    m05: calculateMetricProbability(match.awayPlayer, historicalGames, 'target0.5', isHT, syncLimit),
+    m15: calculateMetricProbability(match.awayPlayer, historicalGames, 'target1.5', isHT, syncLimit),
+    m25: calculateMetricProbability(match.awayPlayer, historicalGames, 'target2.5', isHT, syncLimit),
+  }), [match.awayPlayer, historicalGames, isHT, syncLimit]);
 
   const isAltenarLeague = match.leagueName.toLowerCase().includes('valhalla') ||
     match.leagueName.toLowerCase().includes('valkyrie');
@@ -183,7 +198,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
 
   return (
     <div
-      className={`relative flex flex-col transition-all duration-300 h-full min-h-[480px] rounded-xl overflow-visible ${isSignaled ? 'animate-accent-glow' : ''}`}
+      className={`relative flex flex-col transition-all duration-300 h-full min-h-[420px] rounded-xl overflow-visible ${isSignaled ? 'animate-accent-glow' : ''}`}
       style={{
         background: '#0D0D12',
         border: `1px solid ${isSignaled ? 'rgba(57, 211, 83,0.3)' : '#1E1E28'}`,
@@ -191,39 +206,34 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
         boxShadow: isSignaled ? '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(57, 211, 83,0.1)' : '0 4px 20px rgba(0,0,0,0.4)',
       }}
     >
-      {/* SIGNAL PANEL */}
+      {/* SIGNAL PANEL — Compact */}
       {potential !== 'none' && (
-        <div className="mx-3 mt-3 p-3 rounded-xl"
+        <div className="mx-3 mt-3 px-3 py-2 rounded-xl"
           style={{
             background: isSignaled ? 'rgba(57, 211, 83,0.06)' : '#13131A',
             border: `1px solid ${isSignaled ? 'rgba(57, 211, 83,0.2)' : '#1E1E28'}`,
           }}>
           <div className="flex items-center justify-between">
-            <div className={`flex items-center gap-2.5 ${!isSignaled ? 'opacity-40' : ''}`}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+            <div className={`flex items-center gap-2 ${!isSignaled ? 'opacity-40' : ''}`}>
+              <div className="w-6 h-6 rounded-md flex items-center justify-center"
                 style={{ background: isSignaled ? 'rgba(57, 211, 83,0.12)' : '#1E1E28', border: `1px solid ${isSignaled ? 'rgba(57, 211, 83,0.25)' : '#1E1E28'}` }}>
-                <i className={`fa-solid ${theme.icon} text-xs`} style={{ color: isSignaled ? '#39D353' : '#44445A' }}></i>
+                <i className={`fa-solid ${theme.icon} text-[9px]`} style={{ color: isSignaled ? '#39D353' : '#44445A' }}></i>
               </div>
-              <div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider block" style={{ color: isSignaled ? '#39D353' : '#44445A' }}>
-                  {theme.label}
-                  {!isSignaled && <span className="ml-2 text-[8px] font-normal" style={{ color: '#44445A' }}>OBSERVANDO</span>}
-                </span>
-                {reasons && reasons.length > 0 && (
-                  <span className="text-[8px]" style={{ color: '#44445A' }}>{reasons[0]}</span>
-                )}
-              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: isSignaled ? '#39D353' : '#44445A' }}>
+                {theme.label}
+                {!isSignaled && <span className="ml-1.5 text-[7px] font-normal" style={{ color: '#44445A' }}>OBSERVANDO</span>}
+              </span>
             </div>
 
-            <div className={`flex flex-col items-end gap-1 ${!isSignaled ? 'opacity-30' : ''}`}>
-              <span className="text-sm font-bold tabular-nums font-mono-numbers"
-                style={{ color: confidence && confidence >= 85 ? '#34D399' : confidence && confidence >= 75 ? '#39D353' : '#F87171' }}>
-                {confidence}%
-              </span>
-              <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: '#1E1E28' }}>
+            <div className={`flex items-center gap-2 ${!isSignaled ? 'opacity-30' : ''}`}>
+              <div className="w-12 h-1 rounded-full overflow-hidden" style={{ background: '#1E1E28' }}>
                 <div className="h-full rounded-full transition-all duration-700"
                   style={{ width: `${confidence}%`, background: confidence && confidence >= 85 ? '#34D399' : confidence && confidence >= 75 ? '#39D353' : '#F87171' }}></div>
               </div>
+              <span className="text-xs font-bold tabular-nums font-mono-numbers"
+                style={{ color: confidence && confidence >= 85 ? '#34D399' : confidence && confidence >= 75 ? '#39D353' : '#F87171' }}>
+                {confidence}%
+              </span>
             </div>
           </div>
         </div>
@@ -312,14 +322,15 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           </div>
         </div>
 
-        {/* Metrics — Confronto */}
+        {/* Unified Metrics — Dual Column */}
         <div className="rounded-xl p-2.5" style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
-          <div className="flex items-center justify-between mb-2">
+          {/* Header: Confronto + HT/FT toggle */}
+          <div className="flex items-center justify-between mb-1.5">
             <span className="text-[9px] font-medium uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#44445A' }}>
               <i className="fa-solid fa-bolt text-[8px]" style={{ color: '#34D399' }}></i>
               Linhas Confronto
               {syncLimit < 5 && <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: '#F87171' }}></span>}
-              <span className={syncLimit < 5 ? '' : ''} style={{ color: syncLimit < 5 ? '#4ade80' : '#44445A' }}>({syncLimit}J)</span>
+              <span style={{ color: syncLimit < 5 ? '#4ade80' : '#44445A' }}>({syncLimit}J)</span>
             </span>
             <div className="flex p-0.5 rounded-lg" style={{ background: '#07070A', border: '1px solid #1E1E28' }}>
               <button onClick={() => setActiveTab('HT')} className="px-2 py-0.5 rounded-md text-[8px] font-semibold transition-all"
@@ -328,47 +339,45 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
                 style={!isHT ? { background: '#1E1E28', color: '#F0F0F4' } : { color: '#44445A' }}>FT</button>
             </div>
           </div>
-          <div className="space-y-0.5">
+
+          {/* Player name labels */}
+          <div className="flex items-center justify-between mb-1 px-0.5">
+            <span className="text-[8px] font-semibold uppercase tracking-wider truncate max-w-[90px]" style={{ color: '#F0F0F4' }}>{match.homePlayer}</span>
+            <span className="text-[8px] font-semibold uppercase tracking-wider truncate max-w-[90px]" style={{ color: '#F0F0F4' }}>{match.awayPlayer}</span>
+          </div>
+
+          {/* Confronto dual bars */}
+          <div className="space-y-0">
             {isHT ? (
               <>
-                <MetricRow label="0.5 HT" value={(p1.htOver05Rate + p2.htOver05Rate) / 2} />
-                <MetricRow label="1.5 HT" value={(p1.htOver15Rate + p2.htOver15Rate) / 2} />
-                <MetricRow label="2.5 HT" value={(p1.htOver25Rate + p2.htOver25Rate) / 2} />
-                <MetricRow label="BTTS HT" value={(p1.htBttsRate + p2.htBttsRate) / 2} />
+                <DualMetricRow label="0.5 HT" homeValue={p1.htOver05Rate} awayValue={p2.htOver05Rate} />
+                <DualMetricRow label="1.5 HT" homeValue={p1.htOver15Rate} awayValue={p2.htOver15Rate} />
+                <DualMetricRow label="2.5 HT" homeValue={p1.htOver25Rate} awayValue={p2.htOver25Rate} />
+                <DualMetricRow label="BTTS HT" homeValue={p1.htBttsRate} awayValue={p2.htBttsRate} />
               </>
             ) : (
               <>
-                <MetricRow label="1.5 FT" value={(p1.ft15Rate + p2.ft15Rate) / 2} />
-                <MetricRow label="2.5 FT" value={(p1.ftOver25Rate + p2.ftOver25Rate) / 2} />
-                <MetricRow label="3.5 FT" value={(p1.ft35Rate + p2.ft35Rate) / 2} />
-                <MetricRow label="BTTS FT" value={(p1.ftBttsRate + p2.ftBttsRate) / 2} />
+                <DualMetricRow label="1.5 FT" homeValue={p1.ft15Rate} awayValue={p2.ft15Rate} />
+                <DualMetricRow label="2.5 FT" homeValue={p1.ftOver25Rate} awayValue={p2.ftOver25Rate} />
+                <DualMetricRow label="3.5 FT" homeValue={p1.ft35Rate} awayValue={p2.ft35Rate} />
+                <DualMetricRow label="BTTS FT" homeValue={p1.ftBttsRate} awayValue={p2.ftBttsRate} />
               </>
             )}
           </div>
-        </div>
 
-        {/* Metrics — Player Individual */}
-        <div className="rounded-xl p-2.5" style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[9px] font-medium uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#44445A' }}>
-              <i className="fa-solid fa-chart-line text-[8px]" style={{ color: '#34D399' }}></i>
-              Linhas Players
-            </span>
-            <div className="flex p-0.5 rounded-lg max-w-[140px]" style={{ background: '#07070A', border: '1px solid #1E1E28' }}>
-              <button onClick={() => setActivePlayerTab('H')} className="px-2 py-0.5 rounded-md text-[8px] font-semibold transition-all flex-1 truncate"
-                style={activePlayerTab === 'H' ? { background: '#1E1E28', color: '#F0F0F4' } : { color: '#44445A' }}>
-                {match.homePlayer}
-              </button>
-              <button onClick={() => setActivePlayerTab('A')} className="px-2 py-0.5 rounded-md text-[8px] font-semibold transition-all flex-1 truncate"
-                style={activePlayerTab === 'A' ? { background: '#1E1E28', color: '#F0F0F4' } : { color: '#44445A' }}>
-                {match.awayPlayer}
-              </button>
-            </div>
+          {/* Divider */}
+          <div className="my-2 mx-1" style={{ borderTop: '1px solid #1E1E28' }}></div>
+
+          {/* Over Gols Individual */}
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <i className="fa-solid fa-chart-line text-[8px]" style={{ color: '#34D399' }}></i>
+            <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#44445A' }}>Over Gols Individual</span>
           </div>
-          <div className="space-y-0.5">
-            <MetricRow label={`0.5 ${isHT ? 'HT' : 'FT'}`} value={playerMetrics.m05} />
-            <MetricRow label={`1.5 ${isHT ? 'HT' : 'FT'}`} value={playerMetrics.m15} />
-            <MetricRow label={`2.5 ${isHT ? 'HT' : 'FT'}`} value={playerMetrics.m25} />
+
+          <div className="space-y-0">
+            <DualMetricRow label={`0.5 ${isHT ? 'HT' : 'FT'}`} homeValue={homePlayerMetrics.m05} awayValue={awayPlayerMetrics.m05} />
+            <DualMetricRow label={`1.5 ${isHT ? 'HT' : 'FT'}`} homeValue={homePlayerMetrics.m15} awayValue={awayPlayerMetrics.m15} />
+            <DualMetricRow label={`2.5 ${isHT ? 'HT' : 'FT'}`} homeValue={homePlayerMetrics.m25} awayValue={awayPlayerMetrics.m25} />
           </div>
         </div>
 
