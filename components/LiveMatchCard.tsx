@@ -50,7 +50,7 @@ const FormDots = ({ results, stats }: { results: string[]; stats: any }) => {
 
         const isWin = r === 'W';
         const isDraw = r === 'D';
-        const dotColor = isWin ? '#34D399' : isDraw ? '#4ade80' : '#F87171';
+        const dotColor = isWin ? '#34D399' : isDraw ? '#FBBF24' : '#F87171';
         const statusText = isWin ? "VITÓRIA" : isDraw ? "EMPATE" : "DERROTA";
 
         const dateObj = new Date(game.data_realizacao);
