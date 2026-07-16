@@ -125,6 +125,31 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
   const isSignaled = potential !== 'none' && (confidence ?? 0) >= 75;
   const theme = STRATEGY_THEMES[potential] || STRATEGY_THEMES.none;
 
+  // Single metric bar — shows average value
+  const SingleMetricRow = ({ label, value }: { label: string; value: number }) => {
+    const getBarColor = (v: number) => v >= 70 ? '#34D399' : v >= 50 ? 'rgba(57, 211, 83,0.75)' : 'rgba(248,113,113,0.6)';
+    const getTextColor = (v: number) => v >= 70 ? '#34D399' : v >= 50 ? '#39D353' : '#F87171';
+
+    return (
+      <div className="flex items-center gap-2.5 py-[3px]">
+        {/* Label (left) */}
+        <div className="w-[48px] text-left shrink-0">
+          <span className="text-[8px] font-semibold uppercase" style={{ color: '#6B6B80' }}>{label}</span>
+        </div>
+        {/* Progress bar */}
+        <div className="flex-1 h-[4px] rounded-full overflow-hidden" style={{ background: '#161620' }}>
+          <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${value}%`, background: getBarColor(value) }}></div>
+        </div>
+        {/* Percentage */}
+        <div className="w-[32px] text-right shrink-0">
+          <span className="text-[10px] font-bold font-mono-numbers tabular-nums" style={{ color: getTextColor(value) }}>
+            {value.toFixed(0)}%
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   // Dual metric bar — shows both players' stats mirrored from center
   const DualMetricRow = ({ label, homeValue, awayValue }: { label: string; homeValue: number; awayValue: number }) => {
     const getBarColor = (v: number) => v >= 70 ? '#34D399' : v >= 50 ? 'rgba(57, 211, 83,0.75)' : 'rgba(248,113,113,0.6)';
@@ -322,7 +347,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           </div>
         </div>
 
-        {/* Unified Metrics — Dual Column */}
+        {/* Unified Metrics */}
         <div className="rounded-xl p-2.5" style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
           {/* Header: Confronto + HT/FT toggle */}
           <div className="flex items-center justify-between mb-1.5">
@@ -340,27 +365,21 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
             </div>
           </div>
 
-          {/* Player name labels */}
-          <div className="flex items-center justify-between mb-1 px-0.5">
-            <span className="text-[8px] font-semibold uppercase tracking-wider truncate max-w-[90px]" style={{ color: '#F0F0F4' }}>{match.homePlayer}</span>
-            <span className="text-[8px] font-semibold uppercase tracking-wider truncate max-w-[90px]" style={{ color: '#F0F0F4' }}>{match.awayPlayer}</span>
-          </div>
-
-          {/* Confronto dual bars */}
+          {/* Confronto single bars (Average) */}
           <div className="space-y-0">
             {isHT ? (
               <>
-                <DualMetricRow label="0.5 HT" homeValue={p1.htOver05Rate} awayValue={p2.htOver05Rate} />
-                <DualMetricRow label="1.5 HT" homeValue={p1.htOver15Rate} awayValue={p2.htOver15Rate} />
-                <DualMetricRow label="2.5 HT" homeValue={p1.htOver25Rate} awayValue={p2.htOver25Rate} />
-                <DualMetricRow label="BTTS HT" homeValue={p1.htBttsRate} awayValue={p2.htBttsRate} />
+                <SingleMetricRow label="0.5 HT" value={(p1.htOver05Rate + p2.htOver05Rate) / 2} />
+                <SingleMetricRow label="1.5 HT" value={(p1.htOver15Rate + p2.htOver15Rate) / 2} />
+                <SingleMetricRow label="2.5 HT" value={(p1.htOver25Rate + p2.htOver25Rate) / 2} />
+                <SingleMetricRow label="BTTS HT" value={(p1.htBttsRate + p2.htBttsRate) / 2} />
               </>
             ) : (
               <>
-                <DualMetricRow label="1.5 FT" homeValue={p1.ft15Rate} awayValue={p2.ft15Rate} />
-                <DualMetricRow label="2.5 FT" homeValue={p1.ftOver25Rate} awayValue={p2.ftOver25Rate} />
-                <DualMetricRow label="3.5 FT" homeValue={p1.ft35Rate} awayValue={p2.ft35Rate} />
-                <DualMetricRow label="BTTS FT" homeValue={p1.ftBttsRate} awayValue={p2.ftBttsRate} />
+                <SingleMetricRow label="1.5 FT" value={(p1.ft15Rate + p2.ft15Rate) / 2} />
+                <SingleMetricRow label="2.5 FT" value={(p1.ftOver25Rate + p2.ftOver25Rate) / 2} />
+                <SingleMetricRow label="3.5 FT" value={(p1.ft35Rate + p2.ft35Rate) / 2} />
+                <SingleMetricRow label="BTTS FT" value={(p1.ftBttsRate + p2.ftBttsRate) / 2} />
               </>
             )}
           </div>
@@ -368,12 +387,19 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({ match, potential, 
           {/* Divider */}
           <div className="my-2 mx-1" style={{ borderTop: '1px solid #1E1E28' }}></div>
 
-          {/* Over Gols Individual */}
+          {/* Over Gols Individual Header */}
           <div className="flex items-center gap-1.5 mb-1.5">
             <i className="fa-solid fa-chart-line text-[8px]" style={{ color: '#34D399' }}></i>
             <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#44445A' }}>Over Gols Individual</span>
           </div>
 
+          {/* Player name labels (displayed only for individual metrics) */}
+          <div className="flex items-center justify-between mb-1 px-0.5">
+            <span className="text-[8px] font-semibold uppercase tracking-wider truncate max-w-[90px]" style={{ color: '#F0F0F4' }}>{match.homePlayer}</span>
+            <span className="text-[8px] font-semibold uppercase tracking-wider truncate max-w-[90px]" style={{ color: '#F0F0F4' }}>{match.awayPlayer}</span>
+          </div>
+
+          {/* Individual dual bars */}
           <div className="space-y-0">
             <DualMetricRow label={`0.5 ${isHT ? 'HT' : 'FT'}`} homeValue={homePlayerMetrics.m05} awayValue={awayPlayerMetrics.m05} />
             <DualMetricRow label={`1.5 ${isHT ? 'HT' : 'FT'}`} homeValue={homePlayerMetrics.m15} awayValue={awayPlayerMetrics.m15} />
