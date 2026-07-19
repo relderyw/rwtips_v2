@@ -182,8 +182,8 @@ const textColor = (v: number) => v >= 70 ? '#34D399' : v >= 50 ? '#F59E0B' : '#F
 // ── Single bar row (confronto) ──
 const MetricBar = ({ label, value }: { label: string; value: number }) => (
   <div className="flex items-center gap-2 py-[2.5px]">
-    <span className="w-[42px] text-[7.5px] font-medium shrink-0" style={{ color: '#3E3E55' }}>{label}</span>
-    <div className="flex-1 h-[2.5px] rounded-full overflow-hidden" style={{ background: '#141420' }}>
+    <span className="w-[42px] text-[7.5px] font-medium shrink-0" style={{ color: '#71717A' }}>{label}</span>
+    <div className="flex-1 h-[2.5px] rounded-full overflow-hidden" style={{ background: '#27272A' }}>
       <div className="h-full rounded-full transition-all duration-700"
         style={{ width: `${Math.max(0, Math.min(100, value))}%`, background: barColor(value) }} />
     </div>
@@ -197,11 +197,11 @@ const MetricBar = ({ label, value }: { label: string; value: number }) => (
 const DualBar = ({ label, h, a }: { label: string; h: number; a: number }) => (
   <div className="flex items-center gap-1.5 py-[2.5px]">
     <span className="w-[22px] text-right text-[8px] font-bold tabular-nums shrink-0" style={{ color: textColor(h) }}>{h.toFixed(0)}%</span>
-    <div className="flex-1 h-[2.5px] rounded-full overflow-hidden flex justify-end" style={{ background: '#141420' }}>
+    <div className="flex-1 h-[2.5px] rounded-full overflow-hidden flex justify-end" style={{ background: '#27272A' }}>
       <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, h))}%`, background: barColor(h) }} />
     </div>
-    <span className="w-[36px] text-center text-[7px] font-medium shrink-0" style={{ color: '#2E2E40' }}>{label}</span>
-    <div className="flex-1 h-[2.5px] rounded-full overflow-hidden" style={{ background: '#141420' }}>
+    <span className="w-[36px] text-center text-[7px] font-medium shrink-0" style={{ color: '#71717A' }}>{label}</span>
+    <div className="flex-1 h-[2.5px] rounded-full overflow-hidden" style={{ background: '#27272A' }}>
       <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, a))}%`, background: barColor(a) }} />
     </div>
     <span className="w-[22px] text-[8px] font-bold tabular-nums shrink-0" style={{ color: textColor(a) }}>{a.toFixed(0)}%</span>
@@ -212,14 +212,14 @@ const DualBar = ({ label, h, a }: { label: string; h: number; a: number }) => (
 const MomentumTag = ({ dir, name }: { dir: 'up' | 'stable' | 'down'; name: string }) => {
   const cfg = {
     up:     { arrow: '↑', color: '#34D399', label: 'AQUEC.' },
-    stable: { arrow: '→', color: '#9CA3AF', label: 'ESTÁVEL' },
+    stable: { arrow: '→', color: '#A1A1AA', label: 'ESTÁVEL' },
     down:   { arrow: '↓', color: '#F87171', label: 'ESFRI.' },
   }[dir];
   return (
     <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
-      style={{ background: '#0F0F18', border: `1px solid ${cfg.color}20` }}>
+      style={{ background: '#09090B', border: `1px solid ${cfg.color}25` }}>
       <span className="text-[11px] leading-none font-bold" style={{ color: cfg.color }}>{cfg.arrow}</span>
-      <span className="text-[7px] font-semibold uppercase tracking-wide truncate max-w-[40px]" style={{ color: '#4A4A62' }}>
+      <span className="text-[7px] font-semibold uppercase tracking-wide truncate max-w-[40px]" style={{ color: '#A1A1AA' }}>
         {name.split(' ')[0]}
       </span>
       <span className="text-[6.5px] font-bold uppercase" style={{ color: cfg.color }}>{cfg.label}</span>
@@ -292,14 +292,14 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
   return (
     <div className="relative flex flex-col h-full rounded-xl overflow-visible transition-all duration-300"
       style={{
-        background: '#0A0A10',
-        border: `1px solid ${isElite ? S.cardBorder : '#16161F'}`,
+        background: '#000000',
+        border: `1px solid ${isElite ? S.cardBorder : '#27272A'}`,
         borderLeft: `2px solid ${S.cardLeft}`,
         boxShadow: isElite ? `0 0 0 1px ${S.accentBorder}, 0 8px 32px rgba(0,0,0,0.6)` : '0 4px 20px rgba(0,0,0,0.5)',
       }}>
 
       {/* ── MDS PANEL ── */}
-      <div className="mx-3 mt-3 rounded-xl p-3" style={{ background: S.accentDim, border: `1px solid ${S.accentBorder}` }}>
+      <div className="mx-3 mt-3 rounded-xl p-3" style={{ background: '#09090B', border: `1px solid ${S.accentBorder}` }}>
 
         {/* Top row: label + help */}
         <div className="flex items-center justify-between mb-2.5">
@@ -314,8 +314,8 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
             )}
           </div>
           <button onClick={() => setShowHelp(true)}
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded-md opacity-30 hover:opacity-80 transition-all text-[7px] font-semibold uppercase"
-            style={{ background: '#0A0A10', border: '1px solid #1A1A25', color: '#6B6B85' }}>
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded-md opacity-40 hover:opacity-100 transition-all text-[7px] font-semibold uppercase"
+            style={{ background: '#09090B', border: '1px solid #27272A', color: '#A1A1AA' }}>
             <i className="fa-regular fa-circle-question text-[8px]" /> Guia
           </button>
         </div>
@@ -335,17 +335,17 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
           <div className="flex flex-col gap-2 flex-1 min-w-0">
             {/* Market */}
             <div className="flex items-center gap-1.5">
-              <i className="fa-solid fa-crosshairs text-[8px]" style={{ color: '#2E2E45' }} />
-              <span className="text-[11px] font-semibold" style={{ color: '#C8C8DC' }}>{mds.bestMarket}</span>
+              <i className="fa-solid fa-crosshairs text-[8px]" style={{ color: '#71717A' }} />
+              <span className="text-[11px] font-semibold" style={{ color: '#FFFFFF' }}>{mds.bestMarket}</span>
             </div>
 
             {/* Momentum row */}
             <div className="flex items-center gap-1.5 flex-wrap">
               {/* Liga */}
-              <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: '#0F0F18', border: '1px solid #1A1A25' }}>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: '#000000', border: '1px solid #27272A' }}>
                 <div className="w-1.5 h-1.5 rounded-full" style={{ background: leagueInfo.color }} />
                 {mds.leagueOverRate > 0 && (
-                  <span className="text-[7px] font-semibold tabular-nums" style={{ color: '#5A5A72' }}>
+                  <span className="text-[7px] font-semibold tabular-nums" style={{ color: '#E4E4E7' }}>
                     {mds.leagueOverRate.toFixed(0)}%
                   </span>
                 )}
@@ -355,9 +355,9 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
               <MomentumTag dir={mds.p2Momentum} name={match.awayPlayer} />
 
               {mds.h2hCount > 0 && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: '#0F0F18', border: '1px solid #1A1A25' }}>
-                  <i className="fa-solid fa-arrows-left-right text-[7px]" style={{ color: '#3E3E55' }} />
-                  <span className="text-[7px] font-semibold tabular-nums" style={{ color: '#5A5A72' }}>H2H {mds.h2hCount}j</span>
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: '#000000', border: '1px solid #27272A' }}>
+                  <i className="fa-solid fa-arrows-left-right text-[7px]" style={{ color: '#A1A1AA' }} />
+                  <span className="text-[7px] font-semibold tabular-nums" style={{ color: '#E4E4E7' }}>H2H {mds.h2hCount}j</span>
                 </div>
               )}
             </div>
@@ -366,13 +366,13 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
             <div className="flex flex-col gap-1">
               {mds.convergenceBonus && (
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg self-start"
-                  style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}>
+                  style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)' }}>
                   <i className="fa-solid fa-bolt text-[6px]" style={{ color: '#34D399' }} />
-                  <span className="text-[7px] font-semibold uppercase tracking-wider" style={{ color: '#34D39990' }}>Sinais Convergindo</span>
+                  <span className="text-[7px] font-semibold uppercase tracking-wider" style={{ color: '#34D399' }}>Sinais Convergindo</span>
                 </div>
               )}
               {mds.reasoning[0] && (
-                <p className="text-[7.5px] leading-snug truncate" style={{ color: '#3E3E58' }}>{mds.reasoning[0]}</p>
+                <p className="text-[7.5px] leading-snug truncate" style={{ color: '#A1A1AA' }}>{mds.reasoning[0]}</p>
               )}
             </div>
           </div>
@@ -398,7 +398,7 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
               ].map(({ c, l }) => (
                 <div key={l} className="flex items-center gap-0.5">
                   <div className="w-1.5 h-1.5 rounded-full" style={{ background: c, opacity: 0.7 }} />
-                  <span className="text-[6px] font-medium uppercase" style={{ color: '#2A2A3A' }}>{l}</span>
+                  <span className="text-[6px] font-medium uppercase" style={{ color: '#71717A' }}>{l}</span>
                 </div>
               ))}
             </div>
@@ -407,18 +407,18 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
       </div>
 
       {/* ── Card Header ── */}
-      <div className="px-3.5 pt-2.5 pb-2 flex items-center justify-between" style={{ borderBottom: '1px solid #111118' }}>
+      <div className="px-3.5 pt-2.5 pb-2 flex items-center justify-between" style={{ borderBottom: '1px solid #18181B' }}>
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 p-1" style={{ background: '#111118', border: '1px solid #1A1A25' }}>
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 p-1" style={{ background: '#09090B', border: '1px solid #27272A' }}>
             <img src={leagueInfo.image} className="w-full h-full object-contain" alt="" />
           </div>
           <div className="min-w-0">
-            <h4 className="text-[11px] font-semibold truncate leading-tight" style={{ color: '#CCCCDC' }}>
-              {match.homePlayer} <span style={{ color: '#252535' }}>vs</span> {match.awayPlayer}
+            <h4 className="text-[11px] font-semibold truncate leading-tight" style={{ color: '#FFFFFF' }}>
+              {match.homePlayer} <span style={{ color: '#52525B' }}>vs</span> {match.awayPlayer}
             </h4>
             <div className="flex items-center gap-1">
               <div className="w-1 h-1 rounded-full" style={{ background: leagueInfo.color }} />
-              <span className="text-[8px] font-medium truncate" style={{ color: '#3A3A52' }}>{leagueInfo.name}</span>
+              <span className="text-[8px] font-medium truncate" style={{ color: '#A1A1AA' }}>{leagueInfo.name}</span>
             </div>
           </div>
         </div>
@@ -426,9 +426,9 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
           {onTogglePin && (
             <button onClick={e => { e.stopPropagation(); onTogglePin(); }}
               className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors"
-              style={{ background: '#111118', border: '1px solid #1A1A25' }}>
+              style={{ background: '#09090B', border: '1px solid #27272A' }}>
               <i className={`fa-solid fa-star text-[8px] ${isPinned ? '' : 'opacity-20 hover:opacity-50'}`}
-                style={{ color: isPinned ? '#F59E0B' : '#CCCCDC' }} />
+                style={{ color: isPinned ? '#F59E0B' : '#E4E4E7' }} />
             </button>
           )}
           <div className="px-2 py-1 rounded-lg" style={{ background: `${S.accent}10`, border: `1px solid ${S.accent}20` }}>
@@ -440,14 +440,14 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
       <div className="p-3 flex flex-col gap-2.5 flex-1">
 
         {/* ── Score section ── */}
-        <div className="flex items-center justify-between rounded-xl p-2.5" style={{ background: '#0F0F18', border: '1px solid #141420' }}>
+        <div className="flex items-center justify-between rounded-xl p-2.5" style={{ background: '#09090B', border: '1px solid #27272A' }}>
           {/* Home */}
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[7px] font-medium uppercase truncate mb-0.5" style={{ color: '#252535' }}>{match.homeTeamName || '–'}</p>
-            <h3 className="text-[11px] font-semibold truncate mb-1" style={{ color: '#B0B0C8' }}>{match.homePlayer}</h3>
+            <p className="text-[7px] font-medium uppercase truncate mb-0.5" style={{ color: '#71717A' }}>{match.homeTeamName || '–'}</p>
+            <h3 className="text-[11px] font-semibold truncate mb-1" style={{ color: '#FFFFFF' }}>{match.homePlayer}</h3>
             {p1.lastMatches?.length >= 3 ? <FormDots results={p1.last5} stats={p1} /> : (
-              <div className="mt-1 inline-block px-2 py-0.5 rounded-md" style={{ background: '#141420', border: '1px solid #1E1E2E' }}>
-                <span className="text-[7px]" style={{ color: '#3E3E55' }}>Poucos dados</span>
+              <div className="mt-1 inline-block px-2 py-0.5 rounded-md" style={{ background: '#000000', border: '1px solid #27272A' }}>
+                <span className="text-[7px]" style={{ color: '#A1A1AA' }}>Poucos dados</span>
               </div>
             )}
           </div>
@@ -456,43 +456,43 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
           <div className="flex flex-col items-center mx-2 shrink-0">
             <div className={`px-4 py-2 rounded-xl text-center min-w-[68px] transition-all duration-300 ${scoreAnim ? 'scale-105' : ''}`}
               style={{
-                background: '#07070B',
-                border: `1px solid ${scoreAnim ? `${S.accent}40` : '#141420'}`,
-                boxShadow: scoreAnim ? `0 0 16px ${S.accent}20` : 'none'
+                background: '#000000',
+                border: `1px solid ${scoreAnim ? `${S.accent}60` : '#27272A'}`,
+                boxShadow: scoreAnim ? `0 0 16px ${S.accent}30` : 'none'
               }}>
-              <div className="flex items-center justify-center gap-1.5 text-2xl font-bold tabular-nums" style={{ color: '#E0E0F0' }}>
+              <div className="flex items-center justify-center gap-1.5 text-2xl font-bold tabular-nums" style={{ color: '#FFFFFF' }}>
                 <span>{match.score.home}</span>
-                <span style={{ color: '#1A1A25' }}>–</span>
+                <span style={{ color: '#3F3F46' }}>–</span>
                 <span>{match.score.away}</span>
               </div>
-              <div className="text-[6px] font-medium uppercase tracking-widest mt-0.5" style={{ color: '#252535' }}>AO VIVO</div>
+              <div className="text-[6px] font-medium uppercase tracking-widest mt-0.5" style={{ color: '#71717A' }}>AO VIVO</div>
             </div>
           </div>
 
           {/* Away */}
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[7px] font-medium uppercase truncate mb-0.5" style={{ color: '#252535' }}>{match.awayTeamName || '–'}</p>
-            <h3 className="text-[11px] font-semibold truncate mb-1" style={{ color: '#B0B0C8' }}>{match.awayPlayer}</h3>
+            <p className="text-[7px] font-medium uppercase truncate mb-0.5" style={{ color: '#71717A' }}>{match.awayTeamName || '–'}</p>
+            <h3 className="text-[11px] font-semibold truncate mb-1" style={{ color: '#FFFFFF' }}>{match.awayPlayer}</h3>
             {p2.lastMatches?.length >= 3 ? <FormDots results={p2.last5} stats={p2} /> : (
-              <div className="mt-1 inline-block px-2 py-0.5 rounded-md" style={{ background: '#141420', border: '1px solid #1E1E2E' }}>
-                <span className="text-[7px]" style={{ color: '#3E3E55' }}>Poucos dados</span>
+              <div className="mt-1 inline-block px-2 py-0.5 rounded-md" style={{ background: '#000000', border: '1px solid #27272A' }}>
+                <span className="text-[7px]" style={{ color: '#A1A1AA' }}>Poucos dados</span>
               </div>
             )}
           </div>
         </div>
 
         {/* ── Metrics section ── */}
-        <div className="rounded-xl p-2.5" style={{ background: '#0F0F18', border: '1px solid #141420' }}>
+        <div className="rounded-xl p-2.5" style={{ background: '#09090B', border: '1px solid #27272A' }}>
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[7.5px] font-semibold uppercase tracking-wider" style={{ color: '#2A2A40' }}>
-              Confronto <span style={{ color: syncLimit < 5 ? '#4ADE80' : '#2A2A40' }}>({syncLimit}J)</span>
+            <span className="text-[7.5px] font-semibold uppercase tracking-wider" style={{ color: '#A1A1AA' }}>
+              Confronto <span style={{ color: syncLimit < 5 ? '#4ADE80' : '#A1A1AA' }}>({syncLimit}J)</span>
             </span>
-            <div className="flex p-0.5 rounded-lg" style={{ background: '#07070B', border: '1px solid #141420' }}>
+            <div className="flex p-0.5 rounded-lg" style={{ background: '#000000', border: '1px solid #27272A' }}>
               {(['HT', 'FT'] as const).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className="px-2 py-0.5 rounded-md text-[7.5px] font-semibold transition-all"
-                  style={activeTab === tab ? { background: '#1A1A25', color: '#B0B0C8' } : { color: '#2E2E45' }}>
+                  style={activeTab === tab ? { background: '#27272A', color: '#FFFFFF' } : { color: '#71717A' }}>
                   {tab}
                 </button>
               ))}
@@ -517,19 +517,19 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
           )}
 
           {/* Divider */}
-          <div className="my-2" style={{ borderTop: '1px solid #111118' }} />
+          <div className="my-2" style={{ borderTop: '1px solid #27272A' }} />
 
           {/* Individual header + goals */}
           <div className="flex items-center justify-between px-0.5 mb-1">
             <span className="text-[8px] font-semibold truncate max-w-[70px]" style={{ color: '#34D399' }}>{match.homePlayer}</span>
-            <span className="text-[7px] font-medium" style={{ color: '#252535' }}>Individual</span>
+            <span className="text-[7px] font-medium" style={{ color: '#71717A' }}>Individual</span>
             <span className="text-[8px] font-semibold truncate max-w-[70px] text-right" style={{ color: '#60A5FA' }}>{match.awayPlayer}</span>
           </div>
 
           {/* Goals avg */}
-          <div className="flex items-center justify-between px-0.5 py-1 mb-1 rounded-lg" style={{ background: '#0A0A10' }}>
+          <div className="flex items-center justify-between px-0.5 py-1 mb-1 rounded-lg" style={{ background: '#000000' }}>
             <span className="text-[12px] font-bold tabular-nums" style={{ color: '#34D399' }}>{p1.avgGoalsScoredFT.toFixed(1)}</span>
-            <span className="text-[7px] uppercase font-medium" style={{ color: '#252535' }}>média FT</span>
+            <span className="text-[7px] uppercase font-medium" style={{ color: '#71717A' }}>média FT</span>
             <span className="text-[12px] font-bold tabular-nums" style={{ color: '#60A5FA' }}>{p2.avgGoalsScoredFT.toFixed(1)}</span>
           </div>
 
@@ -553,16 +553,16 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
         <div className="flex gap-2 mt-auto">
           <button onClick={() => onDetailClick(match)}
             className="flex-[0.85] py-2 rounded-xl text-[8.5px] font-semibold uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
-            style={{ background: '#0F0F18', border: '1px solid #1A1A25', color: '#3E3E55' }}
+            style={{ background: '#09090B', border: '1px solid #27272A', color: '#E4E4E7' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${S.accent}30`; (e.currentTarget as HTMLElement).style.color = S.accent; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1A1A25'; (e.currentTarget as HTMLElement).style.color = '#3E3E55'; }}>
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#27272A'; (e.currentTarget as HTMLElement).style.color = '#E4E4E7'; }}>
             Análise <i className="fa-solid fa-microchip text-[8px]" />
           </button>
           <a href={bkUrl} target="_blank" rel="noopener noreferrer"
             className="flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95"
-            style={{ background: '#0F0F18', border: '1px solid #1A1A25', color: '#3E3E55' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#2A2A38'; (e.currentTarget as HTMLElement).style.color = '#CCCCDC'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1A1A25'; (e.currentTarget as HTMLElement).style.color = '#3E3E55'; }}>
+            style={{ background: '#09090B', border: '1px solid #27272A', color: '#E4E4E7' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#52525B'; (e.currentTarget as HTMLElement).style.color = '#FFFFFF'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#27272A'; (e.currentTarget as HTMLElement).style.color = '#E4E4E7'; }}>
             <img src={bkLogo} className="w-3 h-3 object-contain rounded-sm" alt={bkName} />
             <span className="text-[7.5px] font-semibold uppercase tracking-wider">{bkName}</span>
           </a>
