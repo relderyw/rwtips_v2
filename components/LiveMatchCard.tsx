@@ -508,20 +508,20 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
             </div>
           </div>
 
-          {/* Confronto single bars */}
+          {/* Confronto — do mais difícil para o mais fácil */}
           <div className="space-y-0">
             {isHT ? (
               <>
-                <SingleMetricRow label="0.5 HT" value={(p1.htOver05Rate + p2.htOver05Rate) / 2} />
-                <SingleMetricRow label="1.5 HT" value={(p1.htOver15Rate + p2.htOver15Rate) / 2} />
                 <SingleMetricRow label="2.5 HT" value={(p1.htOver25Rate + p2.htOver25Rate) / 2} />
+                <SingleMetricRow label="1.5 HT" value={(p1.htOver15Rate + p2.htOver15Rate) / 2} />
                 <SingleMetricRow label="BTTS HT" value={(p1.htBttsRate + p2.htBttsRate) / 2} />
+                <SingleMetricRow label="0.5 HT" value={(p1.htOver05Rate + p2.htOver05Rate) / 2} />
               </>
             ) : (
               <>
-                <SingleMetricRow label="1.5 FT" value={(p1.ft15Rate + p2.ft15Rate) / 2} />
-                <SingleMetricRow label="2.5 FT" value={(p1.ftOver25Rate + p2.ftOver25Rate) / 2} />
+                <SingleMetricRow label="4.5 FT" value={(p1.ft35Rate + p2.ft35Rate) / 2 * 0.65} />
                 <SingleMetricRow label="3.5 FT" value={(p1.ft35Rate + p2.ft35Rate) / 2} />
+                <SingleMetricRow label="2.5 FT" value={(p1.ftOver25Rate + p2.ftOver25Rate) / 2} />
                 <SingleMetricRow label="BTTS FT" value={(p1.ftBttsRate + p2.ftBttsRate) / 2} />
               </>
             )}
@@ -533,14 +533,36 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
           {/* Individual header */}
           <div className="flex items-center justify-between mb-1 px-0.5">
             <span className="text-[8px] font-semibold uppercase tracking-wider truncate max-w-[80px]" style={{ color: '#F0F0F4' }}>{match.homePlayer}</span>
-            <span className="text-[7px] font-medium" style={{ color: '#44445A' }}>Individual</span>
+            <span className="text-[7px] font-medium" style={{ color: '#44445A' }}>Gols/jogo</span>
             <span className="text-[8px] font-semibold uppercase tracking-wider truncate max-w-[80px] text-right" style={{ color: '#F0F0F4' }}>{match.awayPlayer}</span>
           </div>
 
+          {/* Goals average row */}
+          <div className="flex items-center justify-between px-0.5 py-[3px] mb-1">
+            <span className="text-[11px] font-bold tabular-nums" style={{ color: '#34D399' }}>
+              {p1.avgGoalsScoredFT.toFixed(1)}
+            </span>
+            <span className="text-[7px] font-medium uppercase" style={{ color: '#44445A' }}>média FT</span>
+            <span className="text-[11px] font-bold tabular-nums" style={{ color: '#60A5FA' }}>
+              {p2.avgGoalsScoredFT.toFixed(1)}
+            </span>
+          </div>
+
+          {/* Individual — do mais difícil para o mais fácil */}
           <div className="space-y-0">
-            <DualMetricRow label={`0.5 ${isHT ? 'HT' : 'FT'}`} homeValue={homePlayerMetrics.m05} awayValue={awayPlayerMetrics.m05} />
-            <DualMetricRow label={`1.5 ${isHT ? 'HT' : 'FT'}`} homeValue={homePlayerMetrics.m15} awayValue={awayPlayerMetrics.m15} />
-            <DualMetricRow label={`2.5 ${isHT ? 'HT' : 'FT'}`} homeValue={homePlayerMetrics.m25} awayValue={awayPlayerMetrics.m25} />
+            {isHT ? (
+              <>
+                <DualMetricRow label="2.5 HT" homeValue={homePlayerMetrics.m25} awayValue={awayPlayerMetrics.m25} />
+                <DualMetricRow label="1.5 HT" homeValue={homePlayerMetrics.m15} awayValue={awayPlayerMetrics.m15} />
+                <DualMetricRow label="0.5 HT" homeValue={homePlayerMetrics.m05} awayValue={awayPlayerMetrics.m05} />
+              </>
+            ) : (
+              <>
+                <DualMetricRow label="3.5 FT" homeValue={homePlayerMetrics.m25} awayValue={awayPlayerMetrics.m25} />
+                <DualMetricRow label="2.5 FT" homeValue={homePlayerMetrics.m15} awayValue={awayPlayerMetrics.m15} />
+                <DualMetricRow label="1.5 FT" homeValue={homePlayerMetrics.m05} awayValue={awayPlayerMetrics.m05} />
+              </>
+            )}
           </div>
         </div>
 
