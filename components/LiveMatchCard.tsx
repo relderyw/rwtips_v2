@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { LiveEvent, HistoryMatch } from '../types';
 import {
   calculatePlayerStats, getLeagueInfo, calculateMetricProbability,
@@ -227,67 +228,71 @@ const HELP_SECTIONS = [
   },
 ];
 
-const CardHelpPopup = ({ onClose, p1Name, p2Name }: { onClose: () => void; p1Name: string; p2Name: string }) => (
-  <div
-    className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-    style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
-    onClick={onClose}
-  >
+const CardHelpPopup = ({ onClose, p1Name, p2Name }: { onClose: () => void; p1Name: string; p2Name: string }) => {
+  const content = (
     <div
-      className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl custom-scroll"
-      style={{ background: '#0D0D12', border: '1px solid #2E2E38', boxShadow: '0 40px 100px rgba(0,0,0,0.9)' }}
-      onClick={e => e.stopPropagation()}
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+      onClick={onClose}
     >
-      {/* Header */}
-      <div className="sticky top-0 flex items-center justify-between px-5 py-4 z-10"
-        style={{ background: '#0D0D12', borderBottom: '1px solid #1E1E28' }}>
-        <div>
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Como ler este card</h3>
-          <p className="text-[9px] font-medium mt-0.5" style={{ color: '#44445A' }}>
-            {p1Name} vs {p2Name}
-          </p>
-        </div>
-        <button
-          onClick={onClose}
-          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-rose-500/20"
-          style={{ background: '#13131A', border: '1px solid #1E1E28' }}
-        >
-          <i className="fa-solid fa-xmark text-xs" style={{ color: '#8888A0' }} />
-        </button>
-      </div>
-
-      {/* Sections */}
-      <div className="px-5 py-4 space-y-3">
-        {HELP_SECTIONS.map((section, i) => (
-          <div key={i} className="flex gap-3 p-3 rounded-xl"
-            style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
-            <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-              style={{ background: section.color + '15', border: `1px solid ${section.color}30` }}>
-              <span style={{ color: section.color, fontSize: '10px', fontWeight: 'bold' }}>{section.icon}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: section.color }}>
-                {section.title}
-              </p>
-              <p className="text-[10px] leading-relaxed" style={{ color: '#8888A0' }}>
-                {section.text}
-              </p>
-            </div>
+      <div
+        className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl custom-scroll"
+        style={{ background: '#0D0D12', border: '1px solid #2E2E38', boxShadow: '0 40px 100px rgba(0,0,0,0.9)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="sticky top-0 flex items-center justify-between px-5 py-4 z-10"
+          style={{ background: '#0D0D12', borderBottom: '1px solid #1E1E28' }}>
+          <div>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Como ler este card</h3>
+            <p className="text-[9px] font-medium mt-0.5" style={{ color: '#44445A' }}>
+              {p1Name} vs {p2Name}
+            </p>
           </div>
-        ))}
-      </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-rose-500/20"
+            style={{ background: '#13131A', border: '1px solid #1E1E28' }}
+          >
+            <i className="fa-solid fa-xmark text-xs" style={{ color: '#8888A0' }} />
+          </button>
+        </div>
 
-      {/* Footer */}
-      <div className="px-5 pb-5">
-        <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(57,211,83,0.05)', border: '1px solid rgba(57,211,83,0.15)' }}>
-          <p className="text-[9px] font-medium" style={{ color: '#39D353' }}>
-            💡 Dica: Foque nos cards com ELITE + SINAIS CONVERGINDO para maior assertividade
-          </p>
+        {/* Sections */}
+        <div className="px-5 py-4 space-y-3">
+          {HELP_SECTIONS.map((section, i) => (
+            <div key={i} className="flex gap-3 p-3 rounded-xl"
+              style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
+              <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm"
+                style={{ background: section.color + '15', border: `1px solid ${section.color}30` }}>
+                <span style={{ color: section.color, fontSize: '10px', fontWeight: 'bold' }}>{section.icon}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: section.color }}>
+                  {section.title}
+                </p>
+                <p className="text-[10px] leading-relaxed" style={{ color: '#8888A0' }}>
+                  {section.text}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 pb-5">
+          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(57,211,83,0.05)', border: '1px solid rgba(57,211,83,0.15)' }}>
+            <p className="text-[9px] font-medium" style={{ color: '#39D353' }}>
+              💡 Dica: Foque nos cards com ELITE + SINAIS CONVERGINDO para maior assertividade
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+
+  return ReactDOM.createPortal(content, document.body);
+};
 
 export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
   match, potential, confidence, reasons, historicalGames, onDetailClick,
