@@ -163,11 +163,138 @@ const FormDots = ({ results, stats }: { results: string[]; stats: any }) => (
   </div>
 );
 
+// ── Card Help Popup ──
+const HELP_SECTIONS = [
+  {
+    icon: '🎯',
+    title: 'MDS — Match Decision Score',
+    color: '#34D399',
+    text: 'Score de 0 a 100 que resume todas as informações da partida em um número. Quanto maior, mais forte a oportunidade.',
+  },
+  {
+    icon: '⚡',
+    title: 'Níveis de decisão',
+    color: '#FBBF24',
+    text: '⚡ ELITE (80–100): Apostar com convicção. ✅ ENTRAR (60–79): Condições favoráveis. 👁️ OBSERVAR (40–59): Aguardar evolução. 🚫 EVITAR (<40): Dados desfavoráveis.',
+  },
+  {
+    icon: '🎯',
+    title: 'Mercado Recomendado',
+    color: '#60A5FA',
+    text: 'O mercado com maior taxa histórica combinada dos dois jogadores. Prioriza o mais exigente que tenha taxa suficiente (ex: Over 2.5 HT ao invés de Over 0.5 HT).',
+  },
+  {
+    icon: '↑→↓',
+    title: 'Momentum dos Jogadores',
+    color: '#34D399',
+    text: '↑ Aquecendo: média de gols nos últimos jogos superior à histórica. → Estável: dentro da média. ↓ Esfriando: abaixo da média recente. Impacta diretamente o score MDS.',
+  },
+  {
+    icon: '⚔️',
+    title: 'H2H — Confronto Direto',
+    color: '#A78BFA',
+    text: 'Número de confrontos históricos entre os dois jogadores. Quanto mais jogos e maior a taxa de Over nesses confrontos, maior a pontuação H2H no MDS.',
+  },
+  {
+    icon: '⚡',
+    title: 'Sinais Convergindo',
+    color: '#39D353',
+    text: 'Badge especial quando Liga, Jogador 1 e Jogador 2 estão todos positivos ao mesmo tempo. É o melhor cenário possível — condições alinhadas em todos os eixos.',
+  },
+  {
+    icon: '█',
+    title: 'Barra de Breakdown',
+    color: '#FBBF24',
+    text: 'Barra colorida que mostra a contribuição de cada fator no score: Liga (cor da liga) + P1 (verde) + P2 (azul) + H2H (roxo) + Convergência (amarelo). Total = 100 pontos.',
+  },
+  {
+    icon: '📊',
+    title: 'Métricas de Confronto (barras)',
+    color: '#34D399',
+    text: 'Taxa média de Over dos dois jogadores. Verde (≥70%): alta confiança. Laranja (50–69%): moderado. Vermelho (<50%): abaixo da média. Ordem: do mercado mais difícil para o mais fácil.',
+  },
+  {
+    icon: '⚽',
+    title: 'Média FT (Gols por Jogo)',
+    color: '#F0F0F4',
+    text: 'Média de gols totais por partida de cada jogador nos últimos jogos. Valores acima de 3.0 indicam jogadores voluméticos. Usado também como bônus no cálculo MDS.',
+  },
+  {
+    icon: '●●●',
+    title: 'Pontos de Forma (dots)',
+    color: '#8888A0',
+    text: 'Cada ponto representa um jogo recente. Verde = vitória, Amarelo = empate, Vermelho = derrota. Passe o mouse sobre o ponto para ver o placar detalhado daquele jogo.',
+  },
+];
+
+const CardHelpPopup = ({ onClose, p1Name, p2Name }: { onClose: () => void; p1Name: string; p2Name: string }) => (
+  <div
+    className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+    style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+    onClick={onClose}
+  >
+    <div
+      className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl custom-scroll"
+      style={{ background: '#0D0D12', border: '1px solid #2E2E38', boxShadow: '0 40px 100px rgba(0,0,0,0.9)' }}
+      onClick={e => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="sticky top-0 flex items-center justify-between px-5 py-4 z-10"
+        style={{ background: '#0D0D12', borderBottom: '1px solid #1E1E28' }}>
+        <div>
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Como ler este card</h3>
+          <p className="text-[9px] font-medium mt-0.5" style={{ color: '#44445A' }}>
+            {p1Name} vs {p2Name}
+          </p>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-rose-500/20"
+          style={{ background: '#13131A', border: '1px solid #1E1E28' }}
+        >
+          <i className="fa-solid fa-xmark text-xs" style={{ color: '#8888A0' }} />
+        </button>
+      </div>
+
+      {/* Sections */}
+      <div className="px-5 py-4 space-y-3">
+        {HELP_SECTIONS.map((section, i) => (
+          <div key={i} className="flex gap-3 p-3 rounded-xl"
+            style={{ background: '#13131A', border: '1px solid #1E1E28' }}>
+            <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm"
+              style={{ background: section.color + '15', border: `1px solid ${section.color}30` }}>
+              <span style={{ color: section.color, fontSize: '10px', fontWeight: 'bold' }}>{section.icon}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: section.color }}>
+                {section.title}
+              </p>
+              <p className="text-[10px] leading-relaxed" style={{ color: '#8888A0' }}>
+                {section.text}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="px-5 pb-5">
+        <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(57,211,83,0.05)', border: '1px solid rgba(57,211,83,0.15)' }}>
+          <p className="text-[9px] font-medium" style={{ color: '#39D353' }}>
+            💡 Dica: Foque nos cards com ELITE + SINAIS CONVERGINDO para maior assertividade
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
   match, potential, confidence, reasons, historicalGames, onDetailClick,
   isPinned, onTogglePin, mds: mdsFromProps
 }) => {
   const [activeTab, setActiveTab] = useState<'HT' | 'FT'>('FT');
+  const [showHelp, setShowHelp] = useState(false);
   const leagueInfo = getLeagueInfo(match.leagueName);
 
   const syncLimit = useMemo(() => {
@@ -300,6 +427,18 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
           border: `1px solid ${mdsConfig.border}`,
         }}
       >
+        {/* Help button */}
+        <div className="flex justify-end mb-1.5">
+          <button
+            onClick={() => setShowHelp(true)}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[7px] font-bold uppercase tracking-widest transition-all hover:opacity-100 opacity-40 hover:scale-105 active:scale-95"
+            style={{ background: '#13131A', border: '1px solid #1E1E28', color: '#8888A0' }}
+            title="Como ler este card"
+          >
+            <i className="fa-solid fa-circle-question text-[8px]" />
+            Guia
+          </button>
+        </div>
         <div className="flex items-center gap-3">
           {/* Score Ring */}
           <div className="relative w-[84px] h-[84px] shrink-0 flex items-center justify-center">
@@ -409,6 +548,15 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
           <div className="flex items-center gap-0.5"><div className="w-1.5 h-1.5 rounded-full bg-[#FBBF24]" /><span className="text-[6px] uppercase" style={{ color: '#44445A' }}>Conv.</span></div>
         </div>
       </div>
+
+      {/* Help Popup */}
+      {showHelp && (
+        <CardHelpPopup
+          onClose={() => setShowHelp(false)}
+          p1Name={match.homePlayer}
+          p2Name={match.awayPlayer}
+        />
+      )}
 
       {/* ── Card Header — League + Players ── */}
       <div className="px-3.5 pt-2.5 pb-2 flex items-center justify-between" style={{ borderBottom: '1px solid #161620' }}>
