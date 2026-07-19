@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { HistoryMatch, LiveEvent, Prediction, LeagueStats, PlayerStats } from './types';
-import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize, LEAGUE_MAP, ALLOWED_LEAGUES } from './services/analyzer';
+import { calculatePlayerStats, getH2HStats, analyzeMatchPotential, calculateLeagueStats, getLeagueInfo, normalize, LEAGUE_MAP, ALLOWED_LEAGUES, calculateMatchDecisionScore, MatchDecisionScore } from './services/analyzer';
 import { LiveMatchCard } from './components/LiveMatchCard';
 import { LeagueThermometer } from './components/LeagueThermometer';
 import { LeagueGauge } from './components/LeagueGauge';
@@ -103,6 +103,7 @@ const App: React.FC = () => {
   const [isDevMode, setIsDevMode] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState<'radar' | 'results' | 'upcoming' | 'bankroll' | 'analytics' | 'nba'>('radar');
+  const [radarSortMode, setRadarSortMode] = useState<'league' | 'score'>('score');
   const [selectedModule, setSelectedModule] = useState<'fifa' | 'futebol' | 'basquete' | 'roletas' | null>(null);
   const [history, setHistory] = useState<HistoryMatch[]>([]);
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
@@ -338,11 +339,13 @@ const App: React.FC = () => {
   const analyzedLive = useMemo(() => {
     const analyzed = liveEvents.map(event => {
       const analysis = analyzeMatchPotential(event.homePlayer, event.awayPlayer, history, event.leagueName);
+      const mds = calculateMatchDecisionScore(event.homePlayer, event.awayPlayer, history, event.leagueName);
       return {
         event,
         potential: analysis.key,
         confidence: analysis.confidence,
-        reasons: analysis.reasons
+        reasons: analysis.reasons,
+        mds,
       };
     });
 
@@ -436,15 +439,17 @@ const App: React.FC = () => {
   }, [analyzedLive, searchQuery, selectedLeague]);
 
   const filteredLive = useMemo(() => {
-    return analyzedLive.filter(({ event, potential }) => {
-      const matchesSearch = event.homePlayer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.awayPlayer.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesFilter = filter === 'all' || potential === filter;
-      const leagueNormalized = getLeagueInfo(event.leagueName).name;
-      const isAllowed = ALLOWED_LEAGUES.includes(leagueNormalized);
-      const matchesLeague = selectedLeague === 'all' || leagueNormalized === selectedLeague;
-      return matchesSearch && matchesFilter && matchesLeague && isAllowed;
-    });
+    return analyzedLive
+      .filter(({ event, potential }) => {
+        const matchesSearch = event.homePlayer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          event.awayPlayer.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter = filter === 'all' || potential === filter;
+        const leagueNormalized = getLeagueInfo(event.leagueName).name;
+        const isAllowed = ALLOWED_LEAGUES.includes(leagueNormalized);
+        const matchesLeague = selectedLeague === 'all' || leagueNormalized === selectedLeague;
+        return matchesSearch && matchesFilter && matchesLeague && isAllowed;
+      })
+      .sort((a, b) => (b.mds?.score ?? 0) - (a.mds?.score ?? 0));
   }, [analyzedLive, searchQuery, filter, selectedLeague]);
 
   const pinnedLive = useMemo(() => {
@@ -669,6 +674,43 @@ const App: React.FC = () => {
                       </div>
 
                       <div className="space-y-16">
+
+                        {/* ── TOP PICKS SECTION ── */}
+                        {filteredLive.filter(item => !pinnedMatchIds.includes(item.event.id) && (item.mds?.score ?? 0) >= 80).length > 0 && (
+                          <section className="space-y-5">
+                            <div className="flex items-center gap-3 pb-3 px-2" style={{ borderBottom: '2px solid rgba(52,211,153,0.2)' }}>
+                              <div className="w-8 h-8 rounded-xl flex items-center justify-center animate-accent-glow" style={{ background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.3)' }}>
+                                <i className="fa-solid fa-crown text-sm" style={{ color: '#34D399' }} />
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-bold uppercase tracking-tight" style={{ color: '#34D399' }}>Top Picks da Sessão</h3>
+                                <p className="text-[9px] font-medium mt-0.5" style={{ color: '#6B6B80' }}>MDS ≥ 80 — Melhores oportunidades do momento</p>
+                              </div>
+                              <span className="ml-auto text-[9px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }}>
+                                {filteredLive.filter(item => !pinnedMatchIds.includes(item.event.id) && (item.mds?.score ?? 0) >= 80).length} jogos
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {filteredLive
+                                .filter(item => !pinnedMatchIds.includes(item.event.id) && (item.mds?.score ?? 0) >= 80)
+                                .map(({ event, potential, confidence, reasons, mds }: any) => (
+                                  <LiveMatchCard
+                                    key={`top-${event.id}`}
+                                    match={event}
+                                    potential={potential}
+                                    confidence={confidence}
+                                    reasons={reasons}
+                                    historicalGames={history}
+                                    onDetailClick={handleAnalyze}
+                                    isPinned={pinnedMatchIds.includes(event.id)}
+                                    onTogglePin={() => togglePin(event.id)}
+                                    mds={mds}
+                                  />
+                                ))}
+                            </div>
+                          </section>
+                        )}
+
                         {pinnedLive.length > 0 && (
                           <section className="space-y-6">
                             <div className="flex items-center gap-4 border-b border-green-500/20 pb-3 px-2">
@@ -678,7 +720,7 @@ const App: React.FC = () => {
                               <span className="text-[8px] font-black text-green-500/40 uppercase tracking-[0.4em]">{pinnedLive.length} CONFRONTOS FIXADOS</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                              {pinnedLive.map(({ event, potential, confidence, reasons }: any) => (
+                              {pinnedLive.map(({ event, potential, confidence, reasons, mds }: any) => (
                                 <LiveMatchCard
                                   key={event.id}
                                   match={event}
@@ -689,6 +731,7 @@ const App: React.FC = () => {
                                   onDetailClick={handleAnalyze}
                                   isPinned={true}
                                   onTogglePin={() => togglePin(event.id)}
+                                  mds={mds}
                                 />
                               ))}
                             </div>
@@ -801,40 +844,87 @@ const App: React.FC = () => {
 
                       {/* Live Matches List */}
                       <div className="space-y-8 mt-4 pt-6 border-t border-white/[0.04]">
-                        {Object.keys(groupedMatches).length > 0 ? (Object.entries(groupedMatches) as [string, any[]][]).map(([leagueName, matches]) => {
-                          const lInfo = getLeagueInfo(leagueName);
-
-                          return (
-                            <section key={`matches-${leagueName}`} className="space-y-5">
-                              <div className="flex items-center gap-4 pb-3 px-2" style={{ borderBottom: '1px solid #1E1E28' }}>
-                                <div className="w-1.5 h-5 rounded-full" style={{ backgroundColor: '#39D353' }}></div>
-                                <h3 className="text-sm font-semibold uppercase tracking-tight" style={{ color: '#F0F0F4' }}>{lInfo.name}</h3>
-                                <div className="h-4 w-px mx-2" style={{ background: '#1E1E28' }}></div>
-                                <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#8888A0' }}>{matches.length} CONFRONTOS ATIVOS</span>
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {matches.map(({ event, potential, confidence, reasons }: any) => (
-                                  <LiveMatchCard
-                                    key={event.id}
-                                    match={event}
-                                    potential={potential}
-                                    confidence={confidence}
-                                    reasons={reasons}
-                                    historicalGames={history}
-                                    onDetailClick={handleAnalyze}
-                                    isPinned={false}
-                                    onTogglePin={() => togglePin(event.id)}
-                                  />
-                                ))}
-                              </div>
-                            </section>
-                          );
-                        }) : pinnedLive.length === 0 ? (
-                          <div className="py-56 text-center opacity-10">
-                            <i className="fa-solid fa-satellite-dish text-5xl mb-6 animate-pulse"></i>
-                            <p className="text-[10px] font-black uppercase tracking-[1.5em]">Buscando Oportunidades... </p>
+                        {/* Sort mode toggle */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#44445A' }}>Ordenar por:</span>
+                          <div className="flex p-0.5 rounded-lg" style={{ background: '#111115', border: '1px solid #1E1E28' }}>
+                            <button onClick={() => setRadarSortMode('score')}
+                              className="px-3 py-1 rounded-md text-[9px] font-semibold transition-all"
+                              style={radarSortMode === 'score' ? { background: '#39D353', color: '#07070A' } : { color: '#44445A' }}>
+                              <i className="fa-solid fa-chart-simple mr-1" />Score MDS
+                            </button>
+                            <button onClick={() => setRadarSortMode('league')}
+                              className="px-3 py-1 rounded-md text-[9px] font-semibold transition-all"
+                              style={radarSortMode === 'league' ? { background: '#39D353', color: '#07070A' } : { color: '#44445A' }}>
+                              <i className="fa-solid fa-layer-group mr-1" />Por Liga
+                            </button>
                           </div>
-                        ) : null}
+                        </div>
+
+                        {radarSortMode === 'score' ? (
+                          // SORT BY SCORE MODE
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredLive
+                              .filter(item => !pinnedMatchIds.includes(item.event.id) && (item.mds?.score ?? 0) < 80)
+                              .map(({ event, potential, confidence, reasons, mds }: any) => (
+                                <LiveMatchCard
+                                  key={event.id}
+                                  match={event}
+                                  potential={potential}
+                                  confidence={confidence}
+                                  reasons={reasons}
+                                  historicalGames={history}
+                                  onDetailClick={handleAnalyze}
+                                  isPinned={false}
+                                  onTogglePin={() => togglePin(event.id)}
+                                  mds={mds}
+                                />
+                              ))}
+                          </div>
+                        ) : (
+                          // GROUP BY LEAGUE MODE
+                          Object.keys(groupedMatches).length > 0 ? (Object.entries(groupedMatches) as [string, any[]][]).map(([leagueName, matches]) => {
+                           const lInfo = getLeagueInfo(leagueName);
+                           return (
+                             <section key={`matches-${leagueName}`} className="space-y-5">
+                               <div className="flex items-center gap-4 pb-3 px-2" style={{ borderBottom: '1px solid #1E1E28' }}>
+                                 <div className="w-1.5 h-5 rounded-full" style={{ backgroundColor: '#39D353' }}></div>
+                                 <h3 className="text-sm font-semibold uppercase tracking-tight" style={{ color: '#F0F0F4' }}>{lInfo.name}</h3>
+                                 <div className="h-4 w-px mx-2" style={{ background: '#1E1E28' }}></div>
+                                 <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#8888A0' }}>{matches.length} CONFRONTOS ATIVOS</span>
+                               </div>
+                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                 {matches.map(({ event, potential, confidence, reasons, mds }: any) => (
+                                   <LiveMatchCard
+                                     key={event.id}
+                                     match={event}
+                                     potential={potential}
+                                     confidence={confidence}
+                                     reasons={reasons}
+                                     historicalGames={history}
+                                     onDetailClick={handleAnalyze}
+                                     isPinned={false}
+                                     onTogglePin={() => togglePin(event.id)}
+                                     mds={mds}
+                                   />
+                                 ))}
+                               </div>
+                             </section>
+                           );
+                         }) : pinnedLive.length === 0 ? (
+                           <div className="py-56 text-center opacity-10">
+                             <i className="fa-solid fa-satellite-dish text-5xl mb-6 animate-pulse" />
+                             <p className="text-[10px] font-black uppercase tracking-[1.5em]">Buscando Oportunidades...</p>
+                           </div>
+                         ) : null
+                        )}
+
+                        {radarSortMode === 'score' && filteredLive.filter(i => !pinnedMatchIds.includes(i.event.id)).length === 0 && pinnedLive.length === 0 && (
+                          <div className="py-56 text-center opacity-10">
+                            <i className="fa-solid fa-satellite-dish text-5xl mb-6 animate-pulse" />
+                            <p className="text-[10px] font-black uppercase tracking-[1.5em]">Buscando Oportunidades...</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </>

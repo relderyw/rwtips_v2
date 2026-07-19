@@ -1377,3 +1377,273 @@ export const runScenarioPlayerAnalysis = (
     .sort((a, b) => b.roi - a.roi)
     .slice(0, 4);
 };
+
+// ============================================================
+// === MATCH DECISION SCORE (MDS) ENGINE                    ===
+// ============================================================
+// Sintetiza TODOS os contextos em um único score 0-100 com decisão clara
+
+export interface MatchDecisionScore {
+  score: number;                          // 0-100
+  label: 'elite' | 'enter' | 'watch' | 'avoid';
+  bestMarket: string;                     // Ex: "Over 1.5 HT", "BTTS FT"
+  bestMarketKey: string;                  // Ex: "over_1.5_ht"
+  reasoning: string[];                    // Bullets explicando o score
+  leagueOverRate: number;                 // % over da liga (0-100)
+  p1Momentum: 'up' | 'stable' | 'down';  // Tendência do jogador 1
+  p2Momentum: 'up' | 'stable' | 'down';  // Tendência do jogador 2
+  h2hCount: number;                       // Qtd de confrontos diretos
+  h2hOverRate: number;                    // % over HT no H2H
+  convergenceBonus: boolean;              // Todos os sinais apontando juntos?
+  scoreBreakdown: {
+    leagueScore: number;    // max 20
+    p1Score: number;        // max 25
+    p2Score: number;        // max 25
+    h2hScore: number;       // max 20
+    convergenceScore: number; // max 10
+  };
+}
+
+// Helper: Calcula momentum de um player nos últimos jogos
+const calcPlayerMomentum = (
+  playerName: string,
+  games: HistoryMatch[],
+  limit: number = 5
+): 'up' | 'stable' | 'down' => {
+  const targetName = normalize(playerName);
+  const playerGames = games
+    .filter(g => normalize(g.home_player) === targetName || normalize(g.away_player) === targetName)
+    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+    .slice(0, limit);
+
+  if (playerGames.length < 3) return 'stable';
+
+  // Calcular gols totais por jogo (contexto do confronto, não individual)
+  const goalsList = playerGames.map(g => Number(g.score_home || 0) + Number(g.score_away || 0));
+  const recent = goalsList.slice(0, Math.ceil(goalsList.length / 2));
+  const older = goalsList.slice(Math.ceil(goalsList.length / 2));
+
+  const avgRecent = recent.reduce((a, b) => a + b, 0) / recent.length;
+  const avgOlder = older.length > 0 ? older.reduce((a, b) => a + b, 0) / older.length : avgRecent;
+
+  if (avgRecent > avgOlder + 0.5) return 'up';
+  if (avgRecent < avgOlder - 0.5) return 'down';
+  return 'stable';
+};
+
+// Helper: Melhor mercado baseado em taxa de acerto histórica
+const findBestMarket = (
+  p1Name: string,
+  p2Name: string,
+  games: HistoryMatch[],
+  limit: number = 5
+): { key: string; label: string; combinedRate: number } => {
+  const markets = [
+    { key: 'over_0.5_ht', label: 'Over 0.5 HT' },
+    { key: 'over_1.5_ht', label: 'Over 1.5 HT' },
+    { key: 'over_2.5_ht', label: 'Over 2.5 HT' },
+    { key: 'btts_ht',     label: 'BTTS HT'     },
+    { key: 'over_1.5_ft', label: 'Over 1.5 FT' },
+    { key: 'over_2.5_ft', label: 'Over 2.5 FT' },
+    { key: 'over_3.5_ft', label: 'Over 3.5 FT' },
+    { key: 'btts_ft',     label: 'BTTS FT'     },
+  ];
+
+  const n1 = normalize(p1Name);
+  const n2 = normalize(p2Name);
+
+  const p1Games = games
+    .filter(g => normalize(g.home_player) === n1 || normalize(g.away_player) === n1)
+    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+    .slice(0, limit);
+
+  const p2Games = games
+    .filter(g => normalize(g.home_player) === n2 || normalize(g.away_player) === n2)
+    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+    .slice(0, limit);
+
+  let best = { key: 'over_1.5_ft', label: 'Over 1.5 FT', combinedRate: 0 };
+
+  markets.forEach(m => {
+    const r1 = p1Games.length > 0
+      ? p1Games.filter(g => evaluateMarket(g, m.key).hit).length / p1Games.length * 100
+      : 0;
+    const r2 = p2Games.length > 0
+      ? p2Games.filter(g => evaluateMarket(g, m.key).hit).length / p2Games.length * 100
+      : 0;
+    const combined = (r1 + r2) / 2;
+    if (combined > best.combinedRate) {
+      best = { ...m, combinedRate: combined };
+    }
+  });
+
+  return best;
+};
+
+export const calculateMatchDecisionScore = (
+  p1Name: string,
+  p2Name: string,
+  gamesData: any,
+  leagueName: string = ''
+): MatchDecisionScore => {
+  const games = normalizeHistoryData(gamesData);
+  const reasoning: string[] = [];
+  const breakdown = { leagueScore: 0, p1Score: 0, p2Score: 0, h2hScore: 0, convergenceScore: 0 };
+
+  // === 1. LIGA (max 20pts) ===
+  let leagueOverRate = 0;
+  if (leagueName && games.length >= 5) {
+    const lgInfo = getLeagueInfo(leagueName);
+    const lgGames = games
+      .filter(g => getLeagueInfo(g.league_name).name === lgInfo.name)
+      .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+      .slice(0, 15);
+
+    if (lgGames.length >= 5) {
+      const over15Count = lgGames.filter(g =>
+        (Number(g.score_home || 0) + Number(g.score_away || 0)) > 1.5
+      ).length;
+      leagueOverRate = (over15Count / lgGames.length) * 100;
+
+      if (leagueOverRate >= 90)      { breakdown.leagueScore = 20; reasoning.push(`Liga ${lgInfo.name}: ${leagueOverRate.toFixed(0)}% Over 1.5 🔥`); }
+      else if (leagueOverRate >= 75) { breakdown.leagueScore = 15; reasoning.push(`Liga ${lgInfo.name}: ${leagueOverRate.toFixed(0)}% Over 1.5`); }
+      else if (leagueOverRate >= 60) { breakdown.leagueScore = 10; }
+      else if (leagueOverRate >= 45) { breakdown.leagueScore = 5;  }
+      else                           { breakdown.leagueScore = 0;  reasoning.push(`Liga com baixa taxa de gols (${leagueOverRate.toFixed(0)}%)`); }
+    }
+  }
+
+  // === 2. PLAYER 1 MOMENTUM (max 25pts) ===
+  const n1 = normalize(p1Name);
+  const p1Games = games
+    .filter(g => normalize(g.home_player) === n1 || normalize(g.away_player) === n1)
+    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+    .slice(0, 5);
+
+  const p1Momentum = calcPlayerMomentum(p1Name, games, 5);
+
+  if (p1Games.length >= 3) {
+    // Taxa Over 1.5 FT recente
+    const p1Over15FT = p1Games.filter(g =>
+      (Number(g.score_home || 0) + Number(g.score_away || 0)) > 1.5
+    ).length / p1Games.length * 100;
+
+    // Média de gols
+    const p1AvgGoals = p1Games.reduce((sum, g) =>
+      sum + Number(g.score_home || 0) + Number(g.score_away || 0), 0
+    ) / p1Games.length;
+
+    if (p1Over15FT >= 90 && p1Momentum === 'up')   { breakdown.p1Score = 25; reasoning.push(`${p1Name} aquecendo: ${p1Over15FT.toFixed(0)}% Over 1.5 FT 🔥`); }
+    else if (p1Over15FT >= 80 && p1Momentum !== 'down') { breakdown.p1Score = 20; reasoning.push(`${p1Name} em forma: ${p1Over15FT.toFixed(0)}% Over FT`); }
+    else if (p1Over15FT >= 65) { breakdown.p1Score = 15; }
+    else if (p1Over15FT >= 50) { breakdown.p1Score = 10; }
+    else                       { breakdown.p1Score = 3;  reasoning.push(`${p1Name} em baixa (${p1Over15FT.toFixed(0)}% Over FT)`); }
+
+    if (p1Momentum === 'down') { breakdown.p1Score = Math.max(0, breakdown.p1Score - 8); reasoning.push(`${p1Name} esfriando ↓`); }
+    if (p1AvgGoals >= 3.5) { breakdown.p1Score = Math.min(25, breakdown.p1Score + 3); }
+  }
+
+  // === 3. PLAYER 2 MOMENTUM (max 25pts) ===
+  const n2 = normalize(p2Name);
+  const p2Games = games
+    .filter(g => normalize(g.home_player) === n2 || normalize(g.away_player) === n2)
+    .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
+    .slice(0, 5);
+
+  const p2Momentum = calcPlayerMomentum(p2Name, games, 5);
+
+  if (p2Games.length >= 3) {
+    const p2Over15FT = p2Games.filter(g =>
+      (Number(g.score_home || 0) + Number(g.score_away || 0)) > 1.5
+    ).length / p2Games.length * 100;
+
+    const p2AvgGoals = p2Games.reduce((sum, g) =>
+      sum + Number(g.score_home || 0) + Number(g.score_away || 0), 0
+    ) / p2Games.length;
+
+    if (p2Over15FT >= 90 && p2Momentum === 'up')   { breakdown.p2Score = 25; reasoning.push(`${p2Name} aquecendo: ${p2Over15FT.toFixed(0)}% Over 1.5 FT 🔥`); }
+    else if (p2Over15FT >= 80 && p2Momentum !== 'down') { breakdown.p2Score = 20; reasoning.push(`${p2Name} em forma: ${p2Over15FT.toFixed(0)}% Over FT`); }
+    else if (p2Over15FT >= 65) { breakdown.p2Score = 15; }
+    else if (p2Over15FT >= 50) { breakdown.p2Score = 10; }
+    else                       { breakdown.p2Score = 3;  reasoning.push(`${p2Name} em baixa (${p2Over15FT.toFixed(0)}% Over FT)`); }
+
+    if (p2Momentum === 'down') { breakdown.p2Score = Math.max(0, breakdown.p2Score - 8); reasoning.push(`${p2Name} esfriando ↓`); }
+    if (p2AvgGoals >= 3.5) { breakdown.p2Score = Math.min(25, breakdown.p2Score + 3); }
+  }
+
+  // === 4. H2H (max 20pts) ===
+  const h2h = getH2HStats(p1Name, p2Name, games);
+  let h2hOverRate = 0;
+
+  if (h2h.count >= 2) {
+    const h2hGames = h2h.recentGames;
+    const h2hOver15 = h2hGames.filter(g =>
+      (Number(g.score_home || 0) + Number(g.score_away || 0)) > 1.5
+    ).length;
+    h2hOverRate = h2hGames.length > 0 ? (h2hOver15 / h2hGames.length) * 100 : 0;
+
+    const avgGoalsH2H = (h2h.p1AvgGoalsFT + h2h.p2AvgGoalsFT);
+
+    if (h2hOverRate >= 90 || avgGoalsH2H >= 4.0) {
+      breakdown.h2hScore = 20;
+      reasoning.push(`H2H explosivo: ${h2hOverRate.toFixed(0)}% Over 1.5 (${h2h.count} jogos)`);
+    } else if (h2hOverRate >= 70) {
+      breakdown.h2hScore = 15;
+      reasoning.push(`H2H favorável: ${h2hOverRate.toFixed(0)}% Over (${h2h.count} jogos)`);
+    } else if (h2hOverRate >= 50) {
+      breakdown.h2hScore = 10;
+    } else if (h2h.count >= 1) {
+      breakdown.h2hScore = 5;
+      reasoning.push(`H2H com baixo índice de gols`);
+    }
+  } else {
+    // Sem H2H, dá score parcial baseado na força individual
+    breakdown.h2hScore = 8;
+  }
+
+  // === 5. CONVERGÊNCIA (max 10pts) ===
+  const allPositive = breakdown.leagueScore >= 10 && breakdown.p1Score >= 15 && breakdown.p2Score >= 15;
+  const convergenceBonus = allPositive;
+  if (convergenceBonus) {
+    breakdown.convergenceScore = 10;
+    reasoning.push('⚡ Convergência: Liga + P1 + P2 todos positivos');
+  } else {
+    const positiveSignals = [
+      breakdown.leagueScore >= 10,
+      breakdown.p1Score >= 15,
+      breakdown.p2Score >= 15,
+      breakdown.h2hScore >= 10,
+    ].filter(Boolean).length;
+    breakdown.convergenceScore = positiveSignals * 2;
+  }
+
+  // === SCORE FINAL ===
+  const rawScore = breakdown.leagueScore + breakdown.p1Score + breakdown.p2Score +
+                   breakdown.h2hScore + breakdown.convergenceScore;
+  const score = Math.min(100, Math.max(0, rawScore));
+
+  // === LABEL ===
+  const label: MatchDecisionScore['label'] =
+    score >= 80 ? 'elite' :
+    score >= 60 ? 'enter' :
+    score >= 40 ? 'watch' : 'avoid';
+
+  // === MELHOR MERCADO ===
+  const limit = Math.max(3, Math.min(p1Games.length, p2Games.length, 5));
+  const best = findBestMarket(p1Name, p2Name, games, limit);
+
+  return {
+    score,
+    label,
+    bestMarket: best.label,
+    bestMarketKey: best.key,
+    reasoning: reasoning.slice(0, 5),
+    leagueOverRate,
+    p1Momentum,
+    p2Momentum,
+    h2hCount: h2h.count,
+    h2hOverRate,
+    convergenceBonus,
+    scoreBreakdown: breakdown,
+  };
+};
