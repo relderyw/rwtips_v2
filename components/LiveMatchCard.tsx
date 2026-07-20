@@ -502,16 +502,16 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
           {/* Bars — Confronto */}
           {isHT ? (
             <>
-              <MetricBar label="2.5 HT" value={(p1.htOver25Rate + p2.htOver25Rate) / 2} />
-              <MetricBar label="1.5 HT" value={(p1.htOver15Rate + p2.htOver15Rate) / 2} />
-              <MetricBar label="BTTS HT" value={(p1.htBttsRate + p2.htBttsRate) / 2} />
               <MetricBar label="0.5 HT" value={(p1.htOver05Rate + p2.htOver05Rate) / 2} />
+              <MetricBar label="1.5 HT" value={(p1.htOver15Rate + p2.htOver15Rate) / 2} />
+              <MetricBar label="2.5 HT" value={(p1.htOver25Rate + p2.htOver25Rate) / 2} />
+              <MetricBar label="BTTS HT" value={(p1.htBttsRate + p2.htBttsRate) / 2} />
             </>
           ) : (
             <>
-              <MetricBar label="4.5 FT" value={(p1.ft35Rate + p2.ft35Rate) / 2 * 0.65} />
-              <MetricBar label="3.5 FT" value={(p1.ft35Rate + p2.ft35Rate) / 2} />
+              <MetricBar label="1.5 FT" value={(p1.ft15Rate + p2.ft15Rate) / 2} />
               <MetricBar label="2.5 FT" value={(p1.ftOver25Rate + p2.ftOver25Rate) / 2} />
+              <MetricBar label="3.5 FT" value={(p1.ft35Rate + p2.ft35Rate) / 2} />
               <MetricBar label="BTTS FT" value={(p1.ftBttsRate + p2.ftBttsRate) / 2} />
             </>
           )}
@@ -536,15 +536,15 @@ export const LiveMatchCard: React.FC<LiveMatchCardProps> = ({
           {/* Dual bars */}
           {isHT ? (
             <>
-              <DualBar label="2.5 HT" h={hm.m25} a={am.m25} />
-              <DualBar label="1.5 HT" h={hm.m15} a={am.m15} />
               <DualBar label="0.5 HT" h={hm.m05} a={am.m05} />
+              <DualBar label="1.5 HT" h={hm.m15} a={am.m15} />
+              <DualBar label="2.5 HT" h={hm.m25} a={am.m25} />
             </>
           ) : (
             <>
-              <DualBar label="3.5 FT" h={hm.m25} a={am.m25} />
-              <DualBar label="2.5 FT" h={hm.m15} a={am.m15} />
               <DualBar label="1.5 FT" h={hm.m05} a={am.m05} />
+              <DualBar label="2.5 FT" h={hm.m15} a={am.m15} />
+              <DualBar label="3.5 FT" h={hm.m25} a={am.m25} />
             </>
           )}
         </div>

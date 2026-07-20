@@ -1431,24 +1431,24 @@ const calcPlayerMomentum = (
   return 'stable';
 };
 
-// Helper: Melhor mercado — prioridade top-down (mais difícil que tenha taxa suficiente)
+// Helper: Melhor mercado — escolhe o mercado com MAIOR taxa combinada acima do mínimo exigido.
+// Isso garante que Over 1.5 HT (80%) seja preferido sobre Over 2.5 HT (60%).
 const findBestMarket = (
   p1Name: string,
   p2Name: string,
   games: HistoryMatch[],
   limit: number = 5
 ): { key: string; label: string; combinedRate: number } => {
-  // Ordenados do mais exigente para o mais fácil — recomenda o maior threshold viável
-  const marketsByPriority = [
-    { key: 'over_2.5_ht', label: 'Over 2.5 HT', minRate: 55 },
-    { key: 'btts_ht',     label: 'BTTS HT',      minRate: 55 },
-    { key: 'over_1.5_ht', label: 'Over 1.5 HT',  minRate: 60 },
-    { key: 'over_4.5_ft', label: 'Over 4.5 FT',  minRate: 55 },
-    { key: 'over_3.5_ft', label: 'Over 3.5 FT',  minRate: 60 },
-    { key: 'over_2.5_ft', label: 'Over 2.5 FT',  minRate: 65 },
-    { key: 'btts_ft',     label: 'BTTS FT',       minRate: 60 },
-    { key: 'over_1.5_ft', label: 'Over 1.5 FT',  minRate: 70 },
-    { key: 'over_0.5_ht', label: 'Over 0.5 HT',  minRate: 80 },
+  // Cada mercado tem seu threshold mínimo para ser considerado viável
+  const markets = [
+    { key: 'over_0.5_ht', label: 'Over 0.5 HT',  minRate: 100 },
+    { key: 'over_1.5_ht', label: 'Over 1.5 HT',  minRate: 90  },
+    { key: 'over_2.5_ht', label: 'Over 2.5 HT',  minRate: 85  },
+    { key: 'btts_ht',     label: 'BTTS HT',       minRate: 85  },
+    { key: 'over_2.5_ft', label: 'Over 2.5 FT',  minRate: 100 },
+    { key: 'over_3.5_ft', label: 'Over 3.5 FT',  minRate: 90  },
+    { key: 'over_4.5_ft', label: 'Over 4.5 FT',  minRate: 83  },
+    { key: 'btts_ft',     label: 'BTTS FT',       minRate: 100 },
   ];
 
   const n1 = normalize(p1Name);
@@ -1464,36 +1464,29 @@ const findBestMarket = (
     .sort((a, b) => new Date(b.data_realizacao).getTime() - new Date(a.data_realizacao).getTime())
     .slice(0, limit);
 
-  // Percorre do mais exigente; retorna o primeiro que bater o mínimo para ambos
-  for (const m of marketsByPriority) {
+  // Calcula taxa combinada para cada mercado
+  const rated = markets.map(m => {
     const r1 = p1Games.length > 0
       ? p1Games.filter(g => evaluateMarket(g, m.key).hit).length / p1Games.length * 100
       : 0;
     const r2 = p2Games.length > 0
       ? p2Games.filter(g => evaluateMarket(g, m.key).hit).length / p2Games.length * 100
       : 0;
-    const combined = (r1 + r2) / 2;
-    if (combined >= m.minRate) {
-      return { key: m.key, label: m.label, combinedRate: combined };
-    }
+    return { ...m, combinedRate: (r1 + r2) / 2 };
+  });
+
+  // Filtra apenas os viáveis (acima do mínimo) e escolhe o de MAIOR taxa combinada
+  const viable = rated.filter(m => m.combinedRate >= m.minRate);
+  if (viable.length > 0) {
+    viable.sort((a, b) => b.combinedRate - a.combinedRate);
+    const { key, label, combinedRate } = viable[0];
+    return { key, label, combinedRate };
   }
 
-  // Fallback: o mercado com maior taxa combinada
-  let best = { key: 'over_1.5_ft', label: 'Over 1.5 FT', combinedRate: 0 };
-  for (const m of marketsByPriority) {
-    const r1 = p1Games.length > 0
-      ? p1Games.filter(g => evaluateMarket(g, m.key).hit).length / p1Games.length * 100
-      : 0;
-    const r2 = p2Games.length > 0
-      ? p2Games.filter(g => evaluateMarket(g, m.key).hit).length / p2Games.length * 100
-      : 0;
-    const combined = (r1 + r2) / 2;
-    if (combined > best.combinedRate) {
-      best = { key: m.key, label: m.label, combinedRate: combined };
-    }
-  }
-  return best;
-
+  // Fallback: o mercado com maior taxa combinada independente do mínimo
+  rated.sort((a, b) => b.combinedRate - a.combinedRate);
+  const { key, label, combinedRate } = rated[0] ?? { key: 'over_1.5_ft', label: 'Over 1.5 FT', combinedRate: 0 };
+  return { key, label, combinedRate };
 };
 
 export const calculateMatchDecisionScore = (
